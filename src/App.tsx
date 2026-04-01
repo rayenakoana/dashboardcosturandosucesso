@@ -7,7 +7,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import Index from "./pages/Index";
 import Vendas from "./pages/Vendas";
 import CustosMarketing from "./pages/CustosMarketing";
-import Reunioes from "./pages/Reunioes";
+// Reuniões merged into CustosMarketing page
 import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 
