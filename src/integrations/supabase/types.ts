@@ -14,13 +14,141 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      configuracoes: {
+        Row: {
+          created_at: string
+          id: string
+          tipo: string
+          valor: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          tipo: string
+          valor: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          tipo?: string
+          valor?: string
+        }
+        Relationships: []
+      }
+      custos_marketing: {
+        Row: {
+          categoria: string
+          created_at: string
+          data: string
+          id: string
+          nome_item: string
+          valor: number
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          data?: string
+          id?: string
+          nome_item: string
+          valor?: number
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          data?: string
+          id?: string
+          nome_item?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      performance_reunioes: {
+        Row: {
+          compareceram_real: number
+          created_at: string
+          data: string
+          id: string
+          sdr_confirmado: number
+          sdr_estimado: number
+        }
+        Insert: {
+          compareceram_real?: number
+          created_at?: string
+          data?: string
+          id?: string
+          sdr_confirmado?: number
+          sdr_estimado?: number
+        }
+        Update: {
+          compareceram_real?: number
+          created_at?: string
+          data?: string
+          id?: string
+          sdr_confirmado?: number
+          sdr_estimado?: number
+        }
+        Relationships: []
+      }
+      vendas: {
+        Row: {
+          campanha: string | null
+          created_at: string
+          data_entrada: string
+          data_fechamento: string | null
+          funil: string | null
+          id: string
+          is_renovacao: boolean
+          motivo_perda: string | null
+          nome_cliente: string
+          origem: string | null
+          produto: string | null
+          segmento: string | null
+          status: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          campanha?: string | null
+          created_at?: string
+          data_entrada?: string
+          data_fechamento?: string | null
+          funil?: string | null
+          id?: string
+          is_renovacao?: boolean
+          motivo_perda?: string | null
+          nome_cliente: string
+          origem?: string | null
+          produto?: string | null
+          segmento?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          campanha?: string | null
+          created_at?: string
+          data_entrada?: string
+          data_fechamento?: string | null
+          funil?: string | null
+          id?: string
+          is_renovacao?: boolean
+          motivo_perda?: string | null
+          nome_cliente?: string
+          origem?: string | null
+          produto?: string | null
+          segmento?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      rls_allow_all: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
