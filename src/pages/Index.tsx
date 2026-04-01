@@ -357,7 +357,7 @@ export default function Index() {
       </div>
 
       {/* Charts Row 2: Segmento + Produto */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <GlassCard>
           <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">
             Receita por Segmento
