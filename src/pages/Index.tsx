@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   DollarSign, Target, TrendingUp, Clock, BadgeDollarSign,
   Users, BarChart3, PieChart as PieChartIcon, AlertTriangle,
@@ -100,7 +99,6 @@ export default function Index() {
     return reunioes.filter(r => r.data >= start && r.data <= end);
   }, [reunioes, start, end]);
 
-  // KPIs Comercial
   const fechadas = filteredVendas.filter(v => v.status === "Fechado");
   const faturamento = fechadas.reduce((s, v) => s + Number(v.valor), 0);
   const faturamentoRenovacao = fechadas.filter(v => v.is_renovacao).reduce((s, v) => s + Number(v.valor), 0);
@@ -117,7 +115,6 @@ export default function Index() {
     return Math.round(total / with2dates.length);
   }, [fechadas]);
 
-  // KPIs Marketing
   const totalCustos = filteredCustos.reduce((s, c) => s + Number(c.valor), 0);
   const custosAds = filteredCustos.filter(c => c.categoria === "Ads").reduce((s, c) => s + Number(c.valor), 0);
   const totalLeads = filteredVendas.length;
@@ -125,49 +122,45 @@ export default function Index() {
   const cpl = totalLeads > 0 ? custosAds / totalLeads : 0;
   const roi = totalCustos > 0 ? ((faturamento - totalCustos) / totalCustos * 100) : 0;
 
-  // Show-up
   const totalConfirmado = filteredReunioes.reduce((s, r) => s + r.sdr_confirmado, 0);
   const totalReal = filteredReunioes.reduce((s, r) => s + r.compareceram_real, 0);
   const showUpRate = totalConfirmado > 0 ? (totalReal / totalConfirmado) * 100 : 0;
 
-  // CPL histórico (all-time) para comparação
   const allTimeLeads = vendas.length;
   const allTimeAds = custos.filter(c => c.categoria === "Ads").reduce((s, c) => s + Number(c.valor), 0);
   const cplHistorico = allTimeLeads > 0 ? allTimeAds / allTimeLeads : 0;
 
-  // ====== INSIGHTS / ALERTAS ======
   const insights = useMemo(() => {
     const alerts: { msg: string; severity: "warning" | "destructive" }[] = [];
     const mqlCount = filteredVendas.filter(v => ["MQL", "Reunião", "Fechado"].includes(v.status)).length;
     const reuniaoCount = filteredVendas.filter(v => ["Reunião", "Fechado"].includes(v.status)).length;
 
-    // Lead → Negociação (MQL)
     if (totalLeads > 0) {
       const convLeadMql = (mqlCount / totalLeads) * 100;
       if (convLeadMql < 35) alerts.push({ msg: `⚠️ Gargalo na Qualificação: Conversão Lead > Negociação em ${convLeadMql.toFixed(0)}% (meta: 35%)`, severity: "warning" });
     }
-    // MQL → Proposta (Reunião)
+
     if (mqlCount > 0) {
       const convMqlReuniao = (reuniaoCount / mqlCount) * 100;
       if (convMqlReuniao < 70) alerts.push({ msg: `⚠️ Gargalo na Proposta: Conversão Negociação > Proposta em ${convMqlReuniao.toFixed(0)}% (meta: 70%)`, severity: "warning" });
     }
-    // Reunião → Fechado
+
     if (reuniaoCount > 0) {
       const convReunFech = (fechadas.length / reuniaoCount) * 100;
       if (convReunFech < 30) alerts.push({ msg: `⚠️ Gargalo no Fechamento: Conversão Proposta > Venda em ${convReunFech.toFixed(0)}% (meta: 30%)`, severity: "warning" });
     }
-    // Show-up
+
     if (totalConfirmado > 0 && showUpRate < 70) {
       alerts.push({ msg: `⚠️ Atenção: Taxa de comparecimento em reuniões em ${showUpRate.toFixed(0)}% (meta: 70%)`, severity: "warning" });
     }
-    // CPL elevado
+
     if (cplHistorico > 0 && cpl > cplHistorico * 1.2) {
       alerts.push({ msg: `⚠️ Custo de Lead Elevado: CPL atual R$ ${cpl.toFixed(0)} está ${(((cpl - cplHistorico) / cplHistorico) * 100).toFixed(0)}% acima da média histórica (R$ ${cplHistorico.toFixed(0)})`, severity: "destructive" });
     }
+
     return alerts;
   }, [filteredVendas, fechadas, totalLeads, totalConfirmado, showUpRate, cpl, cplHistorico]);
 
-  // Funnel
   const funnelData = useMemo(() => {
     const leadCount = filteredVendas.length;
     const mqlCount = filteredVendas.filter(v => ["MQL", "Reunião", "Fechado"].includes(v.status)).length;
@@ -209,13 +202,11 @@ export default function Index() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard Geral</h1>
         <p className="text-muted-foreground text-sm mt-1">Visão consolidada de Marketing & Comercial</p>
       </div>
 
-      {/* Filters */}
       <GlassCard className="!py-3">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
           <div>
@@ -280,21 +271,26 @@ export default function Index() {
         </div>
       </GlassCard>
 
-      {/* Insights de Performance */}
       {insights.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-2">
             <AlertTriangle className="h-3.5 w-3.5 text-primary" /> Insights de Performance
           </h2>
           {insights.map((alert, i) => (
-            <Alert key={i} variant={alert.severity === "destructive" ? "destructive" : "default"} className="border-primary/30 bg-primary/5">
-              <AlertDescription className="text-sm">{alert.msg}</AlertDescription>
-            </Alert>
+            <div
+              key={i}
+              className={`rounded-lg border p-4 text-sm ${
+                alert.severity === "destructive"
+                  ? "border-destructive/40 bg-destructive/10 text-foreground"
+                  : "border-primary/30 bg-primary/5 text-foreground"
+              }`}
+            >
+              {alert.msg}
+            </div>
           ))}
         </div>
       )}
 
-      {/* KPIs Comercial */}
       <div>
         <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
           <DollarSign className="h-3.5 w-3.5" /> Métricas Comerciais
@@ -311,7 +307,6 @@ export default function Index() {
         </div>
       </div>
 
-      {/* KPIs Marketing */}
       <div>
         <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
           <BadgeDollarSign className="h-3.5 w-3.5" /> Eficiência de Marketing
@@ -328,7 +323,6 @@ export default function Index() {
         </div>
       </div>
 
-      {/* Charts Row 1: Funnel + Motivos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <GlassCard>
           <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
@@ -383,7 +377,6 @@ export default function Index() {
         </GlassCard>
       </div>
 
-      {/* Charts Row 2: Segmento + Produto */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <GlassCard>
           <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Receita por Segmento</h3>
@@ -418,7 +411,6 @@ export default function Index() {
         </GlassCard>
       </div>
 
-      {/* Chart Row 3: Show-up Rate */}
       <GlassCard>
         <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
           <Users className="h-3.5 w-3.5" /> Show-up Rate — Confirmados vs. Compareceram
