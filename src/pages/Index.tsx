@@ -176,7 +176,7 @@ export default function Index() {
   const showUpRate = totalConfirmado > 0 ? ((totalReal / totalConfirmado) * 100).toFixed(1) : "0";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard Geral</h1>
@@ -253,7 +253,7 @@ export default function Index() {
         <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
           <DollarSign className="h-3.5 w-3.5" /> Métricas Comerciais
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <KPICard title="Faturamento Total" value={`R$ ${faturamento.toLocaleString("pt-BR")}`} icon={DollarSign} />
           <KPICard title="Fat. Renovação" value={`R$ ${faturamentoRenovacao.toLocaleString("pt-BR")}`} icon={TrendingUp} subtitle="C$ CLUB" />
           <KPICard title="Ticket Médio" value={`R$ ${ticketMedio.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={Target} />
@@ -266,7 +266,7 @@ export default function Index() {
         <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
           <BadgeDollarSign className="h-3.5 w-3.5" /> Eficiência de Marketing
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <KPICard title="CAC" value={`R$ ${cac.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={BadgeDollarSign} subtitle="Custo por Aquisição" />
           <KPICard title="CPL" value={`R$ ${cpl.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={Target} subtitle="Custo por Lead" />
           <KPICard
@@ -281,7 +281,7 @@ export default function Index() {
       </div>
 
       {/* Charts Row 1: Funnel + Motivos de Perda */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Funnel */}
         <GlassCard>
           <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
@@ -357,7 +357,7 @@ export default function Index() {
       </div>
 
       {/* Charts Row 2: Segmento + Produto */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <GlassCard>
           <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">
             Receita por Segmento
