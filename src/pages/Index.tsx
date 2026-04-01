@@ -176,7 +176,7 @@ export default function Index() {
   const showUpRate = totalConfirmado > 0 ? ((totalReal / totalConfirmado) * 100).toFixed(1) : "0";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard Geral</h1>
