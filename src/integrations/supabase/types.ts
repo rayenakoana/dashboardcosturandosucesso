@@ -62,6 +62,42 @@ export type Database = {
         }
         Relationships: []
       }
+      metricas_diarias: {
+        Row: {
+          compareceram_real: number
+          created_at: string
+          data: string
+          funil: string
+          id: string
+          leads_qualificados: number
+          leads_recebidos: number
+          reunioes_agendadas: number
+          reunioes_confirmadas: number
+        }
+        Insert: {
+          compareceram_real?: number
+          created_at?: string
+          data?: string
+          funil: string
+          id?: string
+          leads_qualificados?: number
+          leads_recebidos?: number
+          reunioes_agendadas?: number
+          reunioes_confirmadas?: number
+        }
+        Update: {
+          compareceram_real?: number
+          created_at?: string
+          data?: string
+          funil?: string
+          id?: string
+          leads_qualificados?: number
+          leads_recebidos?: number
+          reunioes_agendadas?: number
+          reunioes_confirmadas?: number
+        }
+        Relationships: []
+      }
       performance_reunioes: {
         Row: {
           compareceram_real: number
