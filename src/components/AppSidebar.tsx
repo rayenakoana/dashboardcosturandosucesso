@@ -14,9 +14,8 @@ import {
 
 const items = [
   { title: "Dashboard", url: "/", icon: BarChart3 },
-  { title: "Vendas", url: "/vendas", icon: ShoppingCart },
-  { title: "Custos Marketing", url: "/custos", icon: DollarSign },
-  { title: "Reuniões", url: "/reunioes", icon: Users },
+  { title: "Comercial", url: "/vendas", icon: ShoppingCart },
+  { title: "Marketing & Reuniões", url: "/custos", icon: DollarSign },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
