@@ -7,7 +7,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import Index from "./pages/Index";
 import Vendas from "./pages/Vendas";
 import CustosMarketing from "./pages/CustosMarketing";
-import Reunioes from "./pages/Reunioes";
+// Reuniões merged into CustosMarketing page
 import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 
@@ -30,7 +30,7 @@ const App = () => (
                   <Route path="/" element={<Index />} />
                   <Route path="/vendas" element={<Vendas />} />
                   <Route path="/custos" element={<CustosMarketing />} />
-                  <Route path="/reunioes" element={<Reunioes />} />
+                  {/* Reuniões merged into /custos */}
                   <Route path="/configuracoes" element={<Configuracoes />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

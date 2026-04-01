@@ -5,73 +5,94 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useCustosMarketing, useAddCusto, useDeleteCusto } from "@/hooks/useCustosMarketing";
-import { Plus, Trash2 } from "lucide-react";
+import { usePerformanceReunioes, useAddReuniao, useDeleteReuniao } from "@/hooks/usePerformanceReunioes";
+import { sendToWebhook } from "@/hooks/useWebhook";
+import { Plus, Trash2, DollarSign, Users } from "lucide-react";
 import { toast } from "sonner";
 
 const CATEGORIAS = ["Ads", "Software", "Equipe"];
 
 export default function CustosMarketing() {
   const { data: custos = [] } = useCustosMarketing();
-  const addMutation = useAddCusto();
-  const deleteMutation = useDeleteCusto();
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ data: new Date().toISOString().split("T")[0], categoria: "", nome_item: "", valor: "" });
+  const addCusto = useAddCusto();
+  const deleteCusto = useDeleteCusto();
 
-  const handleSubmit = () => {
-    if (!form.categoria || !form.nome_item.trim()) { toast.error("Preencha todos os campos"); return; }
-    addMutation.mutate({ ...form, valor: Number(form.valor) || 0 }, {
+  const { data: reunioes = [] } = usePerformanceReunioes();
+  const addReuniao = useAddReuniao();
+  const deleteReuniao = useDeleteReuniao();
+
+  const [custoForm, setCustoForm] = useState({ data: new Date().toISOString().split("T")[0], categoria: "", nome_item: "", valor: "" });
+  const [reuniaoForm, setReuniaoForm] = useState({ data: new Date().toISOString().split("T")[0], sdr_estimado: "", sdr_confirmado: "", compareceram_real: "" });
+
+  const handleCusto = () => {
+    if (!custoForm.categoria || !custoForm.nome_item.trim()) { toast.error("Preencha todos os campos"); return; }
+    const payload = { ...custoForm, valor: Number(custoForm.valor) || 0 };
+    addCusto.mutate(payload, {
       onSuccess: () => {
-        setOpen(false);
-        setForm({ data: new Date().toISOString().split("T")[0], categoria: "", nome_item: "", valor: "" });
+        sendToWebhook("custo_marketing", payload);
+        setCustoForm({ data: new Date().toISOString().split("T")[0], categoria: "", nome_item: "", valor: "" });
         toast.success("Custo adicionado");
       },
     });
   };
 
-  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+  const handleReuniao = () => {
+    const payload = {
+      ...reuniaoForm,
+      sdr_estimado: Number(reuniaoForm.sdr_estimado) || 0,
+      sdr_confirmado: Number(reuniaoForm.sdr_confirmado) || 0,
+      compareceram_real: Number(reuniaoForm.compareceram_real) || 0,
+    };
+    addReuniao.mutate(payload, {
+      onSuccess: () => {
+        sendToWebhook("reuniao", payload);
+        setReuniaoForm({ data: new Date().toISOString().split("T")[0], sdr_estimado: "", sdr_confirmado: "", compareceram_real: "" });
+        toast.success("Reunião adicionada");
+      },
+    });
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Custos Marketing</h1>
-          <p className="text-muted-foreground text-sm mt-1">Controle de gastos por categoria</p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-1"><Plus className="h-4 w-4" /> Novo Custo</Button>
-          </DialogTrigger>
-          <DialogContent className="bg-card border-border">
-            <DialogHeader><DialogTitle>Novo Custo</DialogTitle></DialogHeader>
-            <div className="grid gap-3 py-2">
-              <div>
-                <Label>Data</Label>
-                <Input type="date" value={form.data} onChange={e => set("data", e.target.value)} className="bg-muted/50" />
-              </div>
-              <div>
-                <Label>Categoria</Label>
-                <Select value={form.categoria} onValueChange={v => set("categoria", v)}>
-                  <SelectTrigger className="bg-muted/50"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{CATEGORIAS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Nome do Item</Label>
-                <Input value={form.nome_item} onChange={e => set("nome_item", e.target.value)} placeholder="Ex: Meta Ads, n8n..." className="bg-muted/50" />
-              </div>
-              <div>
-                <Label>Valor (R$)</Label>
-                <Input type="number" value={form.valor} onChange={e => set("valor", e.target.value)} className="bg-muted/50" />
-              </div>
-              <Button onClick={handleSubmit} disabled={addMutation.isPending} className="w-full mt-2">Salvar</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Lançamento Marketing & Reuniões</h1>
+        <p className="text-muted-foreground text-sm mt-1">Registre custos de marketing e performance de reuniões</p>
       </div>
 
-      <GlassCard className="p-0 overflow-hidden">
+      {/* BLOCO CUSTOS */}
+      <GlassCard>
+        <div className="flex items-center gap-2 mb-4">
+          <DollarSign className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Custos de Marketing</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
+          <div>
+            <Label>Data</Label>
+            <Input type="date" value={custoForm.data} onChange={e => setCustoForm(f => ({ ...f, data: e.target.value }))} className="bg-muted/50" />
+          </div>
+          <div>
+            <Label>Ferramenta / Canal</Label>
+            <Input value={custoForm.nome_item} onChange={e => setCustoForm(f => ({ ...f, nome_item: e.target.value }))} placeholder="Ex: Meta Ads, n8n..." className="bg-muted/50" />
+          </div>
+          <div>
+            <Label>Categoria</Label>
+            <Select value={custoForm.categoria} onValueChange={v => setCustoForm(f => ({ ...f, categoria: v }))}>
+              <SelectTrigger className="bg-muted/50"><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>{CATEGORIAS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Valor (R$)</Label>
+            <Input type="number" value={custoForm.valor} onChange={e => setCustoForm(f => ({ ...f, valor: e.target.value }))} className="bg-muted/50" placeholder="0,00" />
+          </div>
+          <div className="flex items-end">
+            <Button onClick={handleCusto} disabled={addCusto.isPending} className="w-full gap-1">
+              <Plus className="h-4 w-4" /> Salvar
+            </Button>
+          </div>
+        </div>
+
         <Table>
           <TableHeader>
             <TableRow className="border-border hover:bg-transparent">
@@ -84,7 +105,7 @@ export default function CustosMarketing() {
           </TableHeader>
           <TableBody>
             {custos.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum custo cadastrado</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">Nenhum custo cadastrado</TableCell></TableRow>
             ) : custos.map(c => (
               <TableRow key={c.id} className="border-border">
                 <TableCell className="text-muted-foreground">{c.data}</TableCell>
@@ -93,12 +114,78 @@ export default function CustosMarketing() {
                 <TableCell>R$ {Number(c.valor).toLocaleString("pt-BR")}</TableCell>
                 <TableCell>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                    onClick={() => deleteMutation.mutate(c.id, { onSuccess: () => toast.success("Removido") })}>
+                    onClick={() => deleteCusto.mutate(c.id, { onSuccess: () => toast.success("Removido") })}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </TableCell>
               </TableRow>
             ))}
+          </TableBody>
+        </Table>
+      </GlassCard>
+
+      {/* BLOCO REUNIÕES */}
+      <GlassCard>
+        <div className="flex items-center gap-2 mb-4">
+          <Users className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Performance de Reuniões</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
+          <div>
+            <Label>Data</Label>
+            <Input type="date" value={reuniaoForm.data} onChange={e => setReuniaoForm(f => ({ ...f, data: e.target.value }))} className="bg-muted/50" />
+          </div>
+          <div>
+            <Label>Estimado SDR</Label>
+            <Input type="number" value={reuniaoForm.sdr_estimado} onChange={e => setReuniaoForm(f => ({ ...f, sdr_estimado: e.target.value }))} className="bg-muted/50" />
+          </div>
+          <div>
+            <Label>Confirmado SDR</Label>
+            <Input type="number" value={reuniaoForm.sdr_confirmado} onChange={e => setReuniaoForm(f => ({ ...f, sdr_confirmado: e.target.value }))} className="bg-muted/50" />
+          </div>
+          <div>
+            <Label>Compareceu Real</Label>
+            <Input type="number" value={reuniaoForm.compareceram_real} onChange={e => setReuniaoForm(f => ({ ...f, compareceram_real: e.target.value }))} className="bg-muted/50" />
+          </div>
+          <div className="flex items-end">
+            <Button onClick={handleReuniao} disabled={addReuniao.isPending} className="w-full gap-1">
+              <Plus className="h-4 w-4" /> Salvar
+            </Button>
+          </div>
+        </div>
+
+        <Table>
+          <TableHeader>
+            <TableRow className="border-border hover:bg-transparent">
+              <TableHead>Data</TableHead>
+              <TableHead>Estimado</TableHead>
+              <TableHead>Confirmado</TableHead>
+              <TableHead>Compareceram</TableHead>
+              <TableHead>Taxa</TableHead>
+              <TableHead className="w-10"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {reunioes.length === 0 ? (
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Nenhuma reunião cadastrada</TableCell></TableRow>
+            ) : reunioes.map(r => {
+              const taxa = r.sdr_confirmado > 0 ? ((r.compareceram_real / r.sdr_confirmado) * 100).toFixed(0) : "0";
+              return (
+                <TableRow key={r.id} className="border-border">
+                  <TableCell className="text-muted-foreground">{r.data}</TableCell>
+                  <TableCell>{r.sdr_estimado}</TableCell>
+                  <TableCell>{r.sdr_confirmado}</TableCell>
+                  <TableCell className="font-medium">{r.compareceram_real}</TableCell>
+                  <TableCell><span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">{taxa}%</span></TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={() => deleteReuniao.mutate(r.id, { onSuccess: () => toast.success("Removida") })}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </GlassCard>
