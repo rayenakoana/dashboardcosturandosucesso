@@ -8,13 +8,15 @@ import { useConfiguracoes } from "@/hooks/useConfiguracoes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   DollarSign, Target, TrendingUp, Clock, BadgeDollarSign,
-  Users, BarChart3, PieChart as PieChartIcon,
+  Users, BarChart3, PieChart as PieChartIcon, AlertTriangle,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, FunnelChart, Funnel, LabelList,
+  PieChart, Pie, Cell,
 } from "recharts";
 
 const COLORS = ["#C8102E", "#E8384F", "#FF6B6B", "#FF8E8E", "#FFB4B4", "#991B1B", "#FCA5A5"];
@@ -46,14 +48,28 @@ function getDateRange(period: string, customStart: string, customEnd: string) {
 
 const tooltipStyle = { background: "#111", border: "1px solid hsl(0 0% 12%)", borderRadius: "8px", fontSize: 12 };
 
+function ChartSkeleton({ height = 280 }: { height?: number }) {
+  return (
+    <div className="space-y-3" style={{ height }}>
+      <div className="flex items-end gap-2 h-full">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="flex-1 rounded-md" style={{ height: `${30 + Math.random() * 60}%` }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Index() {
-  const { data: vendas = [] } = useVendas();
-  const { data: custos = [] } = useCustosMarketing();
-  const { data: reunioes = [] } = usePerformanceReunioes();
+  const { data: vendas = [], isLoading: loadingVendas } = useVendas();
+  const { data: custos = [], isLoading: loadingCustos } = useCustosMarketing();
+  const { data: reunioes = [], isLoading: loadingReunioes } = usePerformanceReunioes();
   const { data: funis = [] } = useConfiguracoes("Funil");
   const { data: produtos = [] } = useConfiguracoes("Produto");
   const { data: campanhas = [] } = useConfiguracoes("Campanha");
   const { data: origens = [] } = useConfiguracoes("Origem");
+
+  const isLoading = loadingVendas || loadingCustos || loadingReunioes;
 
   const [period, setPeriod] = useState("month");
   const [customStart, setCustomStart] = useState("");
@@ -109,21 +125,54 @@ export default function Index() {
   const cpl = totalLeads > 0 ? custosAds / totalLeads : 0;
   const roi = totalCustos > 0 ? ((faturamento - totalCustos) / totalCustos * 100) : 0;
 
+  // Show-up
+  const totalConfirmado = filteredReunioes.reduce((s, r) => s + r.sdr_confirmado, 0);
+  const totalReal = filteredReunioes.reduce((s, r) => s + r.compareceram_real, 0);
+  const showUpRate = totalConfirmado > 0 ? (totalReal / totalConfirmado) * 100 : 0;
+
+  // CPL histórico (all-time) para comparação
+  const allTimeLeads = vendas.length;
+  const allTimeAds = custos.filter(c => c.categoria === "Ads").reduce((s, c) => s + Number(c.valor), 0);
+  const cplHistorico = allTimeLeads > 0 ? allTimeAds / allTimeLeads : 0;
+
+  // ====== INSIGHTS / ALERTAS ======
+  const insights = useMemo(() => {
+    const alerts: { msg: string; severity: "warning" | "destructive" }[] = [];
+    const mqlCount = filteredVendas.filter(v => ["MQL", "Reunião", "Fechado"].includes(v.status)).length;
+    const reuniaoCount = filteredVendas.filter(v => ["Reunião", "Fechado"].includes(v.status)).length;
+
+    // Lead → Negociação (MQL)
+    if (totalLeads > 0) {
+      const convLeadMql = (mqlCount / totalLeads) * 100;
+      if (convLeadMql < 35) alerts.push({ msg: `⚠️ Gargalo na Qualificação: Conversão Lead > Negociação em ${convLeadMql.toFixed(0)}% (meta: 35%)`, severity: "warning" });
+    }
+    // MQL → Proposta (Reunião)
+    if (mqlCount > 0) {
+      const convMqlReuniao = (reuniaoCount / mqlCount) * 100;
+      if (convMqlReuniao < 70) alerts.push({ msg: `⚠️ Gargalo na Proposta: Conversão Negociação > Proposta em ${convMqlReuniao.toFixed(0)}% (meta: 70%)`, severity: "warning" });
+    }
+    // Reunião → Fechado
+    if (reuniaoCount > 0) {
+      const convReunFech = (fechadas.length / reuniaoCount) * 100;
+      if (convReunFech < 30) alerts.push({ msg: `⚠️ Gargalo no Fechamento: Conversão Proposta > Venda em ${convReunFech.toFixed(0)}% (meta: 30%)`, severity: "warning" });
+    }
+    // Show-up
+    if (totalConfirmado > 0 && showUpRate < 70) {
+      alerts.push({ msg: `⚠️ Atenção: Taxa de comparecimento em reuniões em ${showUpRate.toFixed(0)}% (meta: 70%)`, severity: "warning" });
+    }
+    // CPL elevado
+    if (cplHistorico > 0 && cpl > cplHistorico * 1.2) {
+      alerts.push({ msg: `⚠️ Custo de Lead Elevado: CPL atual R$ ${cpl.toFixed(0)} está ${(((cpl - cplHistorico) / cplHistorico) * 100).toFixed(0)}% acima da média histórica (R$ ${cplHistorico.toFixed(0)})`, severity: "destructive" });
+    }
+    return alerts;
+  }, [filteredVendas, fechadas, totalLeads, totalConfirmado, showUpRate, cpl, cplHistorico]);
+
   // Funnel
   const funnelData = useMemo(() => {
-    const stages = ["Lead", "MQL", "Reunião", "Fechado"];
-    const counts = stages.map(s => filteredVendas.filter(v => {
-      const idx = stages.indexOf(v.status);
-      const currentIdx = stages.indexOf(s);
-      // "Perdido" counts at whatever stage they were lost, but for funnel we count cumulative
-      return idx >= currentIdx || (v.status === "Perdido" && currentIdx <= stages.indexOf("Lead"));
-    }).length);
-    // Simpler: count how many reached at least this stage
     const leadCount = filteredVendas.length;
     const mqlCount = filteredVendas.filter(v => ["MQL", "Reunião", "Fechado"].includes(v.status)).length;
     const reuniaoCount = filteredVendas.filter(v => ["Reunião", "Fechado"].includes(v.status)).length;
     const fechadoCount = fechadas.length;
-
     return [
       { name: "Leads", value: leadCount, fill: "#C8102E" },
       { name: "MQL", value: mqlCount, fill: "#E8384F" },
@@ -132,37 +181,24 @@ export default function Index() {
     ];
   }, [filteredVendas, fechadas]);
 
-  // Segment revenue
   const segmentoData = useMemo(() => {
     const map: Record<string, number> = {};
-    fechadas.forEach(v => {
-      const seg = v.segmento || "Sem segmento";
-      map[seg] = (map[seg] || 0) + Number(v.valor);
-    });
+    fechadas.forEach(v => { const seg = v.segmento || "Sem segmento"; map[seg] = (map[seg] || 0) + Number(v.valor); });
     return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
   }, [fechadas]);
 
-  // Product revenue
   const produtoData = useMemo(() => {
     const map: Record<string, number> = {};
-    fechadas.forEach(v => {
-      const p = v.produto || "Sem produto";
-      map[p] = (map[p] || 0) + Number(v.valor);
-    });
+    fechadas.forEach(v => { const p = v.produto || "Sem produto"; map[p] = (map[p] || 0) + Number(v.valor); });
     return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
   }, [fechadas]);
 
-  // Loss reasons
   const motivosData = useMemo(() => {
     const map: Record<string, number> = {};
-    filteredVendas.filter(v => v.status === "Perdido").forEach(v => {
-      const m = v.motivo_perda || "Não informado";
-      map[m] = (map[m] || 0) + 1;
-    });
+    filteredVendas.filter(v => v.status === "Perdido").forEach(v => { const m = v.motivo_perda || "Não informado"; map[m] = (map[m] || 0) + 1; });
     return Object.entries(map).map(([name, value]) => ({ name, value }));
   }, [filteredVendas]);
 
-  // Show-up rate chart
   const showUpData = useMemo(() => {
     return filteredReunioes.slice(0, 12).reverse().map(r => ({
       data: r.data,
@@ -170,10 +206,6 @@ export default function Index() {
       Real: r.compareceram_real,
     }));
   }, [filteredReunioes]);
-
-  const totalConfirmado = filteredReunioes.reduce((s, r) => s + r.sdr_confirmado, 0);
-  const totalReal = filteredReunioes.reduce((s, r) => s + r.compareceram_real, 0);
-  const showUpRate = totalConfirmado > 0 ? ((totalReal / totalConfirmado) * 100).toFixed(1) : "0";
 
   return (
     <div className="space-y-8">
@@ -248,16 +280,34 @@ export default function Index() {
         </div>
       </GlassCard>
 
+      {/* Insights de Performance */}
+      {insights.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 text-primary" /> Insights de Performance
+          </h2>
+          {insights.map((alert, i) => (
+            <Alert key={i} variant={alert.severity === "destructive" ? "destructive" : "default"} className="border-primary/30 bg-primary/5">
+              <AlertDescription className="text-sm">{alert.msg}</AlertDescription>
+            </Alert>
+          ))}
+        </div>
+      )}
+
       {/* KPIs Comercial */}
       <div>
         <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
           <DollarSign className="h-3.5 w-3.5" /> Métricas Comerciais
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <KPICard title="Faturamento Total" value={`R$ ${faturamento.toLocaleString("pt-BR")}`} icon={DollarSign} />
-          <KPICard title="Fat. Renovação" value={`R$ ${faturamentoRenovacao.toLocaleString("pt-BR")}`} icon={TrendingUp} subtitle="C$ CLUB" />
-          <KPICard title="Ticket Médio" value={`R$ ${ticketMedio.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={Target} />
-          <KPICard title="Tempo Médio Fech." value={`${tempoMedio} dias`} icon={Clock} />
+          {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[120px] rounded-xl" />) : (
+            <>
+              <KPICard title="Faturamento Total" value={`R$ ${faturamento.toLocaleString("pt-BR")}`} icon={DollarSign} />
+              <KPICard title="Fat. Renovação" value={`R$ ${faturamentoRenovacao.toLocaleString("pt-BR")}`} icon={TrendingUp} subtitle="C$ CLUB" />
+              <KPICard title="Ticket Médio" value={`R$ ${ticketMedio.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={Target} />
+              <KPICard title="Tempo Médio Fech." value={`${tempoMedio} dias`} icon={Clock} />
+            </>
+          )}
         </div>
       </div>
 
@@ -267,52 +317,41 @@ export default function Index() {
           <BadgeDollarSign className="h-3.5 w-3.5" /> Eficiência de Marketing
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <KPICard title="CAC" value={`R$ ${cac.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={BadgeDollarSign} subtitle="Custo por Aquisição" />
-          <KPICard title="CPL" value={`R$ ${cpl.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={Target} subtitle="Custo por Lead" />
-          <KPICard
-            title="ROI Real"
-            value={`${roi.toFixed(1)}%`}
-            icon={TrendingUp}
-            trend={roi > 0 ? "up" : roi < 0 ? "down" : "neutral"}
-            subtitle={roi > 0 ? "Positivo" : roi < 0 ? "Negativo" : "Neutro"}
-          />
-          <KPICard title="Show-up Rate" value={`${showUpRate}%`} icon={Users} subtitle={`${totalReal}/${totalConfirmado} reuniões`} />
+          {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[120px] rounded-xl" />) : (
+            <>
+              <KPICard title="CAC" value={`R$ ${cac.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={BadgeDollarSign} subtitle="Custo por Aquisição" />
+              <KPICard title="CPL" value={`R$ ${cpl.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={Target} subtitle="Custo por Lead" />
+              <KPICard title="ROI Real" value={`${roi.toFixed(1)}%`} icon={TrendingUp} trend={roi > 0 ? "up" : roi < 0 ? "down" : "neutral"} subtitle={roi > 0 ? "Positivo" : roi < 0 ? "Negativo" : "Neutro"} />
+              <KPICard title="Show-up Rate" value={`${showUpRate.toFixed(1)}%`} icon={Users} subtitle={`${totalReal}/${totalConfirmado} reuniões`} />
+            </>
+          )}
         </div>
       </div>
 
-      {/* Charts Row 1: Funnel + Motivos de Perda */}
+      {/* Charts Row 1: Funnel + Motivos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Funnel */}
         <GlassCard>
           <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
             <BarChart3 className="h-3.5 w-3.5" /> Funil de Conversão
           </h3>
-          {funnelData[0]?.value > 0 ? (
+          {isLoading ? <ChartSkeleton height={220} /> : funnelData[0]?.value > 0 ? (
             <div className="space-y-3">
               {funnelData.map((stage, i) => {
                 const pct = funnelData[0].value > 0 ? (stage.value / funnelData[0].value * 100) : 0;
                 const loss = i > 0 ? funnelData[i - 1].value - stage.value : 0;
-                const lossPct = i > 0 && funnelData[i - 1].value > 0
-                  ? ((loss / funnelData[i - 1].value) * 100).toFixed(0) : null;
+                const lossPct = i > 0 && funnelData[i - 1].value > 0 ? ((loss / funnelData[i - 1].value) * 100).toFixed(0) : null;
                 return (
                   <div key={stage.name}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-medium">{stage.name}</span>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold">{stage.value}</span>
-                        {lossPct && (
-                          <span className="text-[10px] text-red-400/70">-{lossPct}%</span>
-                        )}
+                        {lossPct && <span className="text-[10px] text-red-400/70">-{lossPct}%</span>}
                       </div>
                     </div>
                     <div className="h-8 bg-muted/30 rounded-lg overflow-hidden relative">
-                      <div
-                        className="h-full rounded-lg transition-all duration-700"
-                        style={{ width: `${pct}%`, background: stage.fill }}
-                      />
-                      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-white/80">
-                        {pct.toFixed(0)}%
-                      </span>
+                      <div className="h-full rounded-lg transition-all duration-700" style={{ width: `${pct}%`, background: stage.fill }} />
+                      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-white/80">{pct.toFixed(0)}%</span>
                     </div>
                   </div>
                 );
@@ -323,35 +362,23 @@ export default function Index() {
           )}
         </GlassCard>
 
-        {/* Motivos de Perda */}
         <GlassCard>
           <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
             <PieChartIcon className="h-3.5 w-3.5" /> Motivos de Perda
           </h3>
-          {motivosData.length > 0 ? (
+          {isLoading ? <ChartSkeleton /> : motivosData.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
-                <Pie
-                  data={motivosData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  innerRadius={50}
-                  dataKey="value"
+                <Pie data={motivosData} cx="50%" cy="50%" outerRadius={100} innerRadius={50} dataKey="value"
                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={{ stroke: "hsl(0 0% 30%)" }}
-                >
-                  {motivosData.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
+                  labelLine={{ stroke: "hsl(0 0% 30%)" }}>
+                  {motivosData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[280px] flex items-center justify-center text-muted-foreground text-sm">
-              Nenhum lead perdido no período
-            </div>
+            <div className="h-[280px] flex items-center justify-center text-muted-foreground text-sm">Nenhum lead perdido no período</div>
           )}
         </GlassCard>
       </div>
@@ -359,10 +386,8 @@ export default function Index() {
       {/* Charts Row 2: Segmento + Produto */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <GlassCard>
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">
-            Receita por Segmento
-          </h3>
-          {segmentoData.length > 0 ? (
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Receita por Segmento</h3>
+          {isLoading ? <ChartSkeleton /> : segmentoData.length > 0 ? (
             <ResponsiveContainer width="100%" height={Math.max(200, segmentoData.length * 40)}>
               <BarChart data={segmentoData} layout="vertical" margin={{ left: 20 }}>
                 <XAxis type="number" tick={{ fill: "#666", fontSize: 11 }} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
@@ -377,10 +402,8 @@ export default function Index() {
         </GlassCard>
 
         <GlassCard>
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">
-            Receita por Produto
-          </h3>
-          {produtoData.length > 0 ? (
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Receita por Produto</h3>
+          {isLoading ? <ChartSkeleton /> : produtoData.length > 0 ? (
             <ResponsiveContainer width="100%" height={Math.max(200, produtoData.length * 40)}>
               <BarChart data={produtoData} layout="vertical" margin={{ left: 20 }}>
                 <XAxis type="number" tick={{ fill: "#666", fontSize: 11 }} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
@@ -400,7 +423,7 @@ export default function Index() {
         <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
           <Users className="h-3.5 w-3.5" /> Show-up Rate — Confirmados vs. Compareceram
         </h3>
-        {showUpData.length > 0 ? (
+        {isLoading ? <ChartSkeleton /> : showUpData.length > 0 ? (
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={showUpData}>
               <XAxis dataKey="data" tick={{ fill: "#666", fontSize: 11 }} />
@@ -411,9 +434,7 @@ export default function Index() {
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="h-[280px] flex items-center justify-center text-muted-foreground text-sm">
-            Sem dados de reuniões no período
-          </div>
+          <div className="h-[280px] flex items-center justify-center text-muted-foreground text-sm">Sem dados de reuniões no período</div>
         )}
       </GlassCard>
     </div>
