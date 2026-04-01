@@ -281,7 +281,7 @@ export default function Index() {
       </div>
 
       {/* Charts Row 1: Funnel + Motivos de Perda */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Funnel */}
         <GlassCard>
           <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
