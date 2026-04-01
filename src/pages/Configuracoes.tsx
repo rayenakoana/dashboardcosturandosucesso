@@ -2,9 +2,13 @@ import { useState } from "react";
 import { GlassCard } from "@/components/GlassCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { CONFIG_TIPOS, ConfigTipo, useConfiguracoes, useAddConfiguracao, useDeleteConfiguracao } from "@/hooks/useConfiguracoes";
+import { useWebhookUrl } from "@/hooks/useWebhook";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Plus, Trash2, Upload, Link } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Configuracoes() {
@@ -13,6 +17,13 @@ export default function Configuracoes() {
   const { data: items = [], isLoading } = useConfiguracoes(activeTab);
   const addMutation = useAddConfiguracao();
   const deleteMutation = useDeleteConfiguracao();
+  const { url: webhookUrl, save: saveWebhook } = useWebhookUrl();
+  const [webhookInput, setWebhookInput] = useState(webhookUrl);
+
+  // Bulk import
+  const [importOpen, setImportOpen] = useState(false);
+  const [importTipo, setImportTipo] = useState<ConfigTipo>("Funil");
+  const [importText, setImportText] = useState("");
 
   const handleAdd = () => {
     const v = newValue.trim();
@@ -34,15 +45,99 @@ export default function Configuracoes() {
     });
   };
 
+  const handleBulkImport = async () => {
+    const lines = importText.split("\n").map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) { toast.error("Nenhum item para importar"); return; }
+    let count = 0;
+    for (const valor of lines) {
+      try {
+        await addMutation.mutateAsync({ tipo: importTipo, valor });
+        count++;
+      } catch { /* skip duplicates */ }
+    }
+    toast.success(`${count} itens importados para ${importTipo}`);
+    setImportText("");
+    setImportOpen(false);
+  };
+
+  const handleSaveWebhook = () => {
+    saveWebhook(webhookInput.trim());
+    toast.success("URL do Webhook salva");
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Gerencie as listas que alimentam os dropdowns do sistema
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Gerencie as listas que alimentam os dropdowns do sistema
+          </p>
+        </div>
+        <Dialog open={importOpen} onOpenChange={setImportOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="gap-1 border-border">
+              <Upload className="h-4 w-4" /> Importar Opções
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-card border-border max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Importar Opções em Massa</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              Cole a lista da sua planilha (um item por linha) e selecione a categoria.
+            </p>
+            <div className="grid gap-3 py-2">
+              <div>
+                <Label>Categoria</Label>
+                <Tabs value={importTipo} onValueChange={v => setImportTipo(v as ConfigTipo)}>
+                  <TabsList className="bg-muted/50 flex-wrap h-auto gap-1">
+                    {CONFIG_TIPOS.map(t => (
+                      <TabsTrigger key={t} value={t} className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs">{t}</TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              </div>
+              <div>
+                <Label>Itens (um por linha)</Label>
+                <Textarea
+                  value={importText}
+                  onChange={e => setImportText(e.target.value)}
+                  placeholder={"Item 1\nItem 2\nItem 3"}
+                  className="bg-muted/50 border-border min-h-[150px] font-mono text-sm"
+                />
+              </div>
+              <Button onClick={handleBulkImport} disabled={addMutation.isPending} className="w-full">
+                Importar {importText.split("\n").filter(l => l.trim()).length} itens
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
+      {/* Webhook Config */}
+      <GlassCard>
+        <div className="flex items-center gap-2 mb-3">
+          <Link className="h-4 w-4 text-primary" />
+          <h3 className="font-semibold text-sm">Webhook (Saída de Dados)</h3>
+        </div>
+        <p className="text-xs text-muted-foreground mb-3">
+          Toda vez que salvar um formulário, o app enviará um JSON para esta URL (n8n, Make, etc.)
+        </p>
+        <div className="flex gap-2">
+          <Input
+            value={webhookInput}
+            onChange={e => setWebhookInput(e.target.value)}
+            placeholder="https://hooks.n8n.cloud/webhook/..."
+            className="bg-muted/50 border-border font-mono text-xs"
+          />
+          <Button onClick={handleSaveWebhook} variant="outline" className="border-border shrink-0">
+            Salvar
+          </Button>
+        </div>
+      </GlassCard>
+
+      {/* Config Lists */}
       <GlassCard>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ConfigTipo)}>
           <TabsList className="bg-muted/50 mb-6 flex-wrap h-auto gap-1">
