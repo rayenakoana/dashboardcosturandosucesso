@@ -95,6 +95,7 @@ export type Database = {
           created_at: string
           data_entrada: string
           data_fechamento: string | null
+          empresa: string | null
           funil: string | null
           id: string
           is_renovacao: boolean
@@ -102,6 +103,7 @@ export type Database = {
           nome_cliente: string
           origem: string | null
           produto: string | null
+          responsavel: string | null
           segmento: string | null
           status: string
           updated_at: string
@@ -112,6 +114,7 @@ export type Database = {
           created_at?: string
           data_entrada?: string
           data_fechamento?: string | null
+          empresa?: string | null
           funil?: string | null
           id?: string
           is_renovacao?: boolean
@@ -119,6 +122,7 @@ export type Database = {
           nome_cliente: string
           origem?: string | null
           produto?: string | null
+          responsavel?: string | null
           segmento?: string | null
           status?: string
           updated_at?: string
@@ -129,6 +133,7 @@ export type Database = {
           created_at?: string
           data_entrada?: string
           data_fechamento?: string | null
+          empresa?: string | null
           funil?: string | null
           id?: string
           is_renovacao?: boolean
@@ -136,6 +141,7 @@ export type Database = {
           nome_cliente?: string
           origem?: string | null
           produto?: string | null
+          responsavel?: string | null
           segmento?: string | null
           status?: string
           updated_at?: string
