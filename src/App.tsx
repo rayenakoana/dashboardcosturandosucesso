@@ -6,8 +6,8 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import Index from "./pages/Index";
 import Vendas from "./pages/Vendas";
+import InputDiario from "./pages/InputDiario";
 import CustosMarketing from "./pages/CustosMarketing";
-// Reuniões merged into CustosMarketing page
 import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 
@@ -29,8 +29,8 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/vendas" element={<Vendas />} />
+                  <Route path="/input-diario" element={<InputDiario />} />
                   <Route path="/custos" element={<CustosMarketing />} />
-                  {/* Reuniões merged into /custos */}
                   <Route path="/configuracoes" element={<Configuracoes />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

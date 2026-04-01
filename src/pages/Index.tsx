@@ -4,18 +4,20 @@ import { GlassCard } from "@/components/GlassCard";
 import { useVendas } from "@/hooks/useVendas";
 import { useCustosMarketing } from "@/hooks/useCustosMarketing";
 import { usePerformanceReunioes } from "@/hooks/usePerformanceReunioes";
+import { useMetricasDiarias } from "@/hooks/useMetricasDiarias";
 import { useConfiguracoes } from "@/hooks/useConfiguracoes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   DollarSign, Target, TrendingUp, Clock, BadgeDollarSign,
-  Users, BarChart3, PieChart as PieChartIcon, AlertTriangle,
+  Users, BarChart3, PieChart as PieChartIcon, AlertTriangle, CalendarCheck, Percent,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell,
+  PieChart, Pie, Cell, LineChart, Line, Legend,
 } from "recharts";
 
 const COLORS = ["#C8102E", "#E8384F", "#FF6B6B", "#FF8E8E", "#FFB4B4", "#991B1B", "#FCA5A5"];
@@ -63,12 +65,13 @@ export default function Index() {
   const { data: vendas = [], isLoading: loadingVendas } = useVendas();
   const { data: custos = [], isLoading: loadingCustos } = useCustosMarketing();
   const { data: reunioes = [], isLoading: loadingReunioes } = usePerformanceReunioes();
+  const { data: metricasDiarias = [], isLoading: loadingMetricas } = useMetricasDiarias();
   const { data: funis = [] } = useConfiguracoes("Funil");
   const { data: produtos = [] } = useConfiguracoes("Produto");
   const { data: campanhas = [] } = useConfiguracoes("Campanha");
   const { data: origens = [] } = useConfiguracoes("Origem");
 
-  const isLoading = loadingVendas || loadingCustos || loadingReunioes;
+  const isLoading = loadingVendas || loadingCustos || loadingReunioes || loadingMetricas;
 
   const [period, setPeriod] = useState("month");
   const [customStart, setCustomStart] = useState("");
@@ -91,14 +94,18 @@ export default function Index() {
     });
   }, [vendas, start, end, filterFunil, filterProduto, filterCampanha, filterOrigem]);
 
-  const filteredCustos = useMemo(() => {
-    return custos.filter(c => c.data >= start && c.data <= end);
-  }, [custos, start, end]);
+  const filteredCustos = useMemo(() => custos.filter(c => c.data >= start && c.data <= end), [custos, start, end]);
+  const filteredReunioes = useMemo(() => reunioes.filter(r => r.data >= start && r.data <= end), [reunioes, start, end]);
 
-  const filteredReunioes = useMemo(() => {
-    return reunioes.filter(r => r.data >= start && r.data <= end);
-  }, [reunioes, start, end]);
+  const filteredMetricas = useMemo(() => {
+    return metricasDiarias.filter(m => {
+      if (m.data < start || m.data > end) return false;
+      if (filterFunil !== "Todos" && m.funil !== filterFunil) return false;
+      return true;
+    });
+  }, [metricasDiarias, start, end, filterFunil]);
 
+  // === KPIs from vendas ===
   const fechadas = filteredVendas.filter(v => v.status === "Fechado");
   const faturamento = fechadas.reduce((s, v) => s + Number(v.valor), 0);
   const faturamentoRenovacao = fechadas.filter(v => v.is_renovacao).reduce((s, v) => s + Number(v.valor), 0);
@@ -126,6 +133,16 @@ export default function Index() {
   const totalReal = filteredReunioes.reduce((s, r) => s + r.compareceram_real, 0);
   const showUpRate = totalConfirmado > 0 ? (totalReal / totalConfirmado) * 100 : 0;
 
+  // === KPIs from metricas_diarias ===
+  const totalLeadsDiarios = filteredMetricas.reduce((s, m) => s + m.leads_recebidos, 0);
+  const totalMQLDiarios = filteredMetricas.reduce((s, m) => s + m.leads_qualificados, 0);
+  const totalAgendadas = filteredMetricas.reduce((s, m) => s + m.reunioes_agendadas, 0);
+  const totalCompareceramDiarios = filteredMetricas.reduce((s, m) => s + m.compareceram_real, 0);
+  const pctAgendamento = totalMQLDiarios > 0 ? (totalAgendadas / totalMQLDiarios) * 100 : 0;
+  const pctShowUpDiario = totalAgendadas > 0 ? (totalCompareceramDiarios / totalAgendadas) * 100 : 0;
+  const pctLeadVenda = totalLeadsDiarios > 0 ? (fechadas.length / totalLeadsDiarios) * 100 : 0;
+
+  // === Insights ===
   const allTimeLeads = vendas.length;
   const allTimeAds = custos.filter(c => c.categoria === "Ads").reduce((s, c) => s + Number(c.valor), 0);
   const cplHistorico = allTimeLeads > 0 ? allTimeAds / allTimeLeads : 0;
@@ -139,28 +156,24 @@ export default function Index() {
       const convLeadMql = (mqlCount / totalLeads) * 100;
       if (convLeadMql < 35) alerts.push({ msg: `⚠️ Gargalo na Qualificação: Conversão Lead > Negociação em ${convLeadMql.toFixed(0)}% (meta: 35%)`, severity: "warning" });
     }
-
     if (mqlCount > 0) {
       const convMqlReuniao = (reuniaoCount / mqlCount) * 100;
       if (convMqlReuniao < 70) alerts.push({ msg: `⚠️ Gargalo na Proposta: Conversão Negociação > Proposta em ${convMqlReuniao.toFixed(0)}% (meta: 70%)`, severity: "warning" });
     }
-
     if (reuniaoCount > 0) {
       const convReunFech = (fechadas.length / reuniaoCount) * 100;
       if (convReunFech < 30) alerts.push({ msg: `⚠️ Gargalo no Fechamento: Conversão Proposta > Venda em ${convReunFech.toFixed(0)}% (meta: 30%)`, severity: "warning" });
     }
-
     if (totalConfirmado > 0 && showUpRate < 70) {
       alerts.push({ msg: `⚠️ Atenção: Taxa de comparecimento em reuniões em ${showUpRate.toFixed(0)}% (meta: 70%)`, severity: "warning" });
     }
-
     if (cplHistorico > 0 && cpl > cplHistorico * 1.2) {
       alerts.push({ msg: `⚠️ Custo de Lead Elevado: CPL atual R$ ${cpl.toFixed(0)} está ${(((cpl - cplHistorico) / cplHistorico) * 100).toFixed(0)}% acima da média histórica (R$ ${cplHistorico.toFixed(0)})`, severity: "destructive" });
     }
-
     return alerts;
   }, [filteredVendas, fechadas, totalLeads, totalConfirmado, showUpRate, cpl, cplHistorico]);
 
+  // === Chart data ===
   const funnelData = useMemo(() => {
     const leadCount = filteredVendas.length;
     const mqlCount = filteredVendas.filter(v => ["MQL", "Reunião", "Fechado"].includes(v.status)).length;
@@ -200,6 +213,40 @@ export default function Index() {
     }));
   }, [filteredReunioes]);
 
+  // === Daily performance pivot table ===
+  const funilNames = useMemo(() => {
+    const names = new Set(filteredMetricas.map(m => m.funil));
+    return Array.from(names).sort();
+  }, [filteredMetricas]);
+
+  const dailyTableData = useMemo(() => {
+    const dateMap: Record<string, Record<string, number>> = {};
+    filteredMetricas.forEach(m => {
+      if (!dateMap[m.data]) dateMap[m.data] = {};
+      dateMap[m.data][m.funil] = (dateMap[m.data][m.funil] || 0) + m.leads_recebidos;
+    });
+    return Object.entries(dateMap)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([data, funis]) => {
+        const total = Object.values(funis).reduce((s, v) => s + v, 0);
+        return { data, ...funis, TOTAL: total };
+      });
+  }, [filteredMetricas]);
+
+  // === Conversion line chart data ===
+  const conversionLineData = useMemo(() => {
+    const dateMap: Record<string, { mql: number; agendadas: number; compareceram: number }> = {};
+    filteredMetricas.forEach(m => {
+      if (!dateMap[m.data]) dateMap[m.data] = { mql: 0, agendadas: 0, compareceram: 0 };
+      dateMap[m.data].mql += m.leads_qualificados;
+      dateMap[m.data].agendadas += m.reunioes_agendadas;
+      dateMap[m.data].compareceram += m.compareceram_real;
+    });
+    return Object.entries(dateMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([data, vals]) => ({ data, "Leads Qualificados": vals.mql, "Reuniões Agendadas": vals.agendadas, "Compareceram": vals.compareceram }));
+  }, [filteredMetricas]);
+
   return (
     <div className="space-y-8">
       <div>
@@ -207,6 +254,7 @@ export default function Index() {
         <p className="text-muted-foreground text-sm mt-1">Visão consolidada de Marketing & Comercial</p>
       </div>
 
+      {/* Filters */}
       <GlassCard className="!py-3">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
           <div>
@@ -269,6 +317,135 @@ export default function Index() {
             </Select>
           </div>
         </div>
+      </GlassCard>
+
+      {/* Insights */}
+      {insights.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 text-primary" /> Insights de Performance
+          </h2>
+          {insights.map((alert, i) => (
+            <div key={i} className={`rounded-lg border p-4 text-sm ${alert.severity === "destructive" ? "border-destructive/40 bg-destructive/10 text-foreground" : "border-primary/30 bg-primary/5 text-foreground"}`}>
+              {alert.msg}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Conversion KPIs from metricas_diarias */}
+      <div>
+        <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
+          <Percent className="h-3.5 w-3.5" /> KPIs de Conversão (Input Diário)
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[120px] rounded-xl" />) : (
+            <>
+              <KPICard title="% Agendamento" value={`${pctAgendamento.toFixed(1)}%`} icon={CalendarCheck}
+                subtitle={`Meta: 50% | ${totalAgendadas}/${totalMQLDiarios}`}
+                trend={pctAgendamento >= 50 ? "up" : pctAgendamento > 0 ? "down" : "neutral"} />
+              <KPICard title="% Show-up" value={`${pctShowUpDiario.toFixed(1)}%`} icon={Users}
+                subtitle={`Meta: 70% | ${totalCompareceramDiarios}/${totalAgendadas}`}
+                trend={pctShowUpDiario >= 70 ? "up" : pctShowUpDiario > 0 ? "down" : "neutral"} />
+              <KPICard title="Lead > Venda" value={`${pctLeadVenda.toFixed(1)}%`} icon={Target}
+                subtitle={`${fechadas.length} vendas / ${totalLeadsDiarios} leads`}
+                trend={pctLeadVenda >= 10 ? "up" : pctLeadVenda > 0 ? "down" : "neutral"} />
+              <KPICard title="Total Leads Diários" value={totalLeadsDiarios} icon={BarChart3}
+                subtitle={`MQL: ${totalMQLDiarios}`} />
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Commercial KPIs */}
+      <div>
+        <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
+          <DollarSign className="h-3.5 w-3.5" /> Métricas Comerciais
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[120px] rounded-xl" />) : (
+            <>
+              <KPICard title="Faturamento Total" value={`R$ ${faturamento.toLocaleString("pt-BR")}`} icon={DollarSign} />
+              <KPICard title="Fat. Renovação" value={`R$ ${faturamentoRenovacao.toLocaleString("pt-BR")}`} icon={TrendingUp} subtitle="C$ CLUB" />
+              <KPICard title="Ticket Médio" value={`R$ ${ticketMedio.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={Target} />
+              <KPICard title="Tempo Médio Fech." value={`${tempoMedio} dias`} icon={Clock} />
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Marketing KPIs */}
+      <div>
+        <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
+          <BadgeDollarSign className="h-3.5 w-3.5" /> Eficiência de Marketing
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[120px] rounded-xl" />) : (
+            <>
+              <KPICard title="CAC" value={`R$ ${cac.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={BadgeDollarSign} subtitle="Custo por Aquisição" />
+              <KPICard title="CPL" value={`R$ ${cpl.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={Target} subtitle="Custo por Lead" />
+              <KPICard title="ROI Real" value={`${roi.toFixed(1)}%`} icon={TrendingUp} trend={roi > 0 ? "up" : roi < 0 ? "down" : "neutral"} subtitle={roi > 0 ? "Positivo" : roi < 0 ? "Negativo" : "Neutro"} />
+              <KPICard title="Show-up Rate" value={`${showUpRate.toFixed(1)}%`} icon={Users} subtitle={`${totalReal}/${totalConfirmado} reuniões`} />
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Conversion Line Chart */}
+      <GlassCard>
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
+          <TrendingUp className="h-3.5 w-3.5" /> Ritmo do Funil — Conversão Diária
+        </h3>
+        {isLoading ? <ChartSkeleton /> : conversionLineData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={conversionLineData}>
+              <XAxis dataKey="data" tick={{ fill: "#666", fontSize: 11 }} />
+              <YAxis tick={{ fill: "#666", fontSize: 11 }} />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Line type="monotone" dataKey="Leads Qualificados" stroke="#C8102E" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="Reuniões Agendadas" stroke="#FF6B6B" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="Compareceram" stroke="#FFB4B4" strokeWidth={2} dot={{ r: 3 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">Sem dados de input diário no período</div>
+        )}
+      </GlassCard>
+
+      {/* Daily Performance Pivot Table */}
+      <GlassCard className="p-0 overflow-hidden overflow-x-auto">
+        <div className="p-4 pb-2">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+            <CalendarCheck className="h-3.5 w-3.5" /> Performance Diária por Funil (Leads Recebidos)
+          </h3>
+        </div>
+        {isLoading ? (
+          <div className="p-4"><ChartSkeleton height={150} /></div>
+        ) : dailyTableData.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-xs">Data</TableHead>
+                {funilNames.map(f => <TableHead key={f} className="text-xs text-right">{f}</TableHead>)}
+                <TableHead className="text-xs text-right font-bold text-primary">TOTAL</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {dailyTableData.map(row => (
+                <TableRow key={row.data} className="border-border">
+                  <TableCell className="text-sm font-medium">{row.data}</TableCell>
+                  {funilNames.map(f => (
+                    <TableCell key={f} className="text-right tabular-nums text-sm">{(row as any)[f] || 0}</TableCell>
+                  ))}
+                  <TableCell className="text-right tabular-nums text-sm font-bold text-primary">{row.TOTAL}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="p-8 text-center text-muted-foreground text-sm">Sem dados de input diário no período</div>
+        )}
       </GlassCard>
 
       {insights.length > 0 && (
