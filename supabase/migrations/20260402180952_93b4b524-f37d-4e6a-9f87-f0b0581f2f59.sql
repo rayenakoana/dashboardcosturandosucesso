@@ -1,0 +1,1 @@
+ALTER TABLE public.custos_marketing ADD COLUMN produto text;

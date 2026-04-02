@@ -12,7 +12,7 @@ import { toast } from "sonner";
 
 const CATEGORIAS = ["Ads", "Software", "Equipe"];
 
-const initialForm = { data: new Date().toISOString().split("T")[0], categoria: "", nome_item: "", valor: "" };
+const initialForm = { data: new Date().toISOString().split("T")[0], categoria: "", nome_item: "", produto: "", valor: "" };
 
 export default function CustosMarketing() {
   const { data: custos = [] } = useCustosMarketing();
@@ -34,6 +34,7 @@ export default function CustosMarketing() {
       data: c.data,
       categoria: c.categoria,
       nome_item: c.nome_item,
+      produto: c.produto || "",
       valor: String(c.valor),
     });
   };
@@ -82,7 +83,7 @@ export default function CustosMarketing() {
             </Button>
           )}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3 mb-4">
           <div><Label>Data</Label><Input type="date" value={custoForm.data} onChange={e => setCustoForm(f => ({ ...f, data: e.target.value }))} className="bg-muted/50" /></div>
           <div><Label>Categoria</Label>
             <Select value={custoForm.categoria} onValueChange={v => setCustoForm(f => ({ ...f, categoria: v }))}>
@@ -91,6 +92,7 @@ export default function CustosMarketing() {
             </Select>
           </div>
           <div><Label>Ferramenta / Canal</Label><Input value={custoForm.nome_item} onChange={e => setCustoForm(f => ({ ...f, nome_item: e.target.value }))} placeholder="Ex: Meta Ads, n8n..." className="bg-muted/50" /></div>
+          <div><Label>Produto</Label><Input value={custoForm.produto} onChange={e => setCustoForm(f => ({ ...f, produto: e.target.value }))} placeholder="Ex: Mentoria, Curso..." className="bg-muted/50" /></div>
           <div><Label>Valor (R$)</Label><Input type="number" value={custoForm.valor} onChange={e => setCustoForm(f => ({ ...f, valor: e.target.value }))} className="bg-muted/50" placeholder="0,00" /></div>
           <div className="flex items-end">
             <Button onClick={handleCusto} disabled={addCusto.isPending || updateCusto.isPending} className="w-full gap-1 bg-primary hover:bg-primary/90">
@@ -105,18 +107,20 @@ export default function CustosMarketing() {
                 <TableHead>Data</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead>Ferramenta / Canal</TableHead>
+                <TableHead>Produto</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead className="w-20"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {custos.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">Nenhum custo cadastrado</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Nenhum custo cadastrado</TableCell></TableRow>
               ) : custos.map(c => (
                 <TableRow key={c.id} className={`border-border cursor-pointer hover:bg-muted/30 ${editingId === c.id ? "bg-muted/20" : ""}`} onClick={() => handleEdit(c)}>
                   <TableCell className="text-muted-foreground">{c.data}</TableCell>
                   <TableCell><span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">{c.categoria}</span></TableCell>
                   <TableCell className="font-medium">{c.nome_item}</TableCell>
+                  <TableCell className="text-muted-foreground">{(c as any).produto || "—"}</TableCell>
                   <TableCell>R$ {Number(c.valor).toLocaleString("pt-BR")}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
