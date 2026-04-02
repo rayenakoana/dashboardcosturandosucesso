@@ -211,7 +211,8 @@ export default function InputDiario() {
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       </GlassCard>
