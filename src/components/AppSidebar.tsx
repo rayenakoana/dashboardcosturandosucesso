@@ -1,4 +1,4 @@
-import { BarChart3, Settings, DollarSign, ShoppingCart, Users, CalendarPlus } from "lucide-react";
+import { BarChart3, Settings, DollarSign, ShoppingCart, Layers, CalendarPlus } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -16,6 +16,7 @@ const items = [
   { title: "Dashboard", url: "/", icon: BarChart3 },
   { title: "Comercial", url: "/vendas", icon: ShoppingCart },
   { title: "Input Diário", url: "/input-diario", icon: CalendarPlus },
+  { title: "Gestão de Safras", url: "/safras", icon: Layers },
   { title: "Marketing", url: "/custos", icon: DollarSign },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];

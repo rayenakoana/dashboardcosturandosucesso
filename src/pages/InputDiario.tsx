@@ -169,21 +169,35 @@ export default function InputDiario() {
               <TableHead className="text-right">Agendadas</TableHead>
               <TableHead className="text-right">Confirmadas</TableHead>
               <TableHead className="text-right">Compareceram</TableHead>
+              <TableHead className="text-center">Maturação</TableHead>
               <TableHead className="w-20"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {metricas.length === 0 ? (
-              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhuma métrica lançada</TableCell></TableRow>
-            ) : metricas.map(m => (
+              <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma métrica lançada</TableCell></TableRow>
+            ) : metricas.map(m => {
+              const diff = Math.floor((Date.now() - new Date(m.data).getTime()) / (1000 * 60 * 60 * 24));
+              const mat = diff >= 30
+                ? { label: "Madura", cls: "text-emerald-400 bg-emerald-400/10" }
+                : diff >= 14
+                  ? { label: "Em maturação", cls: "text-amber-400 bg-amber-400/10" }
+                  : diff >= 7
+                    ? { label: "Recente", cls: "text-blue-400 bg-blue-400/10" }
+                    : { label: "Nova", cls: "text-muted-foreground bg-muted/20" };
+              const pctAgend = m.leads_qualificados > 0 ? (m.reunioes_agendadas / m.leads_qualificados * 100).toFixed(0) + "%" : "–";
+              return (
               <TableRow key={m.id} className={`border-border cursor-pointer hover:bg-muted/30 ${editingId === m.id ? "bg-muted/20" : ""}`} onClick={() => handleEdit(m)}>
                 <TableCell className="text-sm">{m.data}</TableCell>
                 <TableCell className="font-medium text-sm">{m.funil}</TableCell>
                 <TableCell className="text-right tabular-nums">{m.leads_recebidos}</TableCell>
                 <TableCell className="text-right tabular-nums">{m.leads_qualificados}</TableCell>
-                <TableCell className="text-right tabular-nums">{m.reunioes_agendadas}</TableCell>
-                <TableCell className="text-right tabular-nums">{m.reunioes_confirmadas}</TableCell>
-                <TableCell className="text-right tabular-nums">{m.compareceram_real}</TableCell>
+                <TableCell className="text-right tabular-nums text-amber-400">{m.reunioes_agendadas}</TableCell>
+                <TableCell className="text-right tabular-nums text-amber-400">{m.reunioes_confirmadas}</TableCell>
+                <TableCell className="text-right tabular-nums text-emerald-400">{m.compareceram_real}</TableCell>
+                <TableCell className="text-center">
+                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${mat.cls}`}>{mat.label}</span>
+                </TableCell>
                 <TableCell>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary"
@@ -197,7 +211,8 @@ export default function InputDiario() {
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       </GlassCard>

@@ -448,58 +448,6 @@ export default function Index() {
         )}
       </GlassCard>
 
-      {insights.length > 0 && (
-        <div className="space-y-2">
-          <h2 className="text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-            <AlertTriangle className="h-3.5 w-3.5 text-primary" /> Insights de Performance
-          </h2>
-          {insights.map((alert, i) => (
-            <div
-              key={i}
-              className={`rounded-lg border p-4 text-sm ${
-                alert.severity === "destructive"
-                  ? "border-destructive/40 bg-destructive/10 text-foreground"
-                  : "border-primary/30 bg-primary/5 text-foreground"
-              }`}
-            >
-              {alert.msg}
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div>
-        <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
-          <DollarSign className="h-3.5 w-3.5" /> Métricas Comerciais
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[120px] rounded-xl" />) : (
-            <>
-              <KPICard title="Faturamento Total" value={`R$ ${faturamento.toLocaleString("pt-BR")}`} icon={DollarSign} />
-              <KPICard title="Fat. Renovação" value={`R$ ${faturamentoRenovacao.toLocaleString("pt-BR")}`} icon={TrendingUp} subtitle="C$ CLUB" />
-              <KPICard title="Ticket Médio" value={`R$ ${ticketMedio.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={Target} />
-              <KPICard title="Tempo Médio Fech." value={`${tempoMedio} dias`} icon={Clock} />
-            </>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
-          <BadgeDollarSign className="h-3.5 w-3.5" /> Eficiência de Marketing
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[120px] rounded-xl" />) : (
-            <>
-              <KPICard title="CAC" value={`R$ ${cac.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={BadgeDollarSign} subtitle="Custo por Aquisição" />
-              <KPICard title="CPL" value={`R$ ${cpl.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={Target} subtitle="Custo por Lead" />
-              <KPICard title="ROI Real" value={`${roi.toFixed(1)}%`} icon={TrendingUp} trend={roi > 0 ? "up" : roi < 0 ? "down" : "neutral"} subtitle={roi > 0 ? "Positivo" : roi < 0 ? "Negativo" : "Neutro"} />
-              <KPICard title="Show-up Rate" value={`${showUpRate.toFixed(1)}%`} icon={Users} subtitle={`${totalReal}/${totalConfirmado} reuniões`} />
-            </>
-          )}
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <GlassCard>
           <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
