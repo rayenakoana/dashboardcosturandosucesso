@@ -27,7 +27,27 @@ export function useAddCusto() {
   });
 }
 
+export function useUpdateCusto() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string } & Partial<TablesInsert<"custos_marketing">>) => {
+      const { error } = await supabase.from("custos_marketing").update(data).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["custos_marketing"] }),
+  });
+}
+
 export function useDeleteCusto() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("custos_marketing").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["custos_marketing"] }),
+  });
+}
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
