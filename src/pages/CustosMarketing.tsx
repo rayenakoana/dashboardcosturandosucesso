@@ -107,18 +107,20 @@ export default function CustosMarketing() {
                 <TableHead>Data</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead>Ferramenta / Canal</TableHead>
+                <TableHead>Produto</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead className="w-20"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {custos.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">Nenhum custo cadastrado</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Nenhum custo cadastrado</TableCell></TableRow>
               ) : custos.map(c => (
                 <TableRow key={c.id} className={`border-border cursor-pointer hover:bg-muted/30 ${editingId === c.id ? "bg-muted/20" : ""}`} onClick={() => handleEdit(c)}>
                   <TableCell className="text-muted-foreground">{c.data}</TableCell>
                   <TableCell><span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">{c.categoria}</span></TableCell>
                   <TableCell className="font-medium">{c.nome_item}</TableCell>
+                  <TableCell className="text-muted-foreground">{(c as any).produto || "—"}</TableCell>
                   <TableCell>R$ {Number(c.valor).toLocaleString("pt-BR")}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
