@@ -16,7 +16,7 @@ const items = [
   { title: "Dashboard", url: "/", icon: BarChart3 },
   { title: "Comercial", url: "/vendas", icon: ShoppingCart },
   { title: "Input Diário", url: "/input-diario", icon: CalendarPlus },
-  { title: "Marketing & Reuniões", url: "/custos", icon: DollarSign },
+  { title: "Marketing", url: "/custos", icon: DollarSign },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 

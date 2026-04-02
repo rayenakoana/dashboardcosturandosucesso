@@ -66,7 +66,7 @@ export default function CustosMarketing() {
               <TableRow className="border-border hover:bg-transparent">
                 <TableHead>Data</TableHead>
                 <TableHead>Categoria</TableHead>
-                <TableHead>Produto Destinado</TableHead>
+                <TableHead>Ferramenta / Canal</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead className="w-10"></TableHead>
               </TableRow>
