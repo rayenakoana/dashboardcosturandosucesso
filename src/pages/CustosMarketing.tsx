@@ -34,6 +34,7 @@ export default function CustosMarketing() {
       data: c.data,
       categoria: c.categoria,
       nome_item: c.nome_item,
+      produto: c.produto || "",
       valor: String(c.valor),
     });
   };
