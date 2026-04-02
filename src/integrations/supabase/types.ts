@@ -42,6 +42,7 @@ export type Database = {
           data: string
           id: string
           nome_item: string
+          produto: string | null
           valor: number
         }
         Insert: {
@@ -50,6 +51,7 @@ export type Database = {
           data?: string
           id?: string
           nome_item: string
+          produto?: string | null
           valor?: number
         }
         Update: {
@@ -58,6 +60,7 @@ export type Database = {
           data?: string
           id?: string
           nome_item?: string
+          produto?: string | null
           valor?: number
         }
         Relationships: []
