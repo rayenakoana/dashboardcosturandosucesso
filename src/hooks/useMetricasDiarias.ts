@@ -40,6 +40,17 @@ export function useAddMetricaDiaria() {
   });
 }
 
+export function useUpdateMetricaDiaria() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string } & Partial<Omit<MetricaDiaria, "id" | "created_at">>) => {
+      const { error } = await supabase.from("metricas_diarias").update(data).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["metricas_diarias"] }),
+  });
+}
+
 export function useDeleteMetricaDiaria() {
   const qc = useQueryClient();
   return useMutation({

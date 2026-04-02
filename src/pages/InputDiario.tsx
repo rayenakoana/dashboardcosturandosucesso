@@ -5,31 +5,53 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useMetricasDiarias, useAddMetricaDiaria, useDeleteMetricaDiaria } from "@/hooks/useMetricasDiarias";
+import { useMetricasDiarias, useAddMetricaDiaria, useUpdateMetricaDiaria, useDeleteMetricaDiaria } from "@/hooks/useMetricasDiarias";
 import { useConfiguracoes } from "@/hooks/useConfiguracoes";
 import { sendToWebhook } from "@/hooks/useWebhook";
-import { Plus, Trash2, Download } from "lucide-react";
+import { Plus, Trash2, Download, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 
 const today = () => new Date().toISOString().split("T")[0];
 
+const initialForm = {
+  data: today(),
+  funil: "",
+  leads_recebidos: "",
+  leads_qualificados: "",
+  reunioes_agendadas: "",
+  reunioes_confirmadas: "",
+  compareceram_real: "",
+};
+
 export default function InputDiario() {
   const { data: metricas = [] } = useMetricasDiarias();
   const addMutation = useAddMetricaDiaria();
+  const updateMutation = useUpdateMetricaDiaria();
   const deleteMutation = useDeleteMetricaDiaria();
   const { data: funis = [] } = useConfiguracoes("Funil");
 
-  const [form, setForm] = useState({
-    data: today(),
-    funil: "",
-    leads_recebidos: "",
-    leads_qualificados: "",
-    reunioes_agendadas: "",
-    reunioes_confirmadas: "",
-    compareceram_real: "",
-  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(initialForm);
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  const resetForm = () => {
+    setForm({ ...initialForm, data: today() });
+    setEditingId(null);
+  };
+
+  const handleEdit = (m: any) => {
+    setEditingId(m.id);
+    setForm({
+      data: m.data,
+      funil: m.funil,
+      leads_recebidos: String(m.leads_recebidos),
+      leads_qualificados: String(m.leads_qualificados),
+      reunioes_agendadas: String(m.reunioes_agendadas),
+      reunioes_confirmadas: String(m.reunioes_confirmadas),
+      compareceram_real: String(m.compareceram_real),
+    });
+  };
 
   const handleSubmit = () => {
     if (!form.funil) { toast.error("Selecione um funil"); return; }
@@ -42,14 +64,26 @@ export default function InputDiario() {
       reunioes_confirmadas: Number(form.reunioes_confirmadas) || 0,
       compareceram_real: Number(form.compareceram_real) || 0,
     };
-    addMutation.mutate(payload, {
-      onSuccess: () => {
-        sendToWebhook("metrica_diaria", payload);
-        toast.success("Métricas salvas");
-        setForm(f => ({ ...f, leads_recebidos: "", leads_qualificados: "", reunioes_agendadas: "", reunioes_confirmadas: "", compareceram_real: "" }));
-      },
-      onError: () => toast.error("Erro ao salvar"),
-    });
+
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, ...payload }, {
+        onSuccess: () => {
+          sendToWebhook("metrica_diaria_atualizada", { id: editingId, ...payload });
+          toast.success("Métrica atualizada");
+          resetForm();
+        },
+        onError: () => toast.error("Erro ao atualizar"),
+      });
+    } else {
+      addMutation.mutate(payload, {
+        onSuccess: () => {
+          sendToWebhook("metrica_diaria", payload);
+          toast.success("Métricas salvas");
+          resetForm();
+        },
+        onError: () => toast.error("Erro ao salvar"),
+      });
+    }
   };
 
   const exportCSV = () => {
@@ -74,7 +108,16 @@ export default function InputDiario() {
       </div>
 
       <GlassCard>
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4">Novo Lançamento</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+            {editingId ? "Editando Lançamento" : "Novo Lançamento"}
+          </h2>
+          {editingId && (
+            <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground" onClick={resetForm}>
+              <X className="h-3.5 w-3.5" /> Cancelar
+            </Button>
+          )}
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div>
             <Label className="text-xs">Data</Label>
@@ -108,8 +151,8 @@ export default function InputDiario() {
             <Input type="number" value={form.compareceram_real} onChange={e => set("compareceram_real", e.target.value)} className="bg-muted/50 h-9 text-xs" placeholder="0" />
           </div>
           <div className="flex items-end">
-            <Button onClick={handleSubmit} disabled={addMutation.isPending} className="w-full h-9 bg-primary hover:bg-primary/90 gap-1">
-              <Plus className="h-3.5 w-3.5" /> Salvar
+            <Button onClick={handleSubmit} disabled={addMutation.isPending || updateMutation.isPending} className="w-full h-9 bg-primary hover:bg-primary/90 gap-1">
+              {editingId ? <><Pencil className="h-3.5 w-3.5" /> Atualizar</> : <><Plus className="h-3.5 w-3.5" /> Salvar</>}
             </Button>
           </div>
         </div>
@@ -126,14 +169,14 @@ export default function InputDiario() {
               <TableHead className="text-right">Agendadas</TableHead>
               <TableHead className="text-right">Confirmadas</TableHead>
               <TableHead className="text-right">Compareceram</TableHead>
-              <TableHead className="w-12"></TableHead>
+              <TableHead className="w-20"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {metricas.length === 0 ? (
               <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhuma métrica lançada</TableCell></TableRow>
             ) : metricas.map(m => (
-              <TableRow key={m.id} className="border-border">
+              <TableRow key={m.id} className={`border-border cursor-pointer hover:bg-muted/30 ${editingId === m.id ? "bg-muted/20" : ""}`} onClick={() => handleEdit(m)}>
                 <TableCell className="text-sm">{m.data}</TableCell>
                 <TableCell className="font-medium text-sm">{m.funil}</TableCell>
                 <TableCell className="text-right tabular-nums">{m.leads_recebidos}</TableCell>
@@ -142,10 +185,16 @@ export default function InputDiario() {
                 <TableCell className="text-right tabular-nums">{m.reunioes_confirmadas}</TableCell>
                 <TableCell className="text-right tabular-nums">{m.compareceram_real}</TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                    onClick={() => deleteMutation.mutate(m.id, { onSuccess: () => toast.success("Removido") })}>
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary"
+                      onClick={(e) => { e.stopPropagation(); handleEdit(m); }}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(m.id, { onSuccess: () => toast.success("Removido") }); }}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
