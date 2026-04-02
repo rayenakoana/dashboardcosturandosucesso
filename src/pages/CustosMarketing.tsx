@@ -52,6 +52,7 @@ export default function CustosMarketing() {
               <SelectContent>{CATEGORIAS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
           </div>
+          <div><Label>Ferramenta / Canal</Label><Input value={custoForm.nome_item} onChange={e => setCustoForm(f => ({ ...f, nome_item: e.target.value }))} placeholder="Ex: Meta Ads, n8n..." className="bg-muted/50" /></div>
           <div><Label>Produto Destinado</Label><Input value={custoForm.nome_item} onChange={e => setCustoForm(f => ({ ...f, nome_item: e.target.value }))} placeholder="Ex: Campanha Extra Março" className="bg-muted/50" /></div>
           <div><Label>Valor (R$)</Label><Input type="number" value={custoForm.valor} onChange={e => setCustoForm(f => ({ ...f, valor: e.target.value }))} className="bg-muted/50" placeholder="0,00" /></div>
           <div className="flex items-end">
