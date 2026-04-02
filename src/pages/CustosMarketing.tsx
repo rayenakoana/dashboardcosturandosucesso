@@ -6,9 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCustosMarketing, useAddCusto, useDeleteCusto } from "@/hooks/useCustosMarketing";
-import { usePerformanceReunioes, useAddReuniao, useDeleteReuniao } from "@/hooks/usePerformanceReunioes";
 import { sendToWebhook } from "@/hooks/useWebhook";
-import { Plus, Trash2, DollarSign, Users } from "lucide-react";
+import { Plus, Trash2, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
 const CATEGORIAS = ["Ads", "Software", "Equipe"];
@@ -17,12 +16,8 @@ export default function CustosMarketing() {
   const { data: custos = [] } = useCustosMarketing();
   const addCusto = useAddCusto();
   const deleteCusto = useDeleteCusto();
-  const { data: reunioes = [] } = usePerformanceReunioes();
-  const addReuniao = useAddReuniao();
-  const deleteReuniao = useDeleteReuniao();
 
   const [custoForm, setCustoForm] = useState({ data: new Date().toISOString().split("T")[0], categoria: "", nome_item: "", valor: "" });
-  const [reuniaoForm, setReuniaoForm] = useState({ data: new Date().toISOString().split("T")[0], sdr_estimado: "", sdr_confirmado: "", compareceram_real: "" });
 
   const handleCusto = () => {
     if (!custoForm.categoria || !custoForm.nome_item.trim()) { toast.error("Preencha todos os campos"); return; }
@@ -37,44 +32,27 @@ export default function CustosMarketing() {
     });
   };
 
-  const handleReuniao = () => {
-    const payload = {
-      ...reuniaoForm,
-      sdr_estimado: Number(reuniaoForm.sdr_estimado) || 0,
-      sdr_confirmado: Number(reuniaoForm.sdr_confirmado) || 0,
-      compareceram_real: Number(reuniaoForm.compareceram_real) || 0,
-    };
-    addReuniao.mutate(payload, {
-      onSuccess: () => {
-        sendToWebhook("reuniao", payload);
-        setReuniaoForm({ data: new Date().toISOString().split("T")[0], sdr_estimado: "", sdr_confirmado: "", compareceram_real: "" });
-        toast.success("Reunião adicionada");
-      },
-      onError: () => toast.error("Erro ao adicionar reunião"),
-    });
-  };
-
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Lançamento Marketing & Reuniões</h1>
-        <p className="text-muted-foreground text-sm mt-1">Registre custos de marketing e performance de reuniões</p>
+        <h1 className="text-3xl font-bold tracking-tight">Custos de Marketing</h1>
+        <p className="text-muted-foreground text-sm mt-1">Registre gastos com Ads, Software e Equipe</p>
       </div>
 
       <GlassCard>
         <div className="flex items-center gap-2 mb-4">
           <DollarSign className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold">Custos de Marketing</h2>
+          <h2 className="text-lg font-semibold">Novo Gasto</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-4">
           <div><Label>Data</Label><Input type="date" value={custoForm.data} onChange={e => setCustoForm(f => ({ ...f, data: e.target.value }))} className="bg-muted/50" /></div>
-          <div><Label>Ferramenta / Canal</Label><Input value={custoForm.nome_item} onChange={e => setCustoForm(f => ({ ...f, nome_item: e.target.value }))} placeholder="Ex: Meta Ads, n8n..." className="bg-muted/50" /></div>
           <div><Label>Categoria</Label>
             <Select value={custoForm.categoria} onValueChange={v => setCustoForm(f => ({ ...f, categoria: v }))}>
               <SelectTrigger className="bg-muted/50"><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>{CATEGORIAS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
           </div>
+          <div><Label>Produto Destinado</Label><Input value={custoForm.nome_item} onChange={e => setCustoForm(f => ({ ...f, nome_item: e.target.value }))} placeholder="Ex: Campanha Extra Março" className="bg-muted/50" /></div>
           <div><Label>Valor (R$)</Label><Input type="number" value={custoForm.valor} onChange={e => setCustoForm(f => ({ ...f, valor: e.target.value }))} className="bg-muted/50" placeholder="0,00" /></div>
           <div className="flex items-end">
             <Button onClick={handleCusto} disabled={addCusto.isPending} className="w-full gap-1 bg-primary hover:bg-primary/90">
@@ -88,7 +66,7 @@ export default function CustosMarketing() {
               <TableRow className="border-border hover:bg-transparent">
                 <TableHead>Data</TableHead>
                 <TableHead>Categoria</TableHead>
-                <TableHead>Item</TableHead>
+                <TableHead>Produto Destinado</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead className="w-10"></TableHead>
               </TableRow>
@@ -110,60 +88,6 @@ export default function CustosMarketing() {
                   </TableCell>
                 </TableRow>
               ))}
-            </TableBody>
-          </Table>
-        </div>
-      </GlassCard>
-
-      <GlassCard>
-        <div className="flex items-center gap-2 mb-4">
-          <Users className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold">Performance de Reuniões</h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-          <div><Label>Data</Label><Input type="date" value={reuniaoForm.data} onChange={e => setReuniaoForm(f => ({ ...f, data: e.target.value }))} className="bg-muted/50" /></div>
-          <div><Label>Estimado SDR</Label><Input type="number" value={reuniaoForm.sdr_estimado} onChange={e => setReuniaoForm(f => ({ ...f, sdr_estimado: e.target.value }))} className="bg-muted/50" /></div>
-          <div><Label>Confirmado SDR</Label><Input type="number" value={reuniaoForm.sdr_confirmado} onChange={e => setReuniaoForm(f => ({ ...f, sdr_confirmado: e.target.value }))} className="bg-muted/50" /></div>
-          <div><Label>Compareceu Real</Label><Input type="number" value={reuniaoForm.compareceram_real} onChange={e => setReuniaoForm(f => ({ ...f, compareceram_real: e.target.value }))} className="bg-muted/50" /></div>
-          <div className="flex items-end">
-            <Button onClick={handleReuniao} disabled={addReuniao.isPending} className="w-full gap-1 bg-primary hover:bg-primary/90">
-              <Plus className="h-4 w-4" /> Salvar
-            </Button>
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-border hover:bg-transparent">
-                <TableHead>Data</TableHead>
-                <TableHead>Estimado</TableHead>
-                <TableHead>Confirmado</TableHead>
-                <TableHead>Compareceram</TableHead>
-                <TableHead>Taxa</TableHead>
-                <TableHead className="w-10"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {reunioes.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Nenhuma reunião cadastrada</TableCell></TableRow>
-              ) : reunioes.map(r => {
-                const taxa = r.sdr_confirmado > 0 ? ((r.compareceram_real / r.sdr_confirmado) * 100).toFixed(0) : "0";
-                return (
-                  <TableRow key={r.id} className="border-border">
-                    <TableCell className="text-muted-foreground">{r.data}</TableCell>
-                    <TableCell>{r.sdr_estimado}</TableCell>
-                    <TableCell>{r.sdr_confirmado}</TableCell>
-                    <TableCell className="font-medium">{r.compareceram_real}</TableCell>
-                    <TableCell><span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">{taxa}%</span></TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                        onClick={() => deleteReuniao.mutate(r.id, { onSuccess: () => toast.success("Removida"), onError: () => toast.error("Erro ao remover") })}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
             </TableBody>
           </Table>
         </div>
