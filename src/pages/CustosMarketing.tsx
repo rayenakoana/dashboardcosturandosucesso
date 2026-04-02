@@ -12,7 +12,7 @@ import { toast } from "sonner";
 
 const CATEGORIAS = ["Ads", "Software", "Equipe"];
 
-const initialForm = { data: new Date().toISOString().split("T")[0], categoria: "", nome_item: "", valor: "" };
+const initialForm = { data: new Date().toISOString().split("T")[0], categoria: "", nome_item: "", produto: "", valor: "" };
 
 export default function CustosMarketing() {
   const { data: custos = [] } = useCustosMarketing();
