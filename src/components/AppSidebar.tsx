@@ -1,4 +1,4 @@
-import { BarChart3, Settings, DollarSign, ShoppingCart, Users, CalendarPlus } from "lucide-react";
+import { BarChart3, Settings, DollarSign, ShoppingCart, Layers, CalendarPlus } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
