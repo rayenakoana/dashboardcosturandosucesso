@@ -61,12 +61,3 @@ export function useDeleteMetricaDiaria() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["metricas_diarias"] }),
   });
 }
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("metricas_diarias").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["metricas_diarias"] }),
-  });
-}

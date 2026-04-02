@@ -48,12 +48,3 @@ export function useDeleteCusto() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["custos_marketing"] }),
   });
 }
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("custos_marketing").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["custos_marketing"] }),
-  });
-}
