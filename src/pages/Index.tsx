@@ -157,7 +157,7 @@ export default function Index() {
   const totalCompareceramDiarios = filteredMetricas.reduce((s, m) => s + m.compareceram_real, 0);
   const pctAgendamento = totalMQLDiarios > 0 ? (totalAgendadas / totalMQLDiarios) * 100 : 0;
   const pctShowUpDiario = totalAgendadas > 0 ? (totalCompareceramDiarios / totalAgendadas) * 100 : 0;
-  const pctLeadVenda = totalLeadsDiarios > 0 ? (fechadas.length / totalLeadsDiarios) * 100 : 0;
+  const pctLeadVenda = totalLeadsDiarios > 0 ? (fechadasSafra.length / totalLeadsDiarios) * 100 : 0;
 
   // === Insights ===
   const allTimeLeads = vendas.length;
