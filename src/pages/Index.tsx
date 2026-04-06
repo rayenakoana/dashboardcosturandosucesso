@@ -120,14 +120,13 @@ export default function Index() {
     });
   }, [metricasDiarias, start, end, filterFunil]);
 
-  // === KPIs from vendas ===
-  const fechadas = filteredVendas.filter(v => v.status === "Fechado");
-  const faturamento = fechadas.reduce((s, v) => s + Number(v.valor), 0);
-  const faturamentoRenovacao = fechadas.filter(v => v.is_renovacao).reduce((s, v) => s + Number(v.valor), 0);
-  const ticketMedio = fechadas.length > 0 ? faturamento / fechadas.length : 0;
+  // === KPIs Financeiros (por data_fechamento) ===
+  const faturamento = vendasFechamentoNoPeriodo.reduce((s, v) => s + Number(v.valor), 0);
+  const faturamentoRenovacao = vendasFechamentoNoPeriodo.filter(v => v.is_renovacao).reduce((s, v) => s + Number(v.valor), 0);
+  const ticketMedio = vendasFechamentoNoPeriodo.length > 0 ? faturamento / vendasFechamentoNoPeriodo.length : 0;
 
   const tempoMedio = useMemo(() => {
-    const with2dates = fechadas.filter(v => v.data_entrada && v.data_fechamento);
+    const with2dates = vendasFechamentoNoPeriodo.filter(v => v.data_entrada && v.data_fechamento);
     if (with2dates.length === 0) return 0;
     const total = with2dates.reduce((s, v) => {
       const d1 = new Date(v.data_entrada).getTime();
@@ -135,12 +134,15 @@ export default function Index() {
       return s + Math.max(0, (d2 - d1) / (1000 * 60 * 60 * 24));
     }, 0);
     return Math.round(total / with2dates.length);
-  }, [fechadas]);
+  }, [vendasFechamentoNoPeriodo]);
+
+  // === KPIs de Marketing (por data_entrada / Safra) ===
+  const fechadasSafra = filteredVendas.filter(v => v.status === "Fechado" && v.data_fechamento);
 
   const totalCustos = filteredCustos.reduce((s, c) => s + Number(c.valor), 0);
   const custosAds = filteredCustos.filter(c => c.categoria === "Ads").reduce((s, c) => s + Number(c.valor), 0);
   const totalLeads = filteredVendas.length;
-  const cac = fechadas.length > 0 ? totalCustos / fechadas.length : 0;
+  const cac = fechadasSafra.length > 0 ? totalCustos / fechadasSafra.length : 0;
   const cpl = totalLeads > 0 ? custosAds / totalLeads : 0;
   const roi = totalCustos > 0 ? ((faturamento - totalCustos) / totalCustos * 100) : 0;
 
