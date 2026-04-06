@@ -403,6 +403,24 @@ export default function Index() {
         </div>
       </div>
 
+      {/* Revenue by Day Chart (data_fechamento) */}
+      <GlassCard>
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
+          <DollarSign className="h-3.5 w-3.5" /> Faturamento por Dia (Data de Fechamento)
+        </h3>
+        {isLoading ? <ChartSkeleton /> : receitaDiariaData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={receitaDiariaData}>
+              <XAxis dataKey="data" tick={{ fill: "#666", fontSize: 11 }} />
+              <YAxis tick={{ fill: "#666", fontSize: 11 }} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => `R$ ${v.toLocaleString("pt-BR")}`} />
+              <Bar dataKey="valor" fill="#C8102E" radius={[4, 4, 0, 0]} name="Faturamento" />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">Sem vendas fechadas no período</div>
+        )}
+      </GlassCard>
       {/* Marketing KPIs */}
       <div>
         <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
