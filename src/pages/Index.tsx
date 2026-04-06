@@ -178,7 +178,7 @@ export default function Index() {
       if (convMqlReuniao < 70) alerts.push({ msg: `⚠️ Gargalo na Proposta: Conversão Negociação > Proposta em ${convMqlReuniao.toFixed(0)}% (meta: 70%)`, severity: "warning" });
     }
     if (reuniaoCount > 0) {
-      const convReunFech = (fechadas.length / reuniaoCount) * 100;
+      const convReunFech = (fechadasSafra.length / reuniaoCount) * 100;
       if (convReunFech < 30) alerts.push({ msg: `⚠️ Gargalo no Fechamento: Conversão Proposta > Venda em ${convReunFech.toFixed(0)}% (meta: 30%)`, severity: "warning" });
     }
     if (totalConfirmado > 0 && showUpRate < 70) {
@@ -188,33 +188,33 @@ export default function Index() {
       alerts.push({ msg: `⚠️ Custo de Lead Elevado: CPL atual R$ ${cpl.toFixed(0)} está ${(((cpl - cplHistorico) / cplHistorico) * 100).toFixed(0)}% acima da média histórica (R$ ${cplHistorico.toFixed(0)})`, severity: "destructive" });
     }
     return alerts;
-  }, [filteredVendas, fechadas, totalLeads, totalConfirmado, showUpRate, cpl, cplHistorico]);
+  }, [filteredVendas, fechadasSafra, totalLeads, totalConfirmado, showUpRate, cpl, cplHistorico]);
 
   // === Chart data ===
   const funnelData = useMemo(() => {
     const leadCount = filteredVendas.length;
     const mqlCount = filteredVendas.filter(v => ["MQL", "Reunião", "Fechado"].includes(v.status)).length;
     const reuniaoCount = filteredVendas.filter(v => ["Reunião", "Fechado"].includes(v.status)).length;
-    const fechadoCount = fechadas.length;
+    const fechadoCount = fechadasSafra.length;
     return [
       { name: "Leads", value: leadCount, fill: "#C8102E" },
       { name: "MQL", value: mqlCount, fill: "#E8384F" },
       { name: "Reunião", value: reuniaoCount, fill: "#FF6B6B" },
       { name: "Fechado", value: fechadoCount, fill: "#FF8E8E" },
     ];
-  }, [filteredVendas, fechadas]);
+  }, [filteredVendas, fechadasSafra]);
 
   const segmentoData = useMemo(() => {
     const map: Record<string, number> = {};
-    fechadas.forEach(v => { const seg = v.segmento || "Sem segmento"; map[seg] = (map[seg] || 0) + Number(v.valor); });
+    fechadasSafra.forEach(v => { const seg = v.segmento || "Sem segmento"; map[seg] = (map[seg] || 0) + Number(v.valor); });
     return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [fechadas]);
+  }, [fechadasSafra]);
 
   const produtoData = useMemo(() => {
     const map: Record<string, number> = {};
-    fechadas.forEach(v => { const p = v.produto || "Sem produto"; map[p] = (map[p] || 0) + Number(v.valor); });
+    fechadasSafra.forEach(v => { const p = v.produto || "Sem produto"; map[p] = (map[p] || 0) + Number(v.valor); });
     return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [fechadas]);
+  }, [fechadasSafra]);
 
   const motivosData = useMemo(() => {
     const map: Record<string, number> = {};
@@ -365,7 +365,7 @@ export default function Index() {
                 subtitle={`Meta: 70% | ${totalCompareceramDiarios}/${totalAgendadas}`}
                 trend={pctShowUpDiario >= 70 ? "up" : pctShowUpDiario > 0 ? "down" : "neutral"} />
               <KPICard title="Lead > Venda" value={`${pctLeadVenda.toFixed(1)}%`} icon={Target}
-                subtitle={`${fechadas.length} vendas / ${totalLeadsDiarios} leads`}
+                subtitle={`${fechadasSafra.length} vendas / ${totalLeadsDiarios} leads`}
                 trend={pctLeadVenda >= 10 ? "up" : pctLeadVenda > 0 ? "down" : "neutral"} />
               <KPICard title="Total Leads Diários" value={totalLeadsDiarios} icon={BarChart3}
                 subtitle={`MQL: ${totalMQLDiarios}`} />
