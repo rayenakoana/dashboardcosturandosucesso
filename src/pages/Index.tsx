@@ -83,9 +83,24 @@ export default function Index() {
 
   const { start, end } = getDateRange(period, customStart, customEnd);
 
+  // Vendas filtradas por data_entrada (visão de Safra / Marketing)
   const filteredVendas = useMemo(() => {
     return vendas.filter(v => {
       if (v.data_entrada < start || v.data_entrada > end) return false;
+      if (filterFunil !== "Todos" && v.funil !== filterFunil) return false;
+      if (filterProduto !== "Todos" && v.produto !== filterProduto) return false;
+      if (filterCampanha !== "Todos" && v.campanha !== filterCampanha) return false;
+      if (filterOrigem !== "Todos" && v.origem !== filterOrigem) return false;
+      return true;
+    });
+  }, [vendas, start, end, filterFunil, filterProduto, filterCampanha, filterOrigem]);
+
+  // Vendas filtradas por data_fechamento (visão Financeira / Faturamento)
+  const vendasFechamentoNoPeriodo = useMemo(() => {
+    return vendas.filter(v => {
+      if (!v.data_fechamento) return false;
+      if (v.data_fechamento < start || v.data_fechamento > end) return false;
+      if (v.status !== "Fechado") return false;
       if (filterFunil !== "Todos" && v.funil !== filterFunil) return false;
       if (filterProduto !== "Todos" && v.produto !== filterProduto) return false;
       if (filterCampanha !== "Todos" && v.campanha !== filterCampanha) return false;
@@ -105,14 +120,13 @@ export default function Index() {
     });
   }, [metricasDiarias, start, end, filterFunil]);
 
-  // === KPIs from vendas ===
-  const fechadas = filteredVendas.filter(v => v.status === "Fechado");
-  const faturamento = fechadas.reduce((s, v) => s + Number(v.valor), 0);
-  const faturamentoRenovacao = fechadas.filter(v => v.is_renovacao).reduce((s, v) => s + Number(v.valor), 0);
-  const ticketMedio = fechadas.length > 0 ? faturamento / fechadas.length : 0;
+  // === KPIs Financeiros (por data_fechamento) ===
+  const faturamento = vendasFechamentoNoPeriodo.reduce((s, v) => s + Number(v.valor), 0);
+  const faturamentoRenovacao = vendasFechamentoNoPeriodo.filter(v => v.is_renovacao).reduce((s, v) => s + Number(v.valor), 0);
+  const ticketMedio = vendasFechamentoNoPeriodo.length > 0 ? faturamento / vendasFechamentoNoPeriodo.length : 0;
 
   const tempoMedio = useMemo(() => {
-    const with2dates = fechadas.filter(v => v.data_entrada && v.data_fechamento);
+    const with2dates = vendasFechamentoNoPeriodo.filter(v => v.data_entrada && v.data_fechamento);
     if (with2dates.length === 0) return 0;
     const total = with2dates.reduce((s, v) => {
       const d1 = new Date(v.data_entrada).getTime();
@@ -120,12 +134,15 @@ export default function Index() {
       return s + Math.max(0, (d2 - d1) / (1000 * 60 * 60 * 24));
     }, 0);
     return Math.round(total / with2dates.length);
-  }, [fechadas]);
+  }, [vendasFechamentoNoPeriodo]);
+
+  // === KPIs de Marketing (por data_entrada / Safra) ===
+  const fechadasSafra = filteredVendas.filter(v => v.status === "Fechado" && v.data_fechamento);
 
   const totalCustos = filteredCustos.reduce((s, c) => s + Number(c.valor), 0);
   const custosAds = filteredCustos.filter(c => c.categoria === "Ads").reduce((s, c) => s + Number(c.valor), 0);
   const totalLeads = filteredVendas.length;
-  const cac = fechadas.length > 0 ? totalCustos / fechadas.length : 0;
+  const cac = fechadasSafra.length > 0 ? totalCustos / fechadasSafra.length : 0;
   const cpl = totalLeads > 0 ? custosAds / totalLeads : 0;
   const roi = totalCustos > 0 ? ((faturamento - totalCustos) / totalCustos * 100) : 0;
 
@@ -140,7 +157,7 @@ export default function Index() {
   const totalCompareceramDiarios = filteredMetricas.reduce((s, m) => s + m.compareceram_real, 0);
   const pctAgendamento = totalMQLDiarios > 0 ? (totalAgendadas / totalMQLDiarios) * 100 : 0;
   const pctShowUpDiario = totalAgendadas > 0 ? (totalCompareceramDiarios / totalAgendadas) * 100 : 0;
-  const pctLeadVenda = totalLeadsDiarios > 0 ? (fechadas.length / totalLeadsDiarios) * 100 : 0;
+  const pctLeadVenda = totalLeadsDiarios > 0 ? (fechadasSafra.length / totalLeadsDiarios) * 100 : 0;
 
   // === Insights ===
   const allTimeLeads = vendas.length;
@@ -161,7 +178,7 @@ export default function Index() {
       if (convMqlReuniao < 70) alerts.push({ msg: `⚠️ Gargalo na Proposta: Conversão Negociação > Proposta em ${convMqlReuniao.toFixed(0)}% (meta: 70%)`, severity: "warning" });
     }
     if (reuniaoCount > 0) {
-      const convReunFech = (fechadas.length / reuniaoCount) * 100;
+      const convReunFech = (fechadasSafra.length / reuniaoCount) * 100;
       if (convReunFech < 30) alerts.push({ msg: `⚠️ Gargalo no Fechamento: Conversão Proposta > Venda em ${convReunFech.toFixed(0)}% (meta: 30%)`, severity: "warning" });
     }
     if (totalConfirmado > 0 && showUpRate < 70) {
@@ -171,33 +188,45 @@ export default function Index() {
       alerts.push({ msg: `⚠️ Custo de Lead Elevado: CPL atual R$ ${cpl.toFixed(0)} está ${(((cpl - cplHistorico) / cplHistorico) * 100).toFixed(0)}% acima da média histórica (R$ ${cplHistorico.toFixed(0)})`, severity: "destructive" });
     }
     return alerts;
-  }, [filteredVendas, fechadas, totalLeads, totalConfirmado, showUpRate, cpl, cplHistorico]);
+  }, [filteredVendas, fechadasSafra, totalLeads, totalConfirmado, showUpRate, cpl, cplHistorico]);
 
   // === Chart data ===
   const funnelData = useMemo(() => {
     const leadCount = filteredVendas.length;
     const mqlCount = filteredVendas.filter(v => ["MQL", "Reunião", "Fechado"].includes(v.status)).length;
     const reuniaoCount = filteredVendas.filter(v => ["Reunião", "Fechado"].includes(v.status)).length;
-    const fechadoCount = fechadas.length;
+    const fechadoCount = fechadasSafra.length;
     return [
       { name: "Leads", value: leadCount, fill: "#C8102E" },
       { name: "MQL", value: mqlCount, fill: "#E8384F" },
       { name: "Reunião", value: reuniaoCount, fill: "#FF6B6B" },
       { name: "Fechado", value: fechadoCount, fill: "#FF8E8E" },
     ];
-  }, [filteredVendas, fechadas]);
+  }, [filteredVendas, fechadasSafra]);
 
   const segmentoData = useMemo(() => {
     const map: Record<string, number> = {};
-    fechadas.forEach(v => { const seg = v.segmento || "Sem segmento"; map[seg] = (map[seg] || 0) + Number(v.valor); });
+    vendasFechamentoNoPeriodo.forEach(v => { const seg = v.segmento || "Sem segmento"; map[seg] = (map[seg] || 0) + Number(v.valor); });
     return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [fechadas]);
+  }, [vendasFechamentoNoPeriodo]);
 
   const produtoData = useMemo(() => {
     const map: Record<string, number> = {};
-    fechadas.forEach(v => { const p = v.produto || "Sem produto"; map[p] = (map[p] || 0) + Number(v.valor); });
+    vendasFechamentoNoPeriodo.forEach(v => { const p = v.produto || "Sem produto"; map[p] = (map[p] || 0) + Number(v.valor); });
     return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [fechadas]);
+  }, [vendasFechamentoNoPeriodo]);
+
+  // === Gráfico de Faturamento por Dia (data_fechamento) ===
+  const receitaDiariaData = useMemo(() => {
+    const map: Record<string, number> = {};
+    vendasFechamentoNoPeriodo.forEach(v => {
+      const d = v.data_fechamento!;
+      map[d] = (map[d] || 0) + Number(v.valor);
+    });
+    return Object.entries(map)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([data, valor]) => ({ data, valor }));
+  }, [vendasFechamentoNoPeriodo]);
 
   const motivosData = useMemo(() => {
     const map: Record<string, number> = {};
@@ -348,7 +377,7 @@ export default function Index() {
                 subtitle={`Meta: 70% | ${totalCompareceramDiarios}/${totalAgendadas}`}
                 trend={pctShowUpDiario >= 70 ? "up" : pctShowUpDiario > 0 ? "down" : "neutral"} />
               <KPICard title="Lead > Venda" value={`${pctLeadVenda.toFixed(1)}%`} icon={Target}
-                subtitle={`${fechadas.length} vendas / ${totalLeadsDiarios} leads`}
+                subtitle={`${fechadasSafra.length} vendas / ${totalLeadsDiarios} leads`}
                 trend={pctLeadVenda >= 10 ? "up" : pctLeadVenda > 0 ? "down" : "neutral"} />
               <KPICard title="Total Leads Diários" value={totalLeadsDiarios} icon={BarChart3}
                 subtitle={`MQL: ${totalMQLDiarios}`} />
@@ -365,7 +394,7 @@ export default function Index() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[120px] rounded-xl" />) : (
             <>
-              <KPICard title="Faturamento Total" value={`R$ ${faturamento.toLocaleString("pt-BR")}`} icon={DollarSign} />
+              <KPICard title="Faturamento Total" value={`R$ ${faturamento.toLocaleString("pt-BR")}`} icon={DollarSign} subtitle={`${vendasFechamentoNoPeriodo.length} vendas fechadas no período`} />
               <KPICard title="Fat. Renovação" value={`R$ ${faturamentoRenovacao.toLocaleString("pt-BR")}`} icon={TrendingUp} subtitle="C$ CLUB" />
               <KPICard title="Ticket Médio" value={`R$ ${ticketMedio.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={Target} />
               <KPICard title="Tempo Médio Fech." value={`${tempoMedio} dias`} icon={Clock} />
@@ -374,6 +403,24 @@ export default function Index() {
         </div>
       </div>
 
+      {/* Revenue by Day Chart (data_fechamento) */}
+      <GlassCard>
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
+          <DollarSign className="h-3.5 w-3.5" /> Faturamento por Dia (Data de Fechamento)
+        </h3>
+        {isLoading ? <ChartSkeleton /> : receitaDiariaData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={receitaDiariaData}>
+              <XAxis dataKey="data" tick={{ fill: "#666", fontSize: 11 }} />
+              <YAxis tick={{ fill: "#666", fontSize: 11 }} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => `R$ ${v.toLocaleString("pt-BR")}`} />
+              <Bar dataKey="valor" fill="#C8102E" radius={[4, 4, 0, 0]} name="Faturamento" />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">Sem vendas fechadas no período</div>
+        )}
+      </GlassCard>
       {/* Marketing KPIs */}
       <div>
         <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
