@@ -83,9 +83,24 @@ export default function Index() {
 
   const { start, end } = getDateRange(period, customStart, customEnd);
 
+  // Vendas filtradas por data_entrada (visão de Safra / Marketing)
   const filteredVendas = useMemo(() => {
     return vendas.filter(v => {
       if (v.data_entrada < start || v.data_entrada > end) return false;
+      if (filterFunil !== "Todos" && v.funil !== filterFunil) return false;
+      if (filterProduto !== "Todos" && v.produto !== filterProduto) return false;
+      if (filterCampanha !== "Todos" && v.campanha !== filterCampanha) return false;
+      if (filterOrigem !== "Todos" && v.origem !== filterOrigem) return false;
+      return true;
+    });
+  }, [vendas, start, end, filterFunil, filterProduto, filterCampanha, filterOrigem]);
+
+  // Vendas filtradas por data_fechamento (visão Financeira / Faturamento)
+  const vendasFechamentoNoPeriodo = useMemo(() => {
+    return vendas.filter(v => {
+      if (!v.data_fechamento) return false;
+      if (v.data_fechamento < start || v.data_fechamento > end) return false;
+      if (v.status !== "Fechado") return false;
       if (filterFunil !== "Todos" && v.funil !== filterFunil) return false;
       if (filterProduto !== "Todos" && v.produto !== filterProduto) return false;
       if (filterCampanha !== "Todos" && v.campanha !== filterCampanha) return false;
