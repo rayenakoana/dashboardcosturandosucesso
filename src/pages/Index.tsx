@@ -206,15 +206,27 @@ export default function Index() {
 
   const segmentoData = useMemo(() => {
     const map: Record<string, number> = {};
-    fechadasSafra.forEach(v => { const seg = v.segmento || "Sem segmento"; map[seg] = (map[seg] || 0) + Number(v.valor); });
+    vendasFechamentoNoPeriodo.forEach(v => { const seg = v.segmento || "Sem segmento"; map[seg] = (map[seg] || 0) + Number(v.valor); });
     return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [fechadasSafra]);
+  }, [vendasFechamentoNoPeriodo]);
 
   const produtoData = useMemo(() => {
     const map: Record<string, number> = {};
-    fechadasSafra.forEach(v => { const p = v.produto || "Sem produto"; map[p] = (map[p] || 0) + Number(v.valor); });
+    vendasFechamentoNoPeriodo.forEach(v => { const p = v.produto || "Sem produto"; map[p] = (map[p] || 0) + Number(v.valor); });
     return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [fechadasSafra]);
+  }, [vendasFechamentoNoPeriodo]);
+
+  // === Gráfico de Faturamento por Dia (data_fechamento) ===
+  const receitaDiariaData = useMemo(() => {
+    const map: Record<string, number> = {};
+    vendasFechamentoNoPeriodo.forEach(v => {
+      const d = v.data_fechamento!;
+      map[d] = (map[d] || 0) + Number(v.valor);
+    });
+    return Object.entries(map)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([data, valor]) => ({ data, valor }));
+  }, [vendasFechamentoNoPeriodo]);
 
   const motivosData = useMemo(() => {
     const map: Record<string, number> = {};
