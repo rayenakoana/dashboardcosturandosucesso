@@ -109,7 +109,11 @@ export default function Index() {
     });
   }, [vendas, start, end, filterFunil, filterProduto, filterCampanha, filterOrigem]);
 
-  const filteredCustos = useMemo(() => custos.filter(c => c.data >= start && c.data <= end), [custos, start, end]);
+  const filteredCustos = useMemo(() => custos.filter(c => {
+    if (c.data < start || c.data > end) return false;
+    if (filterFunil !== "Todos" && (c.produto || "").toUpperCase() !== filterFunil.toUpperCase()) return false;
+    return true;
+  }), [custos, start, end, filterFunil]);
   const filteredReunioes = useMemo(() => reunioes.filter(r => r.data >= start && r.data <= end), [reunioes, start, end]);
 
   const filteredMetricas = useMemo(() => {
@@ -139,17 +143,6 @@ export default function Index() {
   // === KPIs de Marketing (por data_entrada / Safra) ===
   const fechadasSafra = filteredVendas.filter(v => v.status === "Fechado" && v.data_fechamento);
 
-  const totalCustos = filteredCustos.reduce((s, c) => s + Number(c.valor), 0);
-  const custosAds = filteredCustos.filter(c => c.categoria === "Ads").reduce((s, c) => s + Number(c.valor), 0);
-  const totalLeads = filteredVendas.length;
-  const cac = fechadasSafra.length > 0 ? totalCustos / fechadasSafra.length : 0;
-  const cpl = totalLeads > 0 ? custosAds / totalLeads : 0;
-  const roi = totalCustos > 0 ? ((faturamento - totalCustos) / totalCustos * 100) : 0;
-
-  const totalConfirmado = filteredReunioes.reduce((s, r) => s + r.sdr_confirmado, 0);
-  const totalReal = filteredReunioes.reduce((s, r) => s + r.compareceram_real, 0);
-  const showUpRate = totalConfirmado > 0 ? (totalReal / totalConfirmado) * 100 : 0;
-
   // === KPIs from metricas_diarias ===
   const totalLeadsDiarios = filteredMetricas.reduce((s, m) => s + m.leads_recebidos, 0);
   const totalMQLDiarios = filteredMetricas.reduce((s, m) => s + m.leads_qualificados, 0);
@@ -158,6 +151,17 @@ export default function Index() {
   const pctAgendamento = totalMQLDiarios > 0 ? (totalAgendadas / totalMQLDiarios) * 100 : 0;
   const pctShowUpDiario = totalAgendadas > 0 ? (totalCompareceramDiarios / totalAgendadas) * 100 : 0;
   const pctLeadVenda = totalLeadsDiarios > 0 ? (fechadasSafra.length / totalLeadsDiarios) * 100 : 0;
+
+  // === KPIs de Eficiência ===
+  const totalCustos = filteredCustos.reduce((s, c) => s + Number(c.valor), 0);
+  const totalLeads = filteredVendas.length;
+  const cpl = totalLeadsDiarios > 0 ? totalCustos / totalLeadsDiarios : 0;
+  const cac = vendasFechamentoNoPeriodo.length > 0 ? totalCustos / vendasFechamentoNoPeriodo.length : 0;
+  const roi = totalCustos > 0 ? ((faturamento - totalCustos) / totalCustos * 100) : 0;
+
+  const totalConfirmado = filteredReunioes.reduce((s, r) => s + r.sdr_confirmado, 0);
+  const totalReal = filteredReunioes.reduce((s, r) => s + r.compareceram_real, 0);
+  const showUpRate = totalConfirmado > 0 ? (totalReal / totalConfirmado) * 100 : 0;
 
   // === Insights ===
   const allTimeLeads = vendas.length;
