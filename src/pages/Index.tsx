@@ -144,10 +144,9 @@ export default function Index() {
   const fechadasSafra = filteredVendas.filter(v => v.status === "Fechado" && v.data_fechamento);
 
   const totalCustos = filteredCustos.reduce((s, c) => s + Number(c.valor), 0);
-  const custosAds = filteredCustos.filter(c => c.categoria === "Ads").reduce((s, c) => s + Number(c.valor), 0);
   const totalLeads = filteredVendas.length;
-  const cac = fechadasSafra.length > 0 ? totalCustos / fechadasSafra.length : 0;
-  const cpl = totalLeads > 0 ? custosAds / totalLeads : 0;
+  const cac = vendasFechamentoNoPeriodo.length > 0 ? totalCustos / vendasFechamentoNoPeriodo.length : 0;
+  const cpl = totalLeadsDiarios > 0 ? totalCustos / totalLeadsDiarios : 0;
   const roi = totalCustos > 0 ? ((faturamento - totalCustos) / totalCustos * 100) : 0;
 
   const totalConfirmado = filteredReunioes.reduce((s, r) => s + r.sdr_confirmado, 0);
