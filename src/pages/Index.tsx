@@ -109,7 +109,11 @@ export default function Index() {
     });
   }, [vendas, start, end, filterFunil, filterProduto, filterCampanha, filterOrigem]);
 
-  const filteredCustos = useMemo(() => custos.filter(c => c.data >= start && c.data <= end), [custos, start, end]);
+  const filteredCustos = useMemo(() => custos.filter(c => {
+    if (c.data < start || c.data > end) return false;
+    if (filterFunil !== "Todos" && (c.produto || "").toUpperCase() !== filterFunil.toUpperCase()) return false;
+    return true;
+  }), [custos, start, end, filterFunil]);
   const filteredReunioes = useMemo(() => reunioes.filter(r => r.data >= start && r.data <= end), [reunioes, start, end]);
 
   const filteredMetricas = useMemo(() => {
