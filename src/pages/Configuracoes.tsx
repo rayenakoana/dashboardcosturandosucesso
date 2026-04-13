@@ -9,7 +9,7 @@ import { useWebhookUrl } from "@/hooks/useWebhook";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Upload, Link, Download } from "lucide-react";
+import { Plus, Trash2, Upload, Link, Download, Target } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
