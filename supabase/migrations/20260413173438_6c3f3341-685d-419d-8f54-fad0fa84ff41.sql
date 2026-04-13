@@ -1,0 +1,1 @@
+ALTER TABLE public.configuracoes ADD COLUMN mes_ref text DEFAULT NULL;

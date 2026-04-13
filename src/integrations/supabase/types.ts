@@ -18,18 +18,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          mes_ref: string | null
           tipo: string
           valor: string
         }
         Insert: {
           created_at?: string
           id?: string
+          mes_ref?: string | null
           tipo: string
           valor: string
         }
         Update: {
           created_at?: string
           id?: string
+          mes_ref?: string | null
           tipo?: string
           valor?: string
         }
