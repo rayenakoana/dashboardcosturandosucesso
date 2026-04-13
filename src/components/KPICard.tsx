@@ -22,7 +22,7 @@ export function KPICard({ title, value, subtitle, icon: Icon, trend }: KPICardPr
               "text-xs mt-1",
               trend === "up" && "text-green-400",
               trend === "down" && "text-red-400",
-              trend === "neutral" && "text-muted-foreground"
+              trend === "neutral" && "text-amber-400"
             )}>
               {subtitle}
             </p>
