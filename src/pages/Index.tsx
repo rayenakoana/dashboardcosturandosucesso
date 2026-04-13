@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { KPICard } from "@/components/KPICard";
 import { GlassCard } from "@/components/GlassCard";
-import { MetasModal } from "@/components/MetasModal";
 import { useVendas } from "@/hooks/useVendas";
 import { useCustosMarketing } from "@/hooks/useCustosMarketing";
 import { usePerformanceReunioes } from "@/hooks/usePerformanceReunioes";
@@ -431,7 +430,6 @@ export default function Index() {
       <div>
         <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
           <DollarSign className="h-3.5 w-3.5" /> Métricas Comerciais
-          <span className="ml-auto"><MetasModal /></span>
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[120px] rounded-xl" />) : (
