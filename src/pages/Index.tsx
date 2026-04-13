@@ -16,7 +16,6 @@ import {
   Users, BarChart3, PieChart as PieChartIcon, AlertTriangle, CalendarCheck, Percent,
   Trophy, RefreshCw, ShoppingCart,
 } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Legend,
@@ -164,10 +163,33 @@ export default function Index() {
   const cac = vendasFechamentoNoPeriodo.length > 0 ? totalCustos / vendasFechamentoNoPeriodo.length : 0;
   const roi = totalCustos > 0 ? ((faturamento - totalCustos) / totalCustos * 100) : 0;
 
-  // === Metas de Vendas ===
-  const metaVendaGeral = metaVendaGeralCfg.length > 0 ? Number(metaVendaGeralCfg[0].valor) || 0 : 0;
-  const metaRenovacao = metaRenovacaoCfg.length > 0 ? Number(metaRenovacaoCfg[0].valor) || 0 : 0;
-  const metaVolume = metaVolumeCfg.length > 0 ? Number(metaVolumeCfg[0].valor) || 0 : 0;
+  // === Metas de Vendas (por mês selecionado) ===
+  const mesRefAtual = useMemo(() => {
+    if (period === "month" || period === "today") {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    }
+    // For custom/quarter, use the start date month
+    if (start && start !== "2000-01-01") {
+      const [y, m] = start.split("-");
+      return `${y}-${m}`;
+    }
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  }, [period, start]);
+
+  const metaVendaGeral = useMemo(() => {
+    const item = metaVendaGeralCfg.find(m => (m as any).mes_ref === mesRefAtual);
+    return item ? Number(item.valor) || 0 : (metaVendaGeralCfg.length > 0 ? Number(metaVendaGeralCfg[0].valor) || 0 : 0);
+  }, [metaVendaGeralCfg, mesRefAtual]);
+  const metaRenovacao = useMemo(() => {
+    const item = metaRenovacaoCfg.find(m => (m as any).mes_ref === mesRefAtual);
+    return item ? Number(item.valor) || 0 : (metaRenovacaoCfg.length > 0 ? Number(metaRenovacaoCfg[0].valor) || 0 : 0);
+  }, [metaRenovacaoCfg, mesRefAtual]);
+  const metaVolume = useMemo(() => {
+    const item = metaVolumeCfg.find(m => (m as any).mes_ref === mesRefAtual);
+    return item ? Number(item.valor) || 0 : (metaVolumeCfg.length > 0 ? Number(metaVolumeCfg[0].valor) || 0 : 0);
+  }, [metaVolumeCfg, mesRefAtual]);
 
   const totalRenovacoes = vendasFechamentoNoPeriodo.filter(v => v.is_renovacao).length;
   const pctRenovacao = metaRenovacao > 0 ? (totalRenovacoes / metaRenovacao) * 100 : 0;
@@ -427,67 +449,35 @@ export default function Index() {
           <Trophy className="h-3.5 w-3.5" /> Metas de Vendas
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {isLoading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-[140px] rounded-xl" />) : (
+          {isLoading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-[120px] rounded-xl" />) : (
             <>
-              {/* Meta Venda Geral */}
-              <GlassCard hover className="relative overflow-hidden">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Meta de Venda Geral</p>
-                    <p className="text-3xl font-bold tracking-tight">R$ {(faturamento / 1000).toFixed(0)}k</p>
-                    <p className={`text-xs mt-1 ${metaVendaGeral > 0 && faturamento >= metaVendaGeral ? "text-[#4ade80]" : "text-[#f87171]"}`}>
-                      Meta: R$ {metaVendaGeral.toLocaleString("pt-BR")} | R$ {faturamento.toLocaleString("pt-BR")} / R$ {metaVendaGeral.toLocaleString("pt-BR")}
-                    </p>
-                    {metaVendaGeral > 0 && (
-                      <Progress value={Math.min((faturamento / metaVendaGeral) * 100, 100)} className="mt-2 h-1.5 bg-muted/30" />
-                    )}
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-primary/10">
-                    <DollarSign className="h-5 w-5 text-primary" />
-                  </div>
-                </div>
-                <div className="absolute bottom-0 right-0 w-24 h-24 bg-primary/5 rounded-tl-full" />
-              </GlassCard>
-
-              {/* Meta Renovação */}
-              <GlassCard hover className="relative overflow-hidden">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Meta de Renovação</p>
-                    <p className="text-3xl font-bold tracking-tight">{pctRenovacao.toFixed(0)}%</p>
-                    <p className={`text-xs mt-1 ${metaRenovacao > 0 && totalRenovacoes >= metaRenovacao ? "text-[#4ade80]" : "text-[#f87171]"}`}>
-                      Meta: {metaRenovacao} | {totalRenovacoes}/{metaRenovacao}
-                    </p>
-                    {metaRenovacao > 0 && (
-                      <Progress value={Math.min(pctRenovacao, 100)} className="mt-2 h-1.5 bg-muted/30" />
-                    )}
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-primary/10">
-                    <RefreshCw className="h-5 w-5 text-primary" />
-                  </div>
-                </div>
-                <div className="absolute bottom-0 right-0 w-24 h-24 bg-primary/5 rounded-tl-full" />
-              </GlassCard>
-
-              {/* Total Vendas (Unidades) */}
-              <GlassCard hover className="relative overflow-hidden">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Total de Vendas (Un.)</p>
-                    <p className="text-3xl font-bold tracking-tight">{totalVendasUnidades}</p>
-                    <p className={`text-xs mt-1 ${metaVolume > 0 && totalVendasUnidades >= metaVolume ? "text-[#4ade80]" : "text-[#f87171]"}`}>
-                      Meta: {metaVolume} | {totalVendasUnidades}/{metaVolume}
-                    </p>
-                    {metaVolume > 0 && (
-                      <Progress value={Math.min((totalVendasUnidades / metaVolume) * 100, 100)} className="mt-2 h-1.5 bg-muted/30" />
-                    )}
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-primary/10">
-                    <ShoppingCart className="h-5 w-5 text-primary" />
-                  </div>
-                </div>
-                <div className="absolute bottom-0 right-0 w-24 h-24 bg-primary/5 rounded-tl-full" />
-              </GlassCard>
+              <KPICard
+                title="Meta de Venda Geral"
+                value={`R$ ${(faturamento / 1000).toFixed(0)}k`}
+                icon={DollarSign}
+                subtitle={metaVendaGeral > 0
+                  ? `Meta: R$ ${metaVendaGeral.toLocaleString("pt-BR")} | ${((faturamento / metaVendaGeral) * 100).toFixed(0)}%`
+                  : "Meta não definida"}
+                trend={metaVendaGeral > 0 ? (faturamento >= metaVendaGeral ? "up" : (faturamento >= metaVendaGeral * 0.8 ? "neutral" : "down")) : "neutral"}
+              />
+              <KPICard
+                title="Meta de Renovação"
+                value={`${pctRenovacao.toFixed(0)}%`}
+                icon={RefreshCw}
+                subtitle={metaRenovacao > 0
+                  ? `Meta: ${metaRenovacao} | ${totalRenovacoes}/${metaRenovacao}`
+                  : "Meta não definida"}
+                trend={metaRenovacao > 0 ? (pctRenovacao >= 100 ? "up" : (pctRenovacao >= 80 ? "neutral" : "down")) : "neutral"}
+              />
+              <KPICard
+                title="Total de Vendas (Un.)"
+                value={totalVendasUnidades}
+                icon={ShoppingCart}
+                subtitle={metaVolume > 0
+                  ? `Meta: ${metaVolume} | ${((totalVendasUnidades / metaVolume) * 100).toFixed(0)}%`
+                  : "Meta não definida"}
+                trend={metaVolume > 0 ? (totalVendasUnidades >= metaVolume ? "up" : (totalVendasUnidades >= metaVolume * 0.8 ? "neutral" : "down")) : "neutral"}
+              />
             </>
           )}
         </div>
