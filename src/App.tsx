@@ -9,6 +9,7 @@ import Vendas from "./pages/Vendas";
 import InputDiario from "./pages/InputDiario";
 import GestaoSafras from "./pages/GestaoSafras";
 import CustosMarketing from "./pages/CustosMarketing";
+import Metas from "./pages/Metas";
 import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 
@@ -33,6 +34,7 @@ const App = () => (
                   <Route path="/input-diario" element={<InputDiario />} />
                   <Route path="/safras" element={<GestaoSafras />} />
                   <Route path="/custos" element={<CustosMarketing />} />
+                  <Route path="/metas" element={<Metas />} />
                   <Route path="/configuracoes" element={<Configuracoes />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

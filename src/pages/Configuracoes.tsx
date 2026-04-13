@@ -1,137 +1,19 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { GlassCard } from "@/components/GlassCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { CONFIG_TIPOS, META_TIPOS, ConfigTipo, useConfiguracoes, useAddConfiguracao, useDeleteConfiguracao } from "@/hooks/useConfiguracoes";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { CONFIG_TIPOS, ConfigTipo, useConfiguracoes, useAddConfiguracao, useDeleteConfiguracao } from "@/hooks/useConfiguracoes";
+import { useQueryClient } from "@tanstack/react-query";
 import { useWebhookUrl } from "@/hooks/useWebhook";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Upload, Link, Download, Target } from "lucide-react";
+import { Plus, Trash2, Upload, Link, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-function MetasSection() {
-  const qc = useQueryClient();
-  const now = new Date();
-  const [mesRef, setMesRef] = useState(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
-  const [saving, setSaving] = useState(false);
 
-  const metaLabels: Record<string, string> = {
-    "Meta Venda Geral": "Meta de Venda Geral (R$)",
-    "Meta Renovação": "Meta de Renovação (unidades)",
-    "Meta Volume Vendas": "Meta de Volume de Vendas (unidades)",
-  };
-
-  // Local state for all 3 metas
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [initialized, setInitialized] = useState(false);
-
-  const { data: allMetas = [], isLoading } = useConfiguracoes();
-
-  // Filter metas for the selected month
-  const metasDoMes = allMetas.filter(m => META_TIPOS.includes(m.tipo as ConfigTipo) && (m.mes_ref === mesRef || (!m.mes_ref && mesRef === "")));
-
-  if (!initialized && !isLoading && allMetas.length > 0) {
-    const v: Record<string, string> = {};
-    META_TIPOS.forEach(tipo => {
-      const item = allMetas.find(m => m.tipo === tipo && m.mes_ref === mesRef);
-      if (item) v[tipo] = item.valor;
-    });
-    setValues(v);
-    setInitialized(true);
-  }
-
-  // Reload values when mesRef changes
-  const handleMesChange = (newMes: string) => {
-    setMesRef(newMes);
-    const v: Record<string, string> = {};
-    META_TIPOS.forEach(tipo => {
-      const item = allMetas.find(m => m.tipo === tipo && m.mes_ref === newMes);
-      if (item) v[tipo] = item.valor;
-      else v[tipo] = "";
-    });
-    setValues(v);
-  };
-
-  const handleSaveAll = async () => {
-    setSaving(true);
-    try {
-      for (const tipo of META_TIPOS) {
-        const existing = allMetas.find(m => m.tipo === tipo && m.mes_ref === mesRef);
-        if (existing) {
-          await supabase.from("configuracoes").delete().eq("id", existing.id);
-        }
-        const val = (values[tipo] || "").trim();
-        if (val) {
-          await supabase.from("configuracoes").insert({ tipo, valor: val, mes_ref: mesRef });
-        }
-      }
-      qc.invalidateQueries({ queryKey: ["configuracoes"] });
-      toast.success("Metas atualizadas");
-    } catch {
-      toast.error("Erro ao salvar metas");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Generate month options dynamically — unlimited
-  const monthOptions = useMemo(() => {
-    const opts: { value: string; label: string }[] = [];
-    for (let i = -24; i <= 24; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      const label = d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
-      opts.push({ value: val, label: label.charAt(0).toUpperCase() + label.slice(1) });
-    }
-    return opts;
-  }, []);
-
-  return (
-    <GlassCard>
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-        <h3 className="font-semibold text-sm flex items-center gap-2">
-          <Target className="h-4 w-4 text-primary" /> Metas de Vendas
-        </h3>
-        <div className="flex items-center gap-3">
-          <Select value={mesRef} onValueChange={handleMesChange}>
-            <SelectTrigger className="bg-muted/50 border-border h-8 text-xs w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {monthOptions.map(o => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {META_TIPOS.map(tipo => (
-          <div key={tipo}>
-            <Label className="text-xs text-muted-foreground">{metaLabels[tipo] || tipo}</Label>
-            <Input
-              type="number"
-              value={values[tipo] || ""}
-              onChange={e => setValues(prev => ({ ...prev, [tipo]: e.target.value }))}
-              placeholder="0"
-              className="bg-muted/50 border-border mt-1 h-9"
-            />
-          </div>
-        ))}
-      </div>
-      <div className="flex justify-end mt-4">
-        <Button onClick={handleSaveAll} disabled={saving} size="sm" variant="outline" className="gap-1 text-xs border-border hover:bg-muted/50">
-          <Target className="h-3.5 w-3.5" /> Atualizar Metas
-        </Button>
-      </div>
-    </GlassCard>
-  );
-}
 
 export default function Configuracoes() {
   const [activeTab, setActiveTab] = useState<ConfigTipo>("Funil");
@@ -271,8 +153,8 @@ export default function Configuracoes() {
         </div>
       </GlassCard>
 
-      {/* Metas de Vendas */}
-      <MetasSection />
+
+
 
       <GlassCard>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ConfigTipo)}>
