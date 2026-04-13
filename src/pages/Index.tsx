@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { KPICard } from "@/components/KPICard";
 import { GlassCard } from "@/components/GlassCard";
+import { MetasModal } from "@/components/MetasModal";
 import { useVendas } from "@/hooks/useVendas";
 import { useCustosMarketing } from "@/hooks/useCustosMarketing";
 import { usePerformanceReunioes } from "@/hooks/usePerformanceReunioes";
@@ -14,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
   DollarSign, Target, TrendingUp, Clock, BadgeDollarSign,
   Users, BarChart3, PieChart as PieChartIcon, AlertTriangle, CalendarCheck, Percent,
-  Trophy, RefreshCw, ShoppingCart,
+  RefreshCw, ShoppingCart,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
