@@ -79,10 +79,10 @@ function MetasSection() {
     }
   };
 
-  // Generate month options (last 12 months + next 6)
+  // Generate month options dynamically — unlimited
   const monthOptions = useMemo(() => {
     const opts: { value: string; label: string }[] = [];
-    for (let i = -12; i <= 6; i++) {
+    for (let i = -24; i <= 24; i++) {
       const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
       const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       const label = d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
