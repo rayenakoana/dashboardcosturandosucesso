@@ -13,6 +13,72 @@ import { Plus, Trash2, Upload, Link, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+function MetasSection() {
+  const qc = useQueryClient();
+  const metaLabels: Record<string, string> = {
+    "Meta Venda Geral": "Meta de Venda Geral (R$)",
+    "Meta Renovação": "Meta de Renovação (unidades)",
+    "Meta Volume Vendas": "Meta de Volume de Vendas (unidades)",
+  };
+
+  return (
+    <GlassCard>
+      <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
+        <Target className="h-4 w-4 text-primary" /> Metas de Vendas
+      </h3>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {META_TIPOS.map(tipo => (
+          <MetaInput key={tipo} tipo={tipo} label={metaLabels[tipo] || tipo} />
+        ))}
+      </div>
+    </GlassCard>
+  );
+}
+
+function MetaInput({ tipo, label }: { tipo: ConfigTipo; label: string }) {
+  const { data: items = [], isLoading } = useConfiguracoes(tipo);
+  const addMutation = useAddConfiguracao();
+  const qc = useQueryClient();
+  const currentValue = items.length > 0 ? items[0].valor : "";
+  const [value, setValue] = useState(currentValue);
+  const [initialized, setInitialized] = useState(false);
+
+  if (!initialized && items.length > 0) {
+    setValue(items[0].valor);
+    setInitialized(true);
+  }
+
+  const handleSave = async () => {
+    // Delete existing then insert new
+    if (items.length > 0) {
+      await supabase.from("configuracoes").delete().eq("id", items[0].id);
+    }
+    if (value.trim()) {
+      await supabase.from("configuracoes").insert({ tipo, valor: value.trim() });
+    }
+    qc.invalidateQueries({ queryKey: ["configuracoes"] });
+    toast.success(`${label} salva`);
+  };
+
+  return (
+    <div>
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <div className="flex gap-2 mt-1">
+        <Input
+          type="number"
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          placeholder="0"
+          className="bg-muted/50 border-border"
+        />
+        <Button onClick={handleSave} size="sm" className="bg-primary hover:bg-primary/90 shrink-0">
+          Salvar
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function Configuracoes() {
   const [activeTab, setActiveTab] = useState<ConfigTipo>("Funil");
   const [newValue, setNewValue] = useState("");
