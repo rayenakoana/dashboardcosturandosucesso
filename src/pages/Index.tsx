@@ -164,10 +164,33 @@ export default function Index() {
   const cac = vendasFechamentoNoPeriodo.length > 0 ? totalCustos / vendasFechamentoNoPeriodo.length : 0;
   const roi = totalCustos > 0 ? ((faturamento - totalCustos) / totalCustos * 100) : 0;
 
-  // === Metas de Vendas ===
-  const metaVendaGeral = metaVendaGeralCfg.length > 0 ? Number(metaVendaGeralCfg[0].valor) || 0 : 0;
-  const metaRenovacao = metaRenovacaoCfg.length > 0 ? Number(metaRenovacaoCfg[0].valor) || 0 : 0;
-  const metaVolume = metaVolumeCfg.length > 0 ? Number(metaVolumeCfg[0].valor) || 0 : 0;
+  // === Metas de Vendas (por mês selecionado) ===
+  const mesRefAtual = useMemo(() => {
+    if (period === "month" || period === "today") {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    }
+    // For custom/quarter, use the start date month
+    if (start && start !== "2000-01-01") {
+      const [y, m] = start.split("-");
+      return `${y}-${m}`;
+    }
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  }, [period, start]);
+
+  const metaVendaGeral = useMemo(() => {
+    const item = metaVendaGeralCfg.find(m => (m as any).mes_ref === mesRefAtual);
+    return item ? Number(item.valor) || 0 : (metaVendaGeralCfg.length > 0 ? Number(metaVendaGeralCfg[0].valor) || 0 : 0);
+  }, [metaVendaGeralCfg, mesRefAtual]);
+  const metaRenovacao = useMemo(() => {
+    const item = metaRenovacaoCfg.find(m => (m as any).mes_ref === mesRefAtual);
+    return item ? Number(item.valor) || 0 : (metaRenovacaoCfg.length > 0 ? Number(metaRenovacaoCfg[0].valor) || 0 : 0);
+  }, [metaRenovacaoCfg, mesRefAtual]);
+  const metaVolume = useMemo(() => {
+    const item = metaVolumeCfg.find(m => (m as any).mes_ref === mesRefAtual);
+    return item ? Number(item.valor) || 0 : (metaVolumeCfg.length > 0 ? Number(metaVolumeCfg[0].valor) || 0 : 0);
+  }, [metaVolumeCfg, mesRefAtual]);
 
   const totalRenovacoes = vendasFechamentoNoPeriodo.filter(v => v.is_renovacao).length;
   const pctRenovacao = metaRenovacao > 0 ? (totalRenovacoes / metaRenovacao) * 100 : 0;
