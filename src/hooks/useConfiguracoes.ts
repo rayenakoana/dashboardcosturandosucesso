@@ -1,10 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type ConfigTipo = "Funil" | "Produto" | "Campanha" | "Origem" | "Segmento" | "Motivo de Perda";
+export type ConfigTipo = "Funil" | "Produto" | "Campanha" | "Origem" | "Segmento" | "Motivo de Perda" | "Meta Venda Geral" | "Meta Renovação" | "Meta Volume Vendas";
 
 export const CONFIG_TIPOS: ConfigTipo[] = [
   "Funil", "Produto", "Campanha", "Origem", "Segmento", "Motivo de Perda"
+];
+
+export const META_TIPOS: ConfigTipo[] = [
+  "Meta Venda Geral", "Meta Renovação", "Meta Volume Vendas"
 ];
 
 export function useConfiguracoes(tipo?: ConfigTipo) {
