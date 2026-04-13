@@ -3,7 +3,9 @@ import { GlassCard } from "@/components/GlassCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { CONFIG_TIPOS, ConfigTipo, useConfiguracoes, useAddConfiguracao, useDeleteConfiguracao } from "@/hooks/useConfiguracoes";
+import { CONFIG_TIPOS, META_TIPOS, ConfigTipo, useConfiguracoes, useAddConfiguracao, useDeleteConfiguracao } from "@/hooks/useConfiguracoes";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useWebhookUrl } from "@/hooks/useWebhook";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -149,6 +151,9 @@ export default function Configuracoes() {
           <Button onClick={handleSaveWebhook} className="shrink-0 bg-primary hover:bg-primary/90">Salvar</Button>
         </div>
       </GlassCard>
+
+      {/* Metas de Vendas */}
+      <MetasSection />
 
       <GlassCard>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ConfigTipo)}>
