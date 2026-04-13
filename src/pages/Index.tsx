@@ -16,7 +16,6 @@ import {
   Users, BarChart3, PieChart as PieChartIcon, AlertTriangle, CalendarCheck, Percent,
   Trophy, RefreshCw, ShoppingCart,
 } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Legend,
