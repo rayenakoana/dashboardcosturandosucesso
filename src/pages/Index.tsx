@@ -431,53 +431,29 @@ export default function Index() {
       <div>
         <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
           <DollarSign className="h-3.5 w-3.5" /> Métricas Comerciais
+          <span className="ml-auto"><MetasModal /></span>
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[120px] rounded-xl" />) : (
             <>
-              <KPICard title="Faturamento Total" value={`R$ ${faturamento.toLocaleString("pt-BR")}`} icon={DollarSign} subtitle={`${vendasFechamentoNoPeriodo.length} vendas fechadas no período`} />
-              <KPICard title="Fat. Renovação" value={`R$ ${faturamentoRenovacao.toLocaleString("pt-BR")}`} icon={TrendingUp} subtitle="C$ CLUB" />
-              <KPICard title="Ticket Médio" value={`R$ ${ticketMedio.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={Target} />
-              <KPICard title="Tempo Médio Fech." value={`${tempoMedio} dias`} icon={Clock} />
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Metas de Vendas */}
-      <div>
-        <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
-          <Trophy className="h-3.5 w-3.5" /> Metas de Vendas
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {isLoading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-[120px] rounded-xl" />) : (
-            <>
-              <KPICard
-                title="Meta de Venda Geral"
-                value={`R$ ${(faturamento / 1000).toFixed(0)}k`}
-                icon={DollarSign}
+              <KPICard title="Faturamento Total" value={`R$ ${faturamento.toLocaleString("pt-BR")}`} icon={DollarSign}
                 subtitle={metaVendaGeral > 0
                   ? `Meta: R$ ${metaVendaGeral.toLocaleString("pt-BR")} | ${((faturamento / metaVendaGeral) * 100).toFixed(0)}%`
-                  : "Meta não definida"}
-                trend={metaVendaGeral > 0 ? (faturamento >= metaVendaGeral ? "up" : (faturamento >= metaVendaGeral * 0.8 ? "neutral" : "down")) : "neutral"}
+                  : `${vendasFechamentoNoPeriodo.length} vendas fechadas`}
+                trend={metaVendaGeral > 0 ? (faturamento >= metaVendaGeral ? "up" : (faturamento >= metaVendaGeral * 0.8 ? "neutral" : "down")) : undefined}
               />
-              <KPICard
-                title="Meta de Renovação"
-                value={`${pctRenovacao.toFixed(0)}%`}
-                icon={RefreshCw}
+              <KPICard title="Fat. Renovação" value={`R$ ${faturamentoRenovacao.toLocaleString("pt-BR")}`} icon={RefreshCw}
                 subtitle={metaRenovacao > 0
-                  ? `Meta: ${metaRenovacao} | ${totalRenovacoes}/${metaRenovacao}`
-                  : "Meta não definida"}
-                trend={metaRenovacao > 0 ? (pctRenovacao >= 100 ? "up" : (pctRenovacao >= 80 ? "neutral" : "down")) : "neutral"}
+                  ? `Meta: ${metaRenovacao} un. | ${totalRenovacoes}/${metaRenovacao} (${pctRenovacao.toFixed(0)}%)`
+                  : `${totalRenovacoes} renovações`}
+                trend={metaRenovacao > 0 ? (pctRenovacao >= 100 ? "up" : (pctRenovacao >= 80 ? "neutral" : "down")) : undefined}
               />
-              <KPICard
-                title="Total de Vendas (Un.)"
-                value={totalVendasUnidades}
-                icon={ShoppingCart}
+              <KPICard title="Ticket Médio" value={`R$ ${ticketMedio.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={Target} />
+              <KPICard title="Total Vendas" value={totalVendasUnidades} icon={ShoppingCart}
                 subtitle={metaVolume > 0
                   ? `Meta: ${metaVolume} | ${((totalVendasUnidades / metaVolume) * 100).toFixed(0)}%`
-                  : "Meta não definida"}
-                trend={metaVolume > 0 ? (totalVendasUnidades >= metaVolume ? "up" : (totalVendasUnidades >= metaVolume * 0.8 ? "neutral" : "down")) : "neutral"}
+                  : `${totalVendasUnidades} unidades`}
+                trend={metaVolume > 0 ? (totalVendasUnidades >= metaVolume ? "up" : (totalVendasUnidades >= metaVolume * 0.8 ? "neutral" : "down")) : undefined}
               />
             </>
           )}
