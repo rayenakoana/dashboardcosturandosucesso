@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
 import { KPICard } from "@/components/KPICard";
 import { GlassCard } from "@/components/GlassCard";
 import { SDRPodium } from "@/components/SDRPodium";
@@ -338,6 +339,30 @@ export default function Index() {
         <p className="text-muted-foreground text-sm mt-1 uppercase tracking-widest text-[11px]">Visão consolidada · Marketing & Comercial</p>
       </div>
 
+      {/* Funil chips (pills), estilo do protótipo */}
+      <div className="flex flex-wrap gap-1.5">
+        <button
+          type="button"
+          onClick={() => setFilterFunis([])}
+          className={cn("fchip", filterFunis.length === 0 && "active")}
+        >
+          Todos os funis
+        </button>
+        {funis.map(f => {
+          const active = filterFunis.includes(f.valor);
+          return (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => toggleFunil(f.valor)}
+              className={cn("fchip", active && "active")}
+            >
+              {f.valor}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Filters */}
       <GlassCard className="!py-3">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
@@ -360,38 +385,6 @@ export default function Index() {
               </div>
             </>
           )}
-          <div className="min-w-[240px]">
-            <Label className="text-xs text-muted-foreground">Funis (selecione um ou vários)</Label>
-            <div className="flex flex-wrap gap-1.5 mt-1.5">
-              {funis.map(f => {
-                const active = filterFunis.includes(f.valor);
-                return (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => toggleFunil(f.valor)}
-                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                      active
-                        ? "text-white border-transparent"
-                        : "bg-muted/40 text-muted-foreground border-border hover:border-primary/50"
-                    }`}
-                    style={active ? { background: "linear-gradient(135deg, #E8384F, #991B1B)" } : undefined}
-                  >
-                    {f.valor}
-                  </button>
-                );
-              })}
-              {filterFunis.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setFilterFunis([])}
-                  className="text-xs px-3 py-1.5 rounded-full border border-border text-muted-foreground hover:text-foreground"
-                >
-                  Limpar
-                </button>
-              )}
-            </div>
-          </div>
           <div className="flex items-center gap-2 pt-5">
             <Switch checked={excludeRenovacao} onCheckedChange={setExcludeRenovacao} id="exclude-renovacao" />
             <Label htmlFor="exclude-renovacao" className="text-xs text-muted-foreground cursor-pointer">
@@ -569,6 +562,12 @@ export default function Index() {
         )}
       </GlassCard>
 
+      {/* Performance por SDR (pódio) + origem geográfica dos leads */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SDRPodium start={start} end={end} />
+        <WorldToBrazilMap />
+      </div>
+
       {/* Daily Performance Pivot Table */}
       <GlassCard className="p-0 overflow-hidden overflow-x-auto">
         <div className="p-4 pb-2">
@@ -725,10 +724,6 @@ export default function Index() {
         )}
       </GlassCard>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SDRPodium start={start} end={end} />
-        <WorldToBrazilMap />
-      </div>
     </div>
   );
 }

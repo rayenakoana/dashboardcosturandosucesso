@@ -3,6 +3,7 @@ import { GlassCard } from "./GlassCard";
 import { useSDRs } from "@/hooks/useSDRs";
 import { useMetricasDiarias } from "@/hooks/useMetricasDiarias";
 import { Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Props {
   start: string;
@@ -13,7 +14,7 @@ export function SDRPodium({ start, end }: Props) {
   const { data: sdrs = [] } = useSDRs();
   const { data: metricas = [] } = useMetricasDiarias();
 
-  const rows = useMemo(() => {
+  const ranked = useMemo(() => {
     return sdrs.map((sdr) => {
       const mine = metricas.filter(
         (m) => (m as any).sdr_id === sdr.id && m.data >= start && m.data <= end
@@ -25,10 +26,21 @@ export function SDRPodium({ start, end }: Props) {
     }).sort((a, b) => b.agendadas - a.agendadas);
   }, [sdrs, metricas, start, end]);
 
-  if (rows.length === 0) return null;
+  if (ranked.length === 0) return null;
 
-  // podium heights (visual, no ranking labels)
-  const heights = ["h-40", "h-32", "h-28"];
+  const top3 = ranked.slice(0, 3);
+  // Visual podium arrangement: 2nd place (left) - 1st place (center, elevated) - 3rd place (right)
+  const podiumOrder =
+    top3.length === 3 ? [top3[1], top3[0], top3[2]] :
+    top3.length === 2 ? [top3[1], top3[0]] :
+    [top3[0]];
+  const centerIndex = top3.length >= 2 ? 1 : 0;
+
+  const barHeights = ["h-[60px]", "h-[90px]", "h-[45px]"];
+  const orderedHeights =
+    top3.length === 3 ? [barHeights[0], barHeights[1], barHeights[2]] :
+    top3.length === 2 ? [barHeights[0], barHeights[1]] :
+    [barHeights[1]];
 
   const initials = (nome: string) =>
     nome.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
@@ -40,52 +52,57 @@ export function SDRPodium({ start, end }: Props) {
         <h2 className="font-display font-bold text-xl tracking-wide">Performance por SDR</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-        {rows.slice(0, 3).map((r, i) => (
-          <div key={r.sdr.id} className="flex flex-col items-center">
-            {/* avatar */}
-            <div className="relative mb-3">
-              <div className="h-20 w-20 rounded-full bg-gradient-red p-[2px]">
-                <div className="h-full w-full rounded-full bg-background flex items-center justify-center overflow-hidden">
-                  {r.sdr.foto_url ? (
-                    <img src={r.sdr.foto_url} alt={r.sdr.nome} className="h-full w-full object-cover rounded-full" />
-                  ) : (
-                    <span className="font-display font-bold text-2xl text-foreground">
-                      {initials(r.sdr.nome)}
-                    </span>
-                  )}
-                </div>
+      <div className="flex items-end justify-center gap-4 max-w-xl mx-auto">
+        {podiumOrder.map((r, i) => {
+          const isCenter = i === centerIndex;
+          return (
+            <div
+              key={r.sdr.id}
+              className={cn("flex flex-col items-center", isCenter ? "w-36 -translate-y-2.5" : "w-28")}
+            >
+              {/* avatar */}
+              <div
+                className={cn(
+                  "rounded-full flex items-center justify-center overflow-hidden mb-2 font-display font-bold text-foreground",
+                  isCenter ? "h-14 w-14 text-lg bg-gradient-red" : "h-11 w-11 text-sm bg-muted"
+                )}
+              >
+                {r.sdr.foto_url ? (
+                  <img src={r.sdr.foto_url} alt={r.sdr.nome} className="h-full w-full object-cover rounded-full" />
+                ) : (
+                  initials(r.sdr.nome)
+                )}
               </div>
-            </div>
 
-            <p className="font-display font-semibold text-base text-foreground mb-3 text-center">
-              {r.sdr.nome}
-            </p>
+              <p className={cn("text-center mb-1.5", isCenter ? "text-sm font-medium text-foreground" : "text-xs text-muted-foreground")}>
+                {r.sdr.nome}
+              </p>
 
-            {/* podium block */}
-            <div className={`${heights[i]} w-full rounded-t-xl bg-gradient-to-t from-primary/30 via-primary/10 to-transparent border border-primary/20 flex flex-col justify-center gap-3 p-4`}>
-              <div className="flex justify-between items-baseline">
-                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Leads</span>
-                <span className="font-display font-bold text-lg text-foreground">{r.leads}</span>
+              <div className="text-center mb-2 space-y-0.5">
+                <p className="text-[10px] text-foreground/90">{r.leads} leads</p>
+                <p className="text-[10px] text-foreground/90">{r.agendadas} reuniões</p>
+                <p className="text-[10px] text-emerald-400">{r.conv.toFixed(0)}% conv.</p>
               </div>
-              <div className="flex justify-between items-baseline">
-                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Agendadas</span>
-                <span className="font-display font-bold text-lg text-gradient-gold">{r.agendadas}</span>
-              </div>
-              <div className="flex justify-between items-baseline">
-                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Conversão</span>
-                <span className="font-display font-bold text-lg text-foreground">{r.conv.toFixed(1)}%</span>
-              </div>
+
+              {/* podium bar */}
+              <div
+                className={cn("w-full rounded-t-md", orderedHeights[i])}
+                style={{
+                  background: isCenter
+                    ? "linear-gradient(180deg, #E8192C, #5a0f16)"
+                    : "linear-gradient(180deg, #6b1c26, #3a0f14)",
+                }}
+              />
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {rows.length > 3 && (
+      {ranked.length > 3 && (
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {rows.slice(3).map((r) => (
+          {ranked.slice(3).map((r) => (
             <div key={r.sdr.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border/50">
-              <div className="h-10 w-10 rounded-full bg-gradient-red/40 flex items-center justify-center text-xs font-display font-bold">
+              <div className="h-10 w-10 rounded-full bg-gradient-red/40 flex items-center justify-center text-xs font-display font-bold shrink-0 overflow-hidden">
                 {r.sdr.foto_url
                   ? <img src={r.sdr.foto_url} alt={r.sdr.nome} className="h-full w-full object-cover rounded-full" />
                   : initials(r.sdr.nome)}
