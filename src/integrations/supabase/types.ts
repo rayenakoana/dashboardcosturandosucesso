@@ -79,6 +79,7 @@ export type Database = {
           leads_recebidos: number
           reunioes_agendadas: number
           reunioes_confirmadas: number
+          sdr_id: string | null
         }
         Insert: {
           compareceram_real?: number
@@ -90,6 +91,7 @@ export type Database = {
           leads_recebidos?: number
           reunioes_agendadas?: number
           reunioes_confirmadas?: number
+          sdr_id?: string | null
         }
         Update: {
           compareceram_real?: number
@@ -101,8 +103,17 @@ export type Database = {
           leads_recebidos?: number
           reunioes_agendadas?: number
           reunioes_confirmadas?: number
+          sdr_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "metricas_diarias_sdr_id_fkey"
+            columns: ["sdr_id"]
+            isOneToOne: false
+            referencedRelation: "sdrs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       performance_reunioes: {
         Row: {
@@ -128,6 +139,30 @@ export type Database = {
           id?: string
           sdr_confirmado?: number
           sdr_estimado?: number
+        }
+        Relationships: []
+      }
+      sdrs: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          foto_url: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          nome?: string
         }
         Relationships: []
       }
