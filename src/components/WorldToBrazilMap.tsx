@@ -1,55 +1,103 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import * as d3 from "d3-geo";
+import { feature } from "topojson-client";
 import { GlassCard } from "./GlassCard";
 import { Globe2, ArrowLeft } from "lucide-react";
 
-export interface GeoPoint {
-  label: string;
-  x: number;
-  y: number;
+export interface GeoValue {
+  /** Nome do país (em inglês, como aparece no world-atlas) ou sigla do estado (UF). */
+  key: string;
   value: number;
 }
 
 interface WorldToBrazilMapProps {
-  /** Leads por país. Se não informado, usa dados de exemplo. */
-  countryData?: GeoPoint[];
-  /** Leads por estado (BR), cruzado com DDD do telefone. */
-  stateData?: GeoPoint[];
+  /** Leads por país (nome em inglês: "Brazil", "Paraguay", "Portugal", "China"...). */
+  countryData?: GeoValue[];
+  /** Leads por estado (BR), cruzado com DDD do telefone. Sigla: "SP", "MG"... */
+  stateData?: GeoValue[];
 }
 
-const DEFAULT_COUNTRIES: GeoPoint[] = [
-  { label: "Brasil", x: 230, y: 190, value: 1050 },
-  { label: "Paraguai", x: 210, y: 220, value: 98 },
-  { label: "Portugal", x: 330, y: 100, value: 64 },
-  { label: "China", x: 520, y: 130, value: 41 },
+const DEFAULT_COUNTRIES: GeoValue[] = [
+  { key: "Brazil", value: 1050 },
+  { key: "Paraguay", value: 98 },
+  { key: "Portugal", value: 64 },
+  { key: "China", value: 41 },
 ];
 
-const DEFAULT_STATES: GeoPoint[] = [
-  { label: "SP", x: 230, y: 200, value: 420 },
-  { label: "MG", x: 280, y: 170, value: 180 },
-  { label: "PR", x: 210, y: 230, value: 150 },
-  { label: "RS", x: 200, y: 260, value: 110 },
-  { label: "RJ", x: 280, y: 210, value: 95 },
+const DEFAULT_STATES: GeoValue[] = [
+  { key: "SP", value: 420 },
+  { key: "MG", value: 180 },
+  { key: "PR", value: 150 },
+  { key: "RS", value: 110 },
+  { key: "RJ", value: 95 },
 ];
+
+const WORLD_TOPOJSON_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+const BRAZIL_STATES_URL =
+  "https://cdn.jsdelivr.net/gh/giuliano-macedo/geodata-br-states@main/geojson/br_states.json";
+
+type Feat = { type: "Feature"; properties: Record<string, any>; geometry: any };
 
 export function WorldToBrazilMap({ countryData, stateData }: WorldToBrazilMapProps) {
   const [showStates, setShowStates] = useState(false);
+  const [worldFeatures, setWorldFeatures] = useState<Feat[] | null>(null);
+  const [brazilFeatures, setBrazilFeatures] = useState<Feat[] | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const [tooltip, setTooltip] = useState<{ label: string; value: number; x: number; y: number } | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
 
   const countries = countryData && countryData.length > 0 ? countryData : DEFAULT_COUNTRIES;
   const states = stateData && stateData.length > 0 ? stateData : DEFAULT_STATES;
 
-  const points = showStates ? states : countries;
-  const maxValue = Math.max(...points.map((p) => p.value), 1);
-  const radiusFor = (v: number) => 6 + (v / maxValue) * (showStates ? 30 : 40);
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([
+      fetch(WORLD_TOPOJSON_URL).then((r) => r.json()),
+      fetch(BRAZIL_STATES_URL).then((r) => r.json()),
+    ])
+      .then(([worldTopo, brStates]) => {
+        if (cancelled) return;
+        const countriesGeo = feature(worldTopo, worldTopo.objects.countries) as any;
+        setWorldFeatures(countriesGeo.features);
+        setBrazilFeatures(brStates.features);
+      })
+      .catch(() => {
+        if (!cancelled) setLoadError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const W = 640;
+  const H = 300;
+
+  const countryValueFor = (props: Record<string, any>) => {
+    const name = props.name || props.NAME || props.ADMIN;
+    return countries.find((c) => c.key === name)?.value ?? 0;
+  };
+  const stateValueFor = (props: Record<string, any>) => {
+    const sigla = props.SIGLA || props.sigla || props.UF || props.abbrev_state;
+    return states.find((s) => s.key === sigla)?.value ?? 0;
+  };
+
+  const maxCountry = Math.max(...countries.map((c) => c.value), 1);
+  const maxState = Math.max(...states.map((s) => s.value), 1);
+
+  const colorFor = (v: number, max: number) => {
+    const intensity = v / max;
+    if (v === 0) return "#1c1c24";
+    if (intensity > 0.6) return "#E8384F";
+    if (intensity > 0.25) return "#B24A3A";
+    return "#3a3040";
+  };
 
   return (
     <GlassCard className="relative overflow-hidden">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Globe2 className="h-4 w-4 text-primary" />
-          <h3 className="font-display font-bold text-lg tracking-wide">
-            Origem geográfica dos leads
-          </h3>
+          <h3 className="font-display font-bold text-lg tracking-wide">Origem geográfica dos leads</h3>
         </div>
         {showStates && (
           <button
@@ -67,55 +115,93 @@ export function WorldToBrazilMap({ countryData, stateData }: WorldToBrazilMapPro
       </p>
 
       <div className="relative h-72 rounded-xl overflow-hidden bg-background/40 border border-border/50">
-        <svg viewBox="0 0 640 300" className="absolute inset-0 w-full h-full">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <line key={`v${i}`} x1={i * 90} y1={0} x2={i * 90} y2={300} stroke="#3a3a45" strokeOpacity={0.35} />
-          ))}
-          {Array.from({ length: 4 }).map((_, i) => (
-            <line key={`h${i}`} x1={0} y1={i * 90} x2={640} y2={i * 90} stroke="#3a3a45" strokeOpacity={0.35} />
-          ))}
-
-          {points.map((p) => {
-            const r = radiusFor(p.value);
-            const intensity = p.value / maxValue;
-            const fill =
-              intensity > 0.6
-                ? "#E8384F"
-                : intensity > 0.25
-                ? "#B24A3A"
-                : "#3a3040";
-            return (
-              <g key={p.label}>
-                <circle
-                  cx={p.x}
-                  cy={p.y}
-                  r={r}
-                  fill={fill}
-                  stroke="#0D0D1A"
-                  strokeWidth={1}
-                  className="cursor-pointer transition-opacity hover:opacity-80"
-                  onMouseEnter={() => setTooltip({ label: p.label, value: p.value, x: p.x, y: p.y })}
-                  onMouseLeave={() => setTooltip(null)}
-                  onClick={() => {
-                    if (!showStates && p.label === "Brasil") setShowStates(true);
-                  }}
-                />
-                <text x={p.x} y={p.y - r - 6} textAnchor="middle" fontSize={10} fill="#999">
-                  {p.label}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
+        {!worldFeatures && !loadError && (
+          <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
+            Carregando mapa...
+          </div>
+        )}
+        {loadError && (
+          <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground px-6 text-center">
+            Não foi possível carregar o mapa geográfico agora.
+          </div>
+        )}
+        {worldFeatures && brazilFeatures && (
+          <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 w-full h-full">
+            {!showStates &&
+              (() => {
+                const projection = d3.geoNaturalEarth1().fitSize(
+                  [W, H],
+                  { type: "FeatureCollection", features: worldFeatures } as any
+                );
+                const path = d3.geoPath(projection);
+                return worldFeatures.map((f, i) => {
+                  const v = countryValueFor(f.properties);
+                  return (
+                    <path
+                      key={i}
+                      d={path(f as any) || undefined}
+                      fill={colorFor(v, maxCountry)}
+                      stroke="#0D0D1A"
+                      strokeWidth={0.5}
+                      className="cursor-pointer transition-opacity hover:opacity-80"
+                      onMouseMove={(e) => {
+                        if (v > 0) {
+                          const rect = svgRef.current?.getBoundingClientRect();
+                          setTooltip({
+                            label: f.properties.name || f.properties.NAME,
+                            value: v,
+                            x: rect ? e.clientX - rect.left : 0,
+                            y: rect ? e.clientY - rect.top : 0,
+                          });
+                        }
+                      }}
+                      onMouseLeave={() => setTooltip(null)}
+                      onClick={() => {
+                        const name = f.properties.name || f.properties.NAME;
+                        if (name === "Brazil") setShowStates(true);
+                      }}
+                    />
+                  );
+                });
+              })()}
+            {showStates &&
+              (() => {
+                const projection = d3
+                  .geoMercator()
+                  .fitSize([W, H], { type: "FeatureCollection", features: brazilFeatures } as any);
+                const path = d3.geoPath(projection);
+                return brazilFeatures.map((f, i) => {
+                  const v = stateValueFor(f.properties);
+                  return (
+                    <path
+                      key={i}
+                      d={path(f as any) || undefined}
+                      fill={colorFor(v, maxState)}
+                      stroke="#0D0D1A"
+                      strokeWidth={0.5}
+                      className="cursor-pointer transition-opacity hover:opacity-80"
+                      onMouseMove={(e) => {
+                        const rect = svgRef.current?.getBoundingClientRect();
+                        const sigla = f.properties.SIGLA || f.properties.sigla || f.properties.UF || "?";
+                        setTooltip({
+                          label: sigla,
+                          value: v,
+                          x: rect ? e.clientX - rect.left : 0,
+                          y: rect ? e.clientY - rect.top : 0,
+                        });
+                      }}
+                      onMouseLeave={() => setTooltip(null)}
+                    />
+                  );
+                });
+              })()}
+          </svg>
+        )}
 
         {tooltip && (
           <div
-            className="absolute pointer-events-none bg-card border border-border rounded-md px-2.5 py-1.5 text-xs shadow-lg"
-            style={{
-              left: `${(tooltip.x / 640) * 100}%`,
-              top: `${(tooltip.y / 300) * 100}%`,
-              transform: "translate(12px, -12px)",
-            }}
+            className="absolute pointer-events-none bg-card border border-border rounded-md px-2.5 py-1.5 text-xs shadow-lg z-10"
+            style={{ left: tooltip.x, top: tooltip.y, transform: "translate(12px, -12px)" }}
           >
             <span className="font-semibold text-foreground">{tooltip.label}</span>
             <span className="text-muted-foreground"> — {tooltip.value} leads</span>
