@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { KPICard } from "@/components/KPICard";
 import { GlassCard } from "@/components/GlassCard";
+import { SDRPodium } from "@/components/SDRPodium";
+import { WorldToBrazilMap } from "@/components/WorldToBrazilMap";
 import { useVendas } from "@/hooks/useVendas";
 import { useCustosMarketing } from "@/hooks/useCustosMarketing";
 import { usePerformanceReunioes } from "@/hooks/usePerformanceReunioes";
@@ -330,8 +332,10 @@ export default function Index() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard Geral</h1>
-        <p className="text-muted-foreground text-sm mt-1">Visão consolidada de Marketing & Comercial</p>
+        <h1 className="font-display font-bold text-4xl md:text-5xl tracking-wide">
+          <span className="text-gradient">DASHBOARD</span> GERAL
+        </h1>
+        <p className="text-muted-foreground text-sm mt-1 uppercase tracking-widest text-[11px]">Visão consolidada · Marketing & Comercial</p>
       </div>
 
       {/* Filters */}
@@ -720,6 +724,11 @@ export default function Index() {
           <div className="h-[280px] flex items-center justify-center text-muted-foreground text-sm">Sem dados de reuniões no período</div>
         )}
       </GlassCard>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SDRPodium start={start} end={end} />
+        <WorldToBrazilMap />
+      </div>
     </div>
   );
 }
