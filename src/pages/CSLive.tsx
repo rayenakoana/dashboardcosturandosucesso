@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useVendas } from "@/hooks/useVendas";
 import { useConfiguracoes } from "@/hooks/useConfiguracoes";
 import { ArrowLeft, TrendingUp, Trophy, Zap } from "lucide-react";
@@ -14,6 +16,7 @@ function formatBRL(v: number) {
 
 export default function CSLive() {
   const { data: vendas = [] } = useVendas();
+  const queryClient = useQueryClient();
   const { data: metaCfg = [] } = useConfiguracoes("Meta Venda Geral");
   const { data: funis = [] } = useConfiguracoes("Funil");
   const [filterFunis, setFilterFunis] = useState<string[]>([]);
@@ -63,6 +66,25 @@ export default function CSLive() {
       celebrate(Number(v.valor));
     });
   }, [vendasDoMes]);
+
+  // Realtime: avisa esta tela sempre que uma venda for inserida/atualizada
+  // em QUALQUER dispositivo (não só na aba que fez a alteração).
+  useEffect(() => {
+    const channel = supabase
+      .channel("cs-live-vendas")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "vendas" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["vendas"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   function celebrate(valor: number) {
     // Confetti burst
