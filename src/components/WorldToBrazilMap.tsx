@@ -1,104 +1,132 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { GlassCard } from "./GlassCard";
-import { Globe2 } from "lucide-react";
+import { Globe2, ArrowLeft } from "lucide-react";
 
-/**
- * Decorative map: animates a slow zoom from a world/globe icon towards Brazil,
- * highlighting the geographic origin of leads. SVG-based, no external deps.
- */
-export function WorldToBrazilMap() {
-  const [zoomed, setZoomed] = useState(false);
-  useEffect(() => {
-    const t = setInterval(() => setZoomed((z) => !z), 5000);
-    return () => clearInterval(t);
-  }, []);
+export interface GeoPoint {
+  label: string;
+  x: number;
+  y: number;
+  value: number;
+}
+
+interface WorldToBrazilMapProps {
+  /** Leads por país. Se não informado, usa dados de exemplo. */
+  countryData?: GeoPoint[];
+  /** Leads por estado (BR), cruzado com DDD do telefone. */
+  stateData?: GeoPoint[];
+}
+
+const DEFAULT_COUNTRIES: GeoPoint[] = [
+  { label: "Brasil", x: 230, y: 190, value: 1050 },
+  { label: "Paraguai", x: 210, y: 220, value: 98 },
+  { label: "Portugal", x: 330, y: 100, value: 64 },
+  { label: "China", x: 520, y: 130, value: 41 },
+];
+
+const DEFAULT_STATES: GeoPoint[] = [
+  { label: "SP", x: 230, y: 200, value: 420 },
+  { label: "MG", x: 280, y: 170, value: 180 },
+  { label: "PR", x: 210, y: 230, value: 150 },
+  { label: "RS", x: 200, y: 260, value: 110 },
+  { label: "RJ", x: 280, y: 210, value: 95 },
+];
+
+export function WorldToBrazilMap({ countryData, stateData }: WorldToBrazilMapProps) {
+  const [showStates, setShowStates] = useState(false);
+  const [tooltip, setTooltip] = useState<{ label: string; value: number; x: number; y: number } | null>(null);
+
+  const countries = countryData && countryData.length > 0 ? countryData : DEFAULT_COUNTRIES;
+  const states = stateData && stateData.length > 0 ? stateData : DEFAULT_STATES;
+
+  const points = showStates ? states : countries;
+  const maxValue = Math.max(...points.map((p) => p.value), 1);
+  const radiusFor = (v: number) => 6 + (v / maxValue) * (showStates ? 30 : 40);
 
   return (
     <GlassCard className="relative overflow-hidden">
-      <div className="flex items-center gap-2 mb-3">
-        <Globe2 className="h-4 w-4 text-primary" />
-        <h3 className="font-display font-bold text-lg tracking-wide">Origem geográfica dos leads</h3>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Globe2 className="h-4 w-4 text-primary" />
+          <h3 className="font-display font-bold text-lg tracking-wide">
+            Origem geográfica dos leads
+          </h3>
+        </div>
+        {showStates && (
+          <button
+            onClick={() => setShowStates(false)}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Mundo
+          </button>
+        )}
       </div>
-      <div className="relative h-64 rounded-xl overflow-hidden bg-background/40 border border-border/50">
-        <svg
-          viewBox="0 0 800 400"
-          className="absolute inset-0 w-full h-full transition-transform duration-[3000ms] ease-in-out"
-          style={{
-            transform: zoomed ? "scale(3.4) translate(-8%, -6%)" : "scale(1) translate(0,0)",
-            transformOrigin: "34% 62%",
-          }}
-        >
-          <defs>
-            <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="hsl(355 82% 51%)" stopOpacity="0.6" />
-              <stop offset="100%" stopColor="hsl(355 82% 51%)" stopOpacity="0" />
-            </radialGradient>
-            <linearGradient id="landGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="hsl(240 15% 18%)" />
-              <stop offset="100%" stopColor="hsl(240 20% 10%)" />
-            </linearGradient>
-            <linearGradient id="brGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="hsl(355 82% 55%)" />
-              <stop offset="100%" stopColor="hsl(355 72% 31%)" />
-            </linearGradient>
-          </defs>
+      <p className="text-xs text-muted-foreground mb-2">
+        {showStates
+          ? "Distribuição por estado, cruzada com o DDD do telefone"
+          : "Clique no Brasil para ver a distribuição por estado"}
+      </p>
 
-          {/* Simplified continents silhouette */}
-          <g fill="url(#landGrad)" stroke="hsl(240 15% 22%)" strokeWidth="0.5">
-            {/* North America */}
-            <path d="M60 90 L180 70 L230 130 L200 200 L120 210 L80 170 Z" />
-            {/* South America (Brazil area highlighted separately) */}
-            <path d="M220 220 L280 210 L300 260 L280 340 L230 350 L200 300 Z" />
-            {/* Europe */}
-            <path d="M370 90 L430 80 L450 130 L410 160 L370 140 Z" />
-            {/* Africa */}
-            <path d="M400 170 L460 165 L470 260 L430 320 L400 260 Z" />
-            {/* Asia */}
-            <path d="M470 80 L680 70 L720 160 L650 200 L500 180 L470 140 Z" />
-            {/* Australia */}
-            <path d="M640 280 L720 275 L740 320 L680 335 L640 315 Z" />
-          </g>
-
-          {/* Brazil highlighted */}
-          <path
-            d="M235 225 L275 218 L295 255 L285 305 L260 340 L230 335 L215 300 L220 260 Z"
-            fill="url(#brGrad)"
-            stroke="hsl(355 82% 60%)"
-            strokeWidth="1"
-          />
-
-          {/* Pulsing glow over Brazil */}
-          <circle cx="260" cy="285" r="45" fill="url(#glow)">
-            <animate attributeName="r" values="30;55;30" dur="3s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3s" repeatCount="indefinite" />
-          </circle>
-
-          {/* Origin markers */}
-          {[
-            { x: 245, y: 260, r: 3 },
-            { x: 268, y: 280, r: 4 },
-            { x: 255, y: 305, r: 3 },
-            { x: 240, y: 295, r: 2.5 },
-            { x: 275, y: 320, r: 3 },
-          ].map((p, i) => (
-            <g key={i}>
-              <circle cx={p.x} cy={p.y} r={p.r} fill="hsl(45 78% 54%)" />
-              <circle cx={p.x} cy={p.y} r={p.r * 2} fill="hsl(45 78% 54%)" opacity="0.3">
-                <animate attributeName="r" values={`${p.r};${p.r * 3};${p.r}`} dur="2.5s" begin={`${i * 0.3}s`} repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.6;0;0.6" dur="2.5s" begin={`${i * 0.3}s`} repeatCount="indefinite" />
-              </circle>
-            </g>
+      <div className="relative h-72 rounded-xl overflow-hidden bg-background/40 border border-border/50">
+        <svg viewBox="0 0 640 300" className="absolute inset-0 w-full h-full">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <line key={`v${i}`} x1={i * 90} y1={0} x2={i * 90} y2={300} stroke="hsl(var(--border))" strokeOpacity={0.25} />
           ))}
+          {Array.from({ length: 4 }).map((_, i) => (
+            <line key={`h${i}`} x1={0} y1={i * 90} x2={640} y2={i * 90} stroke="hsl(var(--border))" strokeOpacity={0.25} />
+          ))}
+
+          {points.map((p) => {
+            const r = radiusFor(p.value);
+            const intensity = p.value / maxValue;
+            const fill =
+              intensity > 0.6
+                ? "hsl(355 82% 51%)"
+                : intensity > 0.25
+                ? "hsl(355 55% 40%)"
+                : "hsl(240 15% 22%)";
+            return (
+              <g key={p.label}>
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={r}
+                  fill={fill}
+                  stroke="hsl(var(--background))"
+                  strokeWidth={1}
+                  className="cursor-pointer transition-opacity hover:opacity-80"
+                  onMouseEnter={() => setTooltip({ label: p.label, value: p.value, x: p.x, y: p.y })}
+                  onMouseLeave={() => setTooltip(null)}
+                  onClick={() => {
+                    if (!showStates && p.label === "Brasil") setShowStates(true);
+                  }}
+                />
+                <text x={p.x} y={p.y - r - 6} textAnchor="middle" fontSize={10} fill="hsl(var(--muted-foreground))">
+                  {p.label}
+                </text>
+              </g>
+            );
+          })}
         </svg>
 
-        <div className="absolute bottom-3 left-3 flex items-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-primary" /> Brasil
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-gold" /> Origens
-          </span>
-        </div>
+        {tooltip && (
+          <div
+            className="absolute pointer-events-none bg-card border border-border rounded-md px-2.5 py-1.5 text-xs shadow-lg"
+            style={{
+              left: `${(tooltip.x / 640) * 100}%`,
+              top: `${(tooltip.y / 300) * 100}%`,
+              transform: "translate(12px, -12px)",
+            }}
+          >
+            <span className="font-semibold text-foreground">{tooltip.label}</span>
+            <span className="text-muted-foreground"> — {tooltip.value} leads</span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 mt-3">
+        <span className="text-[10px] text-muted-foreground">menos leads</span>
+        <div className="flex-1 h-1.5 rounded-full bg-gradient-to-r from-muted to-primary" />
+        <span className="text-[10px] text-muted-foreground">mais leads</span>
       </div>
     </GlassCard>
   );

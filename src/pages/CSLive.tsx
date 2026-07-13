@@ -15,14 +15,24 @@ function formatBRL(v: number) {
 export default function CSLive() {
   const { data: vendas = [] } = useVendas();
   const { data: metaCfg = [] } = useConfiguracoes("Meta Venda Geral");
+  const { data: funis = [] } = useConfiguracoes("Funil");
+  const [filterFunis, setFilterFunis] = useState<string[]>([]);
+  const toggleFunil = (nome: string) => {
+    setFilterFunis(prev => prev.includes(nome) ? prev.filter(f => f !== nome) : [...prev, nome]);
+  };
 
   const now = new Date();
   const mesRef = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const monthStart = `${mesRef}-01`;
 
   const vendasDoMes = useMemo(
-    () => vendas.filter(v => v.status === "Fechado" && v.data_fechamento && v.data_fechamento >= monthStart),
-    [vendas, monthStart]
+    () => vendas.filter(v =>
+      v.status === "Fechado" &&
+      v.data_fechamento &&
+      v.data_fechamento >= monthStart &&
+      (filterFunis.length === 0 || filterFunis.includes(v.funil))
+    ),
+    [vendas, monthStart, filterFunis]
   );
   const faturamento = vendasDoMes.reduce((s, v) => s + Number(v.valor), 0);
   const totalVendas = vendasDoMes.length;
@@ -62,8 +72,8 @@ export default function CSLive() {
       origin: { y: 0.6 },
       colors: ["#E8192C", "#C9A017", "#ffffff", "#8a1520"],
     });
-    setTimeout(() => confetti({ particleCount: 80, angle: 60, spread: 55, origin: { x: 0 } }), 200);
-    setTimeout(() => confetti({ particleCount: 80, angle: 120, spread: 55, origin: { x: 1 } }), 400);
+    setTimeout(() => confetti({ particleCount: 80, angle: 60, spread: 55, origin: { x: 0 }, colors: ["#E8192C", "#C9A017", "#ffffff", "#8a1520"] }), 200);
+    setTimeout(() => confetti({ particleCount: 80, angle: 120, spread: 55, origin: { x: 1 }, colors: ["#E8192C", "#C9A017", "#ffffff", "#8a1520"] }), 400);
 
     // Emoji pop
     setPop({ emoji: EMOJIS[Math.floor(Math.random() * EMOJIS.length)], key: Date.now() });
@@ -120,6 +130,36 @@ export default function CSLive() {
         </div>
       )}
 
+      {/* Filtro por funil */}
+      <div className="flex flex-wrap items-center justify-center gap-2 mb-8 z-10 max-w-2xl">
+        <button
+          onClick={() => setFilterFunis([])}
+          className={`text-xs px-4 py-1.5 rounded-full border transition-colors ${
+            filterFunis.length === 0
+              ? "text-white border-transparent bg-gradient-red"
+              : "bg-muted/40 text-muted-foreground border-border hover:border-primary/50"
+          }`}
+        >
+          Todos os funis
+        </button>
+        {(funis as any[]).map((f) => {
+          const active = filterFunis.includes(f.valor);
+          return (
+            <button
+              key={f.id}
+              onClick={() => toggleFunil(f.valor)}
+              className={`text-xs px-4 py-1.5 rounded-full border transition-colors ${
+                active
+                  ? "text-white border-transparent bg-gradient-red"
+                  : "bg-muted/40 text-muted-foreground border-border hover:border-primary/50"
+              }`}
+            >
+              {f.valor}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Header */}
       <div className="text-center mb-12 z-10">
         <div className="text-[10px] md:text-xs uppercase tracking-[0.4em] text-muted-foreground mb-3">
@@ -174,6 +214,13 @@ export default function CSLive() {
           <span>{pctMeta.toFixed(1)}% atingido</span>
           <span>{formatBRL(meta)}</span>
         </div>
+        {meta > 0 && (
+          <div className="text-center mt-3 text-sm text-primary/80">
+            {faturamento >= meta
+              ? "🎉 Meta batida!"
+              : `Faltam ${formatBRL(meta - faturamento)} para bater a meta`}
+          </div>
+        )}
       </div>
     </div>
   );

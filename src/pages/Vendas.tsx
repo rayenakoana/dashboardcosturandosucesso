@@ -72,6 +72,10 @@ export default function Vendas() {
   const [dateEnd, setDateEnd] = useState("");
   const [filtroResponsavel, setFiltroResponsavel] = useState("all");
   const [filtroProdutoFunil, setFiltroProdutoFunil] = useState("all");
+  const [filterFunis, setFilterFunis] = useState<string[]>([]);
+  const toggleFunilFiltro = (nome: string) => {
+    setFilterFunis(prev => prev.includes(nome) ? prev.filter(f => f !== nome) : [...prev, nome]);
+  };
 
   // Ordenação
   const [sortKey, setSortKey] = useState<SortKey>("data_entrada");
@@ -118,6 +122,7 @@ export default function Vendas() {
         const f = filtroProdutoFunil.toLowerCase();
         if ((v.produto || "").toLowerCase() !== f && (v.funil || "").toLowerCase() !== f) return false;
       }
+      if (filterFunis.length > 0 && !filterFunis.includes(v.funil)) return false;
       return true;
     });
 
@@ -139,7 +144,7 @@ export default function Vendas() {
     });
 
     return result;
-  }, [vendas, search, dateStart, dateEnd, filtroResponsavel, filtroProdutoFunil, sortKey, sortDir]);
+  }, [vendas, search, dateStart, dateEnd, filtroResponsavel, filtroProdutoFunil, filterFunis, sortKey, sortDir]);
 
   const resumo = useMemo(() => {
     const total = vendasFiltradas.reduce((acc, v) => acc + (Number(v.valor) || 0), 0);
@@ -169,10 +174,24 @@ export default function Vendas() {
 
   const limparFiltros = () => {
     setSearch(""); setDateStart(""); setDateEnd("");
-    setFiltroResponsavel("all"); setFiltroProdutoFunil("all");
+    setFiltroResponsavel("all"); setFiltroProdutoFunil("all"); setFilterFunis([]);
   };
-  const hasFiltros = !!(search || dateStart || dateEnd || filtroResponsavel !== "all" || filtroProdutoFunil !== "all");
-  const painelFiltrosCount = [dateStart, dateEnd, filtroResponsavel !== "all", filtroProdutoFunil !== "all"].filter(Boolean).length;
+  const hasFiltros = !!(search || dateStart || dateEnd || filtroResponsavel !== "all" || filtroProdutoFunil !== "all" || filterFunis.length > 0);
+  const painelFiltrosCount = [dateStart, dateEnd, filtroResponsavel !== "all", filtroProdutoFunil !== "all", filterFunis.length > 0].filter(Boolean).length;
+
+  const aplicarPresetPeriodo = (preset: "hoje" | "mes" | "trimestre") => {
+    const hoje = new Date();
+    const toISO = (d: Date) => d.toISOString().slice(0, 10);
+    if (preset === "hoje") {
+      setDateStart(toISO(hoje)); setDateEnd(toISO(hoje));
+    } else if (preset === "mes") {
+      const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+      setDateStart(toISO(inicio)); setDateEnd(toISO(hoje));
+    } else if (preset === "trimestre") {
+      const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 2, 1);
+      setDateStart(toISO(inicio)); setDateEnd(toISO(hoje));
+    }
+  };
 
   const resetForm = () => {
     setForm({ ...initialForm, data_entrada: new Date().toISOString().split("T")[0] });
@@ -360,6 +379,11 @@ export default function Vendas() {
               <div className="space-y-5 mt-6">
                 <div>
                   <Label className="text-xs text-muted-foreground mb-2 block">Período</Label>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    <Button type="button" size="sm" variant="outline" className="h-7 text-xs bg-muted/50" onClick={() => aplicarPresetPeriodo("hoje")}>Hoje</Button>
+                    <Button type="button" size="sm" variant="outline" className="h-7 text-xs bg-muted/50" onClick={() => aplicarPresetPeriodo("mes")}>Este mês</Button>
+                    <Button type="button" size="sm" variant="outline" className="h-7 text-xs bg-muted/50" onClick={() => aplicarPresetPeriodo("trimestre")}>Trimestre</Button>
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <Label className="text-[11px] text-muted-foreground">De</Label>
@@ -369,6 +393,24 @@ export default function Vendas() {
                       <Label className="text-[11px] text-muted-foreground">Até</Label>
                       <Input type="date" value={dateEnd} onChange={e => setDateEnd(e.target.value)} className="bg-muted/50" />
                     </div>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-2 block">
+                    Funil <span className="text-[11px]">(selecione um ou vários)</span>
+                  </Label>
+                  <div className="space-y-1.5">
+                    {funis.map(f => (
+                      <label key={f.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filterFunis.includes(f.valor)}
+                          onChange={() => toggleFunilFiltro(f.valor)}
+                          className="accent-primary h-3.5 w-3.5"
+                        />
+                        {f.valor}
+                      </label>
+                    ))}
                   </div>
                 </div>
                 <div>
