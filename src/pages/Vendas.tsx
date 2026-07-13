@@ -7,10 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { useVendas, useAddVenda, useUpdateVenda, useDeleteVenda } from "@/hooks/useVendas";
 import { useConfiguracoes } from "@/hooks/useConfiguracoes";
 import { sendToWebhook } from "@/hooks/useWebhook";
-import { Plus, Trash2, Pencil, ArrowUpDown, ArrowUp, ArrowDown, Search, X } from "lucide-react";
+import { Plus, Trash2, Pencil, ArrowUpDown, ArrowUp, ArrowDown, Search, X, Filter } from "lucide-react";
 import { toast } from "sonner";
 
 const STATUS_OPTIONS = ["Lead", "MQL", "Reunião", "Fechado", "Perdido"];
@@ -171,6 +172,7 @@ export default function Vendas() {
     setFiltroResponsavel("all"); setFiltroProdutoFunil("all");
   };
   const hasFiltros = !!(search || dateStart || dateEnd || filtroResponsavel !== "all" || filtroProdutoFunil !== "all");
+  const painelFiltrosCount = [dateStart, dateEnd, filtroResponsavel !== "all", filtroProdutoFunil !== "all"].filter(Boolean).length;
 
   const resetForm = () => {
     setForm({ ...initialForm, data_entrada: new Date().toISOString().split("T")[0] });
@@ -332,44 +334,82 @@ export default function Vendas() {
       {/* Filtros */}
       <GlassCard className="p-4">
         <div className="flex flex-wrap items-end gap-3">
-          <div className="flex-1 min-w-[200px]">
+          <div className="flex-1 min-w-[240px]">
             <Label className="text-xs text-muted-foreground">Buscar cliente / empresa</Label>
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Digite para buscar..." className="bg-muted/50 pl-8" />
             </div>
           </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">De</Label>
-            <Input type="date" value={dateStart} onChange={e => setDateStart(e.target.value)} className="bg-muted/50 w-[150px]" />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">Até</Label>
-            <Input type="date" value={dateEnd} onChange={e => setDateEnd(e.target.value)} className="bg-muted/50 w-[150px]" />
-          </div>
-          <div className="min-w-[160px]">
-            <Label className="text-xs text-muted-foreground">Vendedor / SDR</Label>
-            <Select value={filtroResponsavel} onValueChange={setFiltroResponsavel}>
-              <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {responsaveisDisponiveis.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="min-w-[180px]">
-            <Label className="text-xs text-muted-foreground">Produto / Funil</Label>
-            <Select value={filtroProdutoFunil} onValueChange={setFiltroProdutoFunil}>
-              <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {produtosFunisDisponiveis.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="gap-2 bg-muted/50">
+                <Filter className="h-4 w-4" /> Filtros
+                {painelFiltrosCount > 0 && (
+                  <span className="bg-primary text-primary-foreground rounded-full text-xs px-1.5 py-0.5 leading-none">
+                    {painelFiltrosCount}
+                  </span>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="bg-card border-border overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Filtros {painelFiltrosCount > 0 && <span className="text-muted-foreground font-normal">({painelFiltrosCount})</span>}</SheetTitle>
+              </SheetHeader>
+              <div className="space-y-5 mt-6">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-2 block">Período</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-[11px] text-muted-foreground">De</Label>
+                      <Input type="date" value={dateStart} onChange={e => setDateStart(e.target.value)} className="bg-muted/50" />
+                    </div>
+                    <div>
+                      <Label className="text-[11px] text-muted-foreground">Até</Label>
+                      <Input type="date" value={dateEnd} onChange={e => setDateEnd(e.target.value)} className="bg-muted/50" />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-2 block">Vendedor / SDR</Label>
+                  <Select value={filtroResponsavel} onValueChange={setFiltroResponsavel}>
+                    <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {responsaveisDisponiveis.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-2 block">Produto / Funil</Label>
+                  <Select value={filtroProdutoFunil} onValueChange={setFiltroProdutoFunil}>
+                    <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {produtosFunisDisponiveis.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <SheetFooter className="mt-8 flex-row gap-2 sm:justify-start">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => { setDateStart(""); setDateEnd(""); setFiltroResponsavel("all"); setFiltroProdutoFunil("all"); }}
+                >
+                  Limpar filtros
+                </Button>
+                <SheetClose asChild>
+                  <Button className="flex-1 bg-primary hover:bg-primary/90">Aplicar filtros</Button>
+                </SheetClose>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
+
           {hasFiltros && (
             <Button variant="ghost" onClick={limparFiltros} className="gap-1 text-muted-foreground hover:text-foreground">
-              <X className="h-4 w-4" /> Limpar
+              <X className="h-4 w-4" /> Limpar tudo
             </Button>
           )}
         </div>

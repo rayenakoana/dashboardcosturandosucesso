@@ -8,6 +8,7 @@ import { useMetricasDiarias } from "@/hooks/useMetricasDiarias";
 import { useConfiguracoes } from "@/hooks/useConfiguracoes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,7 +19,7 @@ import {
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line, Legend,
+  PieChart, Pie, Cell, LineChart, Line, Legend, ComposedChart, Area,
 } from "recharts";
 
 const COLORS = ["#C8102E", "#E8384F", "#FF6B6B", "#FF8E8E", "#FFB4B4", "#991B1B", "#FCA5A5"];
@@ -80,10 +81,14 @@ export default function Index() {
   const [period, setPeriod] = useState("month");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
-  const [filterFunil, setFilterFunil] = useState("Todos");
+  const [filterFunis, setFilterFunis] = useState<string[]>([]);
+  const toggleFunil = (nome: string) => {
+    setFilterFunis(prev => prev.includes(nome) ? prev.filter(f => f !== nome) : [...prev, nome]);
+  };
   const [filterProduto, setFilterProduto] = useState("Todos");
   const [filterCampanha, setFilterCampanha] = useState("Todos");
   const [filterOrigem, setFilterOrigem] = useState("Todos");
+  const [excludeRenovacao, setExcludeRenovacao] = useState(false);
 
   const { start, end } = getDateRange(period, customStart, customEnd);
 
@@ -91,13 +96,13 @@ export default function Index() {
   const filteredVendas = useMemo(() => {
     return vendas.filter(v => {
       if (v.data_entrada < start || v.data_entrada > end) return false;
-      if (filterFunil !== "Todos" && v.funil !== filterFunil) return false;
+      if (filterFunis.length > 0 && !filterFunis.includes(v.funil)) return false;
       if (filterProduto !== "Todos" && v.produto !== filterProduto) return false;
       if (filterCampanha !== "Todos" && v.campanha !== filterCampanha) return false;
       if (filterOrigem !== "Todos" && v.origem !== filterOrigem) return false;
       return true;
     });
-  }, [vendas, start, end, filterFunil, filterProduto, filterCampanha, filterOrigem]);
+  }, [vendas, start, end, filterFunis, filterProduto, filterCampanha, filterOrigem]);
 
   // Vendas filtradas por data_fechamento (visão Financeira / Faturamento)
   const vendasFechamentoNoPeriodo = useMemo(() => {
@@ -105,33 +110,39 @@ export default function Index() {
       if (!v.data_fechamento) return false;
       if (v.data_fechamento < start || v.data_fechamento > end) return false;
       if (v.status !== "Fechado") return false;
-      if (filterFunil !== "Todos" && v.funil !== filterFunil) return false;
+      if (filterFunis.length > 0 && !filterFunis.includes(v.funil)) return false;
       if (filterProduto !== "Todos" && v.produto !== filterProduto) return false;
       if (filterCampanha !== "Todos" && v.campanha !== filterCampanha) return false;
       if (filterOrigem !== "Todos" && v.origem !== filterOrigem) return false;
       return true;
     });
-  }, [vendas, start, end, filterFunil, filterProduto, filterCampanha, filterOrigem]);
+  }, [vendas, start, end, filterFunis, filterProduto, filterCampanha, filterOrigem]);
 
   const filteredCustos = useMemo(() => custos.filter(c => {
     if (c.data < start || c.data > end) return false;
-    if (filterFunil !== "Todos" && (c.produto || "").toUpperCase() !== filterFunil.toUpperCase()) return false;
+    if (filterFunis.length > 0 && !filterFunis.map(f => f.toUpperCase()).includes((c.produto || "").toUpperCase())) return false;
     return true;
-  }), [custos, start, end, filterFunil]);
+  }), [custos, start, end, filterFunis]);
   const filteredReunioes = useMemo(() => reunioes.filter(r => r.data >= start && r.data <= end), [reunioes, start, end]);
 
   const filteredMetricas = useMemo(() => {
     return metricasDiarias.filter(m => {
       if (m.data < start || m.data > end) return false;
-      if (filterFunil !== "Todos" && m.funil !== filterFunil) return false;
+      if (filterFunis.length > 0 && !filterFunis.includes(m.funil)) return false;
       return true;
     });
-  }, [metricasDiarias, start, end, filterFunil]);
+  }, [metricasDiarias, start, end, filterFunis]);
 
   // === KPIs Financeiros (por data_fechamento) ===
-  const faturamento = vendasFechamentoNoPeriodo.reduce((s, v) => s + Number(v.valor), 0);
+  const vendasParaFaturamento = excludeRenovacao
+    ? vendasFechamentoNoPeriodo.filter(v => !v.is_renovacao)
+    : vendasFechamentoNoPeriodo;
+  const faturamento = vendasParaFaturamento.reduce((s, v) => s + Number(v.valor), 0);
   const faturamentoRenovacao = vendasFechamentoNoPeriodo.filter(v => v.is_renovacao).reduce((s, v) => s + Number(v.valor), 0);
-  const ticketMedio = vendasFechamentoNoPeriodo.length > 0 ? faturamento / vendasFechamentoNoPeriodo.length : 0;
+  const pctReceitaRenovacao = (faturamento + (excludeRenovacao ? faturamentoRenovacao : 0)) > 0
+    ? (faturamentoRenovacao / (faturamento + (excludeRenovacao ? faturamentoRenovacao : 0))) * 100
+    : 0;
+  const ticketMedio = vendasParaFaturamento.length > 0 ? faturamento / vendasParaFaturamento.length : 0;
 
   const tempoMedio = useMemo(() => {
     const with2dates = vendasFechamentoNoPeriodo.filter(v => v.data_entrada && v.data_fechamento);
@@ -345,15 +356,43 @@ export default function Index() {
               </div>
             </>
           )}
-          <div>
-            <Label className="text-xs text-muted-foreground">Funil</Label>
-            <Select value={filterFunil} onValueChange={setFilterFunil}>
-              <SelectTrigger className="bg-muted/50 h-9 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Todos">Todos</SelectItem>
-                {funis.map(f => <SelectItem key={f.id} value={f.valor}>{f.valor}</SelectItem>)}
-              </SelectContent>
-            </Select>
+          <div className="min-w-[240px]">
+            <Label className="text-xs text-muted-foreground">Funis (selecione um ou vários)</Label>
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
+              {funis.map(f => {
+                const active = filterFunis.includes(f.valor);
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => toggleFunil(f.valor)}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                      active
+                        ? "text-white border-transparent"
+                        : "bg-muted/40 text-muted-foreground border-border hover:border-primary/50"
+                    }`}
+                    style={active ? { background: "linear-gradient(135deg, #E8384F, #991B1B)" } : undefined}
+                  >
+                    {f.valor}
+                  </button>
+                );
+              })}
+              {filterFunis.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setFilterFunis([])}
+                  className="text-xs px-3 py-1.5 rounded-full border border-border text-muted-foreground hover:text-foreground"
+                >
+                  Limpar
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 pt-5">
+            <Switch checked={excludeRenovacao} onCheckedChange={setExcludeRenovacao} id="exclude-renovacao" />
+            <Label htmlFor="exclude-renovacao" className="text-xs text-muted-foreground cursor-pointer">
+              Retirar renovação
+            </Label>
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Produto</Label>
@@ -437,7 +476,11 @@ export default function Index() {
               <KPICard title="Faturamento Total" value={`R$ ${faturamento.toLocaleString("pt-BR")}`} icon={DollarSign}
                 subtitle={metaVendaGeral > 0
                   ? `Meta: R$ ${metaVendaGeral.toLocaleString("pt-BR")} | ${((faturamento / metaVendaGeral) * 100).toFixed(0)}%`
-                  : `${vendasFechamentoNoPeriodo.length} vendas fechadas`}
+                  : (excludeRenovacao
+                      ? `${vendasParaFaturamento.length} vendas (sem renovação)`
+                      : faturamentoRenovacao > 0
+                        ? `dos quais R$ ${faturamentoRenovacao.toLocaleString("pt-BR")} (${pctReceitaRenovacao.toFixed(0)}%) é renovação`
+                        : `${vendasFechamentoNoPeriodo.length} vendas fechadas`)}
                 trend={metaVendaGeral > 0 ? (faturamento >= metaVendaGeral ? "up" : (faturamento >= metaVendaGeral * 0.8 ? "neutral" : "down")) : undefined}
               />
               <KPICard title="Fat. Renovação" value={`R$ ${faturamentoRenovacao.toLocaleString("pt-BR")}`} icon={RefreshCw}
@@ -500,15 +543,22 @@ export default function Index() {
         </h3>
         {isLoading ? <ChartSkeleton /> : conversionLineData.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={conversionLineData}>
+            <ComposedChart data={conversionLineData}>
+              <defs>
+                <linearGradient id="gradQualificados" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#E8384F" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="#E8384F" stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <XAxis dataKey="data" tick={{ fill: "#666", fontSize: 11 }} />
               <YAxis tick={{ fill: "#666", fontSize: 11 }} />
               <Tooltip contentStyle={tooltipStyle} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Line type="monotone" dataKey="Leads Qualificados" stroke="#C8102E" strokeWidth={2} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="Reuniões Agendadas" stroke="#FF6B6B" strokeWidth={2} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="Compareceram" stroke="#FFB4B4" strokeWidth={2} dot={{ r: 3 }} />
-            </LineChart>
+              <Area type="monotone" dataKey="Leads Qualificados" stroke="#E8384F" strokeWidth={2.5}
+                fill="url(#gradQualificados)" dot={false} activeDot={{ r: 4 }} />
+              <Line type="monotone" dataKey="Reuniões Agendadas" stroke="#EF9F27" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="Compareceram" stroke="#5DCAA5" strokeWidth={2} dot={{ r: 3 }} />
+            </ComposedChart>
           </ResponsiveContainer>
         ) : (
           <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">Sem dados de input diário no período</div>
@@ -590,10 +640,18 @@ export default function Index() {
           {isLoading ? <ChartSkeleton /> : motivosData.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
+                <defs>
+                  {COLORS.map((c, i) => (
+                    <linearGradient key={i} id={`gradPie${i}`} x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor={c} stopOpacity={0.55} />
+                      <stop offset="100%" stopColor={c} stopOpacity={1} />
+                    </linearGradient>
+                  ))}
+                </defs>
                 <Pie data={motivosData} cx="50%" cy="50%" outerRadius={100} innerRadius={50} dataKey="value"
                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   labelLine={{ stroke: "hsl(0 0% 30%)" }}>
-                  {motivosData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  {motivosData.map((_, i) => <Cell key={i} fill={`url(#gradPie${i % COLORS.length})`} />)}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} />
               </PieChart>
@@ -610,10 +668,16 @@ export default function Index() {
           {isLoading ? <ChartSkeleton /> : segmentoData.length > 0 ? (
             <ResponsiveContainer width="100%" height={Math.max(200, segmentoData.length * 40)}>
               <BarChart data={segmentoData} layout="vertical" margin={{ left: 20 }}>
+                <defs>
+                  <linearGradient id="gradBarSegmento" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#991B1B" />
+                    <stop offset="100%" stopColor="#E8384F" />
+                  </linearGradient>
+                </defs>
                 <XAxis type="number" tick={{ fill: "#666", fontSize: 11 }} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
                 <YAxis dataKey="name" type="category" tick={{ fill: "#999", fontSize: 11 }} width={100} />
                 <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => `R$ ${v.toLocaleString("pt-BR")}`} />
-                <Bar dataKey="value" fill="#C8102E" radius={[0, 6, 6, 0]} barSize={20} />
+                <Bar dataKey="value" fill="url(#gradBarSegmento)" radius={[0, 6, 6, 0]} barSize={20} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
