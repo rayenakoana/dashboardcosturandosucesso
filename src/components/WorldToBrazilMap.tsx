@@ -69,10 +69,10 @@ export function WorldToBrazilMap({ countryData, stateData }: WorldToBrazilMapPro
       <div className="relative h-72 rounded-xl overflow-hidden bg-background/40 border border-border/50">
         <svg viewBox="0 0 640 300" className="absolute inset-0 w-full h-full">
           {Array.from({ length: 8 }).map((_, i) => (
-            <line key={`v${i}`} x1={i * 90} y1={0} x2={i * 90} y2={300} stroke="hsl(var(--border))" strokeOpacity={0.25} />
+            <line key={`v${i}`} x1={i * 90} y1={0} x2={i * 90} y2={300} stroke="#3a3a45" strokeOpacity={0.35} />
           ))}
           {Array.from({ length: 4 }).map((_, i) => (
-            <line key={`h${i}`} x1={0} y1={i * 90} x2={640} y2={i * 90} stroke="hsl(var(--border))" strokeOpacity={0.25} />
+            <line key={`h${i}`} x1={0} y1={i * 90} x2={640} y2={i * 90} stroke="#3a3a45" strokeOpacity={0.35} />
           ))}
 
           {points.map((p) => {
@@ -80,10 +80,10 @@ export function WorldToBrazilMap({ countryData, stateData }: WorldToBrazilMapPro
             const intensity = p.value / maxValue;
             const fill =
               intensity > 0.6
-                ? "hsl(355 82% 51%)"
+                ? "#E8384F"
                 : intensity > 0.25
-                ? "hsl(355 55% 40%)"
-                : "hsl(240 15% 22%)";
+                ? "#B24A3A"
+                : "#3a3040";
             return (
               <g key={p.label}>
                 <circle
@@ -91,7 +91,7 @@ export function WorldToBrazilMap({ countryData, stateData }: WorldToBrazilMapPro
                   cy={p.y}
                   r={r}
                   fill={fill}
-                  stroke="hsl(var(--background))"
+                  stroke="#0D0D1A"
                   strokeWidth={1}
                   className="cursor-pointer transition-opacity hover:opacity-80"
                   onMouseEnter={() => setTooltip({ label: p.label, value: p.value, x: p.x, y: p.y })}
@@ -100,7 +100,7 @@ export function WorldToBrazilMap({ countryData, stateData }: WorldToBrazilMapPro
                     if (!showStates && p.label === "Brasil") setShowStates(true);
                   }}
                 />
-                <text x={p.x} y={p.y - r - 6} textAnchor="middle" fontSize={10} fill="hsl(var(--muted-foreground))">
+                <text x={p.x} y={p.y - r - 6} textAnchor="middle" fontSize={10} fill="#999">
                   {p.label}
                 </text>
               </g>

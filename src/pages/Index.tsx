@@ -13,12 +13,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   DollarSign, Target, TrendingUp, Clock, BadgeDollarSign,
   Users, BarChart3, PieChart as PieChartIcon, AlertTriangle, CalendarCheck, Percent,
-  RefreshCw, ShoppingCart,
+  RefreshCw, ShoppingCart, Filter,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -92,6 +94,13 @@ export default function Index() {
   const [filterCampanha, setFilterCampanha] = useState("Todos");
   const [filterOrigem, setFilterOrigem] = useState("Todos");
   const [excludeRenovacao, setExcludeRenovacao] = useState(false);
+  const filtrosPainelCount = [
+    period !== "month",
+    filterProduto !== "Todos",
+    filterCampanha !== "Todos",
+    filterOrigem !== "Todos",
+    excludeRenovacao,
+  ].filter(Boolean).length;
 
   const { start, end } = getDateRange(period, customStart, customEnd);
 
@@ -339,8 +348,8 @@ export default function Index() {
         <p className="text-muted-foreground text-sm mt-1 uppercase tracking-widest text-[11px]">Visão consolidada · Marketing & Comercial</p>
       </div>
 
-      {/* Funil chips (pills), estilo do protótipo */}
-      <div className="flex flex-wrap gap-1.5">
+      {/* Funil chips (pills), estilo do protótipo — acesso rápido */}
+      <div className="flex flex-wrap items-center gap-1.5">
         <button
           type="button"
           onClick={() => setFilterFunis([])}
@@ -361,68 +370,99 @@ export default function Index() {
             </button>
           );
         })}
+
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2 bg-muted/50 ml-auto">
+              <Filter className="h-3.5 w-3.5" /> Filtros
+              {filtrosPainelCount > 0 && (
+                <span className="bg-primary text-primary-foreground rounded-full text-xs px-1.5 py-0.5 leading-none">
+                  {filtrosPainelCount}
+                </span>
+              )}
+            </Button>
+          </SheetTrigger>
+          <SheetContent className="bg-card border-border overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Filtros {filtrosPainelCount > 0 && <span className="text-muted-foreground font-normal">({filtrosPainelCount})</span>}</SheetTitle>
+            </SheetHeader>
+            <div className="space-y-5 mt-6">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-2 block">Período</Label>
+                <Select value={period} onValueChange={setPeriod}>
+                  <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                  <SelectContent>{PERIOD_OPTIONS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              {period === "custom" && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-[11px] text-muted-foreground">De</Label>
+                    <Input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="bg-muted/50" />
+                  </div>
+                  <div>
+                    <Label className="text-[11px] text-muted-foreground">Até</Label>
+                    <Input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="bg-muted/50" />
+                  </div>
+                </div>
+              )}
+              <div>
+                <Label className="text-xs text-muted-foreground mb-2 block">Produto</Label>
+                <Select value={filterProduto} onValueChange={setFilterProduto}>
+                  <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Todos">Todos</SelectItem>
+                    {produtos.map(f => <SelectItem key={f.id} value={f.valor}>{f.valor}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-2 block">Campanha</Label>
+                <Select value={filterCampanha} onValueChange={setFilterCampanha}>
+                  <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Todos">Todos</SelectItem>
+                    {campanhas.map(f => <SelectItem key={f.id} value={f.valor}>{f.valor}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-2 block">Origem</Label>
+                <Select value={filterOrigem} onValueChange={setFilterOrigem}>
+                  <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Todos">Todos</SelectItem>
+                    {origens.map(f => <SelectItem key={f.id} value={f.valor}>{f.valor}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <Switch checked={excludeRenovacao} onCheckedChange={setExcludeRenovacao} id="exclude-renovacao" />
+                <Label htmlFor="exclude-renovacao" className="text-xs text-muted-foreground cursor-pointer">
+                  Retirar renovação
+                </Label>
+              </div>
+            </div>
+            <SheetFooter className="mt-8 flex-row gap-2 sm:justify-start">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setPeriod("month"); setCustomStart(""); setCustomEnd("");
+                  setFilterProduto("Todos"); setFilterCampanha("Todos"); setFilterOrigem("Todos");
+                  setExcludeRenovacao(false);
+                }}
+              >
+                Limpar filtros
+              </Button>
+              <SheetClose asChild>
+                <Button className="flex-1 bg-primary hover:bg-primary/90">Aplicar filtros</Button>
+              </SheetClose>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
       </div>
 
-      {/* Filters */}
-      <GlassCard className="!py-3">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
-          <div>
-            <Label className="text-xs text-muted-foreground">Período</Label>
-            <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger className="bg-muted/50 h-9 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>{PERIOD_OPTIONS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          {period === "custom" && (
-            <>
-              <div>
-                <Label className="text-xs text-muted-foreground">De</Label>
-                <Input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="bg-muted/50 h-9 text-xs" />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Até</Label>
-                <Input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="bg-muted/50 h-9 text-xs" />
-              </div>
-            </>
-          )}
-          <div className="flex items-center gap-2 pt-5">
-            <Switch checked={excludeRenovacao} onCheckedChange={setExcludeRenovacao} id="exclude-renovacao" />
-            <Label htmlFor="exclude-renovacao" className="text-xs text-muted-foreground cursor-pointer">
-              Retirar renovação
-            </Label>
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">Produto</Label>
-            <Select value={filterProduto} onValueChange={setFilterProduto}>
-              <SelectTrigger className="bg-muted/50 h-9 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Todos">Todos</SelectItem>
-                {produtos.map(f => <SelectItem key={f.id} value={f.valor}>{f.valor}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">Campanha</Label>
-            <Select value={filterCampanha} onValueChange={setFilterCampanha}>
-              <SelectTrigger className="bg-muted/50 h-9 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Todos">Todos</SelectItem>
-                {campanhas.map(f => <SelectItem key={f.id} value={f.valor}>{f.valor}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">Origem</Label>
-            <Select value={filterOrigem} onValueChange={setFilterOrigem}>
-              <SelectTrigger className="bg-muted/50 h-9 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Todos">Todos</SelectItem>
-                {origens.map(f => <SelectItem key={f.id} value={f.valor}>{f.valor}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </GlassCard>
 
       {/* Insights */}
       {insights.length > 0 && (
@@ -562,46 +602,11 @@ export default function Index() {
         )}
       </GlassCard>
 
-      {/* Performance por SDR (pódio) + origem geográfica dos leads */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SDRPodium start={start} end={end} />
-        <WorldToBrazilMap />
-      </div>
+      {/* Performance por SDR (pódio) */}
+      <SDRPodium start={start} end={end} />
 
-      {/* Daily Performance Pivot Table */}
-      <GlassCard className="p-0 overflow-hidden overflow-x-auto">
-        <div className="p-4 pb-2">
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-            <CalendarCheck className="h-3.5 w-3.5" /> Performance Diária por Funil (Leads Recebidos)
-          </h3>
-        </div>
-        {isLoading ? (
-          <div className="p-4"><ChartSkeleton height={150} /></div>
-        ) : dailyTableData.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-xs">Data</TableHead>
-                {funilNames.map(f => <TableHead key={f} className="text-xs text-right">{f}</TableHead>)}
-                <TableHead className="text-xs text-right font-bold text-primary">TOTAL</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {dailyTableData.map(row => (
-                <TableRow key={row.data} className="border-border">
-                  <TableCell className="text-sm font-medium">{row.data}</TableCell>
-                  {funilNames.map(f => (
-                    <TableCell key={f} className="text-right tabular-nums text-sm">{(row as any)[f] || 0}</TableCell>
-                  ))}
-                  <TableCell className="text-right tabular-nums text-sm font-bold text-primary">{row.TOTAL}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <div className="p-8 text-center text-muted-foreground text-sm">Sem dados de input diário no período</div>
-        )}
-      </GlassCard>
+      {/* Origem geográfica dos leads */}
+      <WorldToBrazilMap />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <GlassCard>
