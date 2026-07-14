@@ -3,7 +3,8 @@ import * as d3 from "d3-geo";
 import { feature } from "topojson-client";
 import { GlassCard } from "./GlassCard";
 import { Globe2, ArrowLeft } from "lucide-react";
-import { supabase } from "../lib/supabase"; // Verifique se esse é o caminho correto para o seu arquivo supabase.ts
+import { supabase } from "@/integrations/supabase/client";
+
 export interface GeoValue {
   /** Nome do país (em inglês, como aparece no world-atlas) ou sigla do estado (UF). */
   key: string;
