@@ -3,7 +3,7 @@ import * as d3 from "d3-geo";
 import { feature } from "topojson-client";
 import { GlassCard } from "./GlassCard";
 import { Globe2, ArrowLeft } from "lucide-react";
-
+import { supabase } from "../lib/supabase"; // Verifique se esse é o caminho correto para o seu arquivo supabase.ts
 export interface GeoValue {
   /** Nome do país (em inglês, como aparece no world-atlas) ou sigla do estado (UF). */
   key: string;
@@ -16,21 +16,6 @@ interface WorldToBrazilMapProps {
   /** Leads por estado (BR), cruzado com DDD do telefone. Sigla: "SP", "MG"... */
   stateData?: GeoValue[];
 }
-
-const DEFAULT_COUNTRIES: GeoValue[] = [
-  { key: "Brazil", value: 1050 },
-  { key: "Paraguay", value: 98 },
-  { key: "Portugal", value: 64 },
-  { key: "China", value: 41 },
-];
-
-const DEFAULT_STATES: GeoValue[] = [
-  { key: "SP", value: 420 },
-  { key: "MG", value: 180 },
-  { key: "PR", value: 150 },
-  { key: "RS", value: 110 },
-  { key: "RJ", value: 95 },
-];
 
 const WORLD_TOPOJSON_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 const BRAZIL_STATES_URL =
@@ -45,9 +30,55 @@ export function WorldToBrazilMap({ countryData, stateData }: WorldToBrazilMapPro
   const [loadError, setLoadError] = useState(false);
   const [tooltip, setTooltip] = useState<{ label: string; value: number; x: number; y: number } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const [realStateData, setRealStateData] = useState<{ key: string; value: number }[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const countries = countryData && countryData.length > 0 ? countryData : DEFAULT_COUNTRIES;
-  const states = stateData && stateData.length > 0 ? stateData : DEFAULT_STATES;
+  useEffect(() => {
+    async function fetchLeadsGeografia() {
+      try {
+        const { data, error } = await supabase.from('leads_geografia').select('uf');
+
+        if (error) {
+          console.error("Erro no Supabase:", error);
+          return;
+        }
+
+        if (data) {
+          const contagemPorUf = data.reduce((acc, lead) => {
+            if (lead.uf) {
+              const ufUpper = lead.uf.toUpperCase();
+              acc[ufUpper] = (acc[ufUpper] || 0) + 1;
+            }
+            return acc;
+          }, {} as Record<string, number>);
+
+          const dadosMapeados = Object.entries(contagemPorUf).map(([uf, count]) => ({
+            key: uf,
+            value: count
+          }));
+
+          setRealStateData(dadosMapeados);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados geográficos:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchLeadsGeografia();
+  }, []);
+  
+  // Calcula o total de leads reais para mostrar no Brasil inteiro
+  const totalLeads = realStateData.reduce((acc, curr) => acc + curr.value, 0);
+  
+  const countries = countryData && countryData.length > 0 
+    ? countryData 
+    : [{ key: "Brazil", value: totalLeads }];
+    
+  const states = realStateData.length > 0 
+    ? realStateData 
+    : (stateData || []);
 
   useEffect(() => {
     let cancelled = false;
