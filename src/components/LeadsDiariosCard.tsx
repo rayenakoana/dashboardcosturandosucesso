@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { GlassCard } from "@/components/GlassCard";
 import { Users } from "lucide-react";
 
 interface Props {
