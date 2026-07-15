@@ -4,6 +4,7 @@ import { KPICard } from "@/components/KPICard";
 import { GlassCard } from "@/components/GlassCard";
 import { SDRPodium } from "@/components/SDRPodium";
 import { WorldToBrazilMap } from "@/components/WorldToBrazilMap";
+import { LeadsDiariosCard } from "@/components/LeadsDiariosCard";
 import { useVendas } from "@/hooks/useVendas";
 import { useCustosMarketing } from "@/hooks/useCustosMarketing";
 import { usePerformanceReunioes } from "@/hooks/usePerformanceReunioes";
@@ -607,6 +608,9 @@ export default function Index() {
 
       {/* Origem geográfica dos leads */}
       <WorldToBrazilMap />
+
+      {/* Chegada de leads por funil */}
+      <LeadsDiariosCard start={start} end={end} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <GlassCard>
