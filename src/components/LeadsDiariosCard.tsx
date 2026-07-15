@@ -32,33 +32,36 @@ const FUNIL_CORES: Record<string, string> = {
   "Imersão China": "#F97316",
 };
 
-const FUNIL_PIPELINE: Record<string, string> = {
-  "Segredos da Confecção": "699effbf7b4346001f83c691",
-  "UniForce": "6a04bd740b69f50013dd4c1a",
-  "Imersões Paraguai": "699f00342be5b20013e23f9c",
-  "CS Club": "6848412da06be900147fd766",
-  "Imersão Europa": "6a3ab5572a7c51002575739f",
-  "Imersão China": "6a3ab56ba02ee90021dd1c3b",
-};
+type Periodo = "hoje" | "semana" | "mes" | "personalizado";
 
-const PERIODO_LABELS: Record<string, string> = {
+const PERIODO_LABELS: Record<Periodo, string> = {
   hoje: "Hoje",
   semana: "Últimos 7 dias",
   mes: "Este mês",
+  personalizado: "Personalizado",
 };
+
+function getHoje() { return new Date().toISOString().split("T")[0]; }
+function getMesInicio() { return getHoje().substring(0, 7) + "-01"; }
+function getSemanaAtras() {
+  return new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+}
 
 export function LeadsDiariosCard({ start, end }: Props) {
   const [dados, setDados] = useState<LeadRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [periodo, setPeriodo] = useState<"hoje" | "semana" | "mes">("mes");
+  const [periodo, setPeriodo] = useState<Periodo>("mes");
   const [funilSelecionado, setFunilSelecionado] = useState<string>("todos");
+  const [customStart, setCustomStart] = useState(getMesInicio());
+  const [customEnd, setCustomEnd] = useState(getHoje());
 
-  const hoje = new Date().toISOString().split("T")[0];
-  const semanaAtras = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-  const mesInicio = hoje.substring(0, 7) + "-01";
+  const periodoStart =
+    periodo === "hoje" ? getHoje() :
+    periodo === "semana" ? getSemanaAtras() :
+    periodo === "mes" ? getMesInicio() :
+    customStart;
 
-  const periodoStart = periodo === "hoje" ? hoje : periodo === "semana" ? semanaAtras : mesInicio;
-  const periodoEnd = hoje;
+  const periodoEnd = periodo === "personalizado" ? customEnd : getHoje();
 
   async function fetchDados() {
     setLoading(true);
@@ -73,7 +76,7 @@ export function LeadsDiariosCard({ start, end }: Props) {
 
   useEffect(() => {
     fetchDados();
-  }, [periodo]);
+  }, [periodo, customStart, customEnd]);
 
   // Agrega por funil
   const totalPorFunil: Record<string, number> = {};
@@ -82,7 +85,6 @@ export function LeadsDiariosCard({ start, end }: Props) {
     totalPorFunil[row.funil] += row.total_leads;
   });
 
-  // Filtra por funil selecionado
   const funisExibidos = funilSelecionado === "todos"
     ? FUNIS_ORDEM
     : FUNIS_ORDEM.filter((f) => f === funilSelecionado);
@@ -91,11 +93,10 @@ export function LeadsDiariosCard({ start, end }: Props) {
   const maxFunil = Math.max(...FUNIS_ORDEM.map((f) => totalPorFunil[f] ?? 0), 1);
 
   const periodoLabel =
-    periodo === "hoje"
-      ? hoje
-      : periodo === "semana"
-      ? `${semanaAtras} — ${hoje}`
-      : `${mesInicio} — ${hoje}`;
+    periodo === "hoje" ? getHoje() :
+    periodo === "semana" ? `${getSemanaAtras()} — ${getHoje()}` :
+    periodo === "mes" ? `${getMesInicio()} — ${getHoje()}` :
+    `${customStart} — ${customEnd}`;
 
   return (
     <GlassCard>
@@ -108,8 +109,8 @@ export function LeadsDiariosCard({ start, end }: Props) {
 
         <div className="flex items-center gap-2 flex-wrap">
           {/* Filtro de período */}
-          <div className="flex gap-1">
-            {(["hoje", "semana", "mes"] as const).map((p) => (
+          <div className="flex gap-1 flex-wrap">
+            {(["hoje", "semana", "mes", "personalizado"] as Periodo[]).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriodo(p)}
@@ -137,6 +138,29 @@ export function LeadsDiariosCard({ start, end }: Props) {
           </select>
         </div>
       </div>
+
+      {/* Seletor de datas personalizado */}
+      {periodo === "personalizado" && (
+        <div className="flex items-center gap-3 mb-5 p-3 rounded-lg bg-background/40 border border-border/40">
+          <span className="text-[11px] uppercase tracking-widest text-muted-foreground">De</span>
+          <input
+            type="date"
+            value={customStart}
+            max={customEnd}
+            onChange={(e) => setCustomStart(e.target.value)}
+            className="text-[12px] px-2 py-1 rounded-md border border-border bg-muted/30 text-foreground"
+          />
+          <span className="text-[11px] uppercase tracking-widest text-muted-foreground">Até</span>
+          <input
+            type="date"
+            value={customEnd}
+            min={customStart}
+            max={getHoje()}
+            onChange={(e) => setCustomEnd(e.target.value)}
+            className="text-[12px] px-2 py-1 rounded-md border border-border bg-muted/30 text-foreground"
+          />
+        </div>
+      )}
 
       {/* Totalizador */}
       <div className="flex items-center gap-4 mb-5 p-3 rounded-lg bg-background/40 border border-border/40">
