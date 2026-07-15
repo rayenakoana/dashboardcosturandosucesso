@@ -8,6 +8,25 @@ import { useVendas } from "@/hooks/useVendas";
 import { useConfiguracoes } from "@/hooks/useConfiguracoes";
 import { ArrowLeft, TrendingUp, Trophy, Zap } from "lucide-react";
 
+// Cores fixas por funil (ordem: Segredos, UniForce, Paraguai, Club, Europa, China)
+const FUNIL_CORES: Record<string, string> = {
+  "Segredos da Confecção": "#E8192C",
+  "UniForce": "#C9A017",
+  "Imersões Paraguai": "#4A9EFF",
+  "CS Club": "#7C3AED",
+  "Imersão Europa": "#10B981",
+  "Imersão China": "#F97316",
+};
+
+const FUNIS_ORDEM = [
+  "Segredos da Confecção",
+  "UniForce",
+  "Imersões Paraguai",
+  "CS Club",
+  "Imersão Europa",
+  "Imersão China",
+];
+
 const EMOJIS = ["🎉", "🔥", "💰", "🚀", "🏆", "⚡", "✨"];
 
 function formatBRL(v: number) {
@@ -45,6 +64,31 @@ export default function CSLive() {
     return item ? Number(item.valor) || 0 : (metaCfg[0] ? Number(metaCfg[0].valor) : 0);
   }, [metaCfg, mesRef]);
   const pctMeta = meta > 0 ? Math.min(100, (faturamento / meta) * 100) : 0;
+
+  // Leads do dia por funil
+  const [leadsHoje, setLeadsHoje] = useState<Record<string, number>>({});
+  const totalLeadsHoje = Object.values(leadsHoje).reduce((s, v) => s + v, 0);
+
+  const hoje = new Date().toISOString().split("T")[0];
+
+  async function fetchLeadsHoje() {
+    const { data } = await supabase
+      .from("leads_diarios_por_funil")
+      .select("funil, total_leads")
+      .eq("data", hoje);
+    if (data) {
+      const map: Record<string, number> = {};
+      data.forEach((row: any) => { map[row.funil] = row.total_leads; });
+      setLeadsHoje(map);
+    }
+  }
+
+  useEffect(() => {
+    fetchLeadsHoje();
+    // Atualiza a cada 30 segundos
+    const interval = setInterval(fetchLeadsHoje, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Detect new sales
   const knownIds = useRef<Set<string>>(new Set());
@@ -152,35 +196,7 @@ export default function CSLive() {
         </div>
       )}
 
-      {/* Filtro por funil */}
-      <div className="flex flex-wrap items-center justify-center gap-2 mb-8 z-10 max-w-2xl">
-        <button
-          onClick={() => setFilterFunis([])}
-          className={`text-xs px-4 py-1.5 rounded-full border transition-colors ${
-            filterFunis.length === 0
-              ? "text-white border-transparent bg-gradient-red"
-              : "bg-muted/40 text-muted-foreground border-border hover:border-primary/50"
-          }`}
-        >
-          Todos os funis
-        </button>
-        {(funis as any[]).map((f) => {
-          const active = filterFunis.includes(f.valor);
-          return (
-            <button
-              key={f.id}
-              onClick={() => toggleFunil(f.valor)}
-              className={`text-xs px-4 py-1.5 rounded-full border transition-colors ${
-                active
-                  ? "text-white border-transparent bg-gradient-red"
-                  : "bg-muted/40 text-muted-foreground border-border hover:border-primary/50"
-              }`}
-            >
-              {f.valor}
-            </button>
-          );
-        })}
-      </div>
+
 
       {/* Header */}
       <div className="text-center mb-12 z-10">
@@ -243,6 +259,70 @@ export default function CSLive() {
               : `Faltam ${formatBRL(meta - faturamento)} para bater a meta`}
           </div>
         )}
+      </div>
+
+      {/* Divisória */}
+      <div className="w-full max-w-4xl border-t border-border/40 my-10 z-10" />
+
+      {/* Bloco de leads do dia */}
+      <div className="w-full max-w-4xl z-10 flex flex-col items-center gap-6">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+            Leads recebidos hoje
+          </span>
+          <span className="bg-primary text-white text-[9px] font-bold px-2 py-0.5 rounded tracking-widest animate-pulse">
+            LIVE
+          </span>
+        </div>
+
+        {/* Número total */}
+        <div className="flex flex-col items-center gap-1">
+          <div className="font-display font-bold text-7xl md:text-8xl leading-none text-primary"
+            style={{ textShadow: "0 0 40px rgba(232,25,44,0.35)" }}>
+            {totalLeadsHoje}
+          </div>
+          <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+            leads hoje
+          </div>
+        </div>
+
+        {/* Grid de funis */}
+        <div className="grid grid-cols-6 gap-3 w-full">
+          {FUNIS_ORDEM.map((funil) => {
+            const cor = FUNIL_CORES[funil] ?? "#666";
+            const count = leadsHoje[funil] ?? 0;
+            return (
+              <div
+                key={funil}
+                className="flex flex-col items-center gap-2 bg-card/60 border border-border rounded-xl p-3 text-center"
+              >
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ background: cor }}
+                />
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground leading-tight min-h-[28px] flex items-center justify-center">
+                  {funil}
+                </div>
+                <div
+                  className="font-display font-bold text-3xl leading-none"
+                  style={{ color: cor }}
+                >
+                  {count}
+                </div>
+                <div className="text-[9px] uppercase tracking-widest text-muted-foreground/50">
+                  leads
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Rodapé atualização */}
+        <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground/30">
+          <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+          Atualiza automaticamente em tempo real
+        </div>
       </div>
     </div>
   );
