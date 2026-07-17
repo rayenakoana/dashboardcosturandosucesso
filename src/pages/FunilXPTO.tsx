@@ -155,14 +155,14 @@ export default function FunilXPTO() {
     // Vendas
     let vendaQuery = supabase
       .from("vendas")
-      .select("status, funil")
+      .select("status, funil, email_cliente")
       .gte("data_entrada", start)
       .lte("data_entrada", end);
     if (!todosSelecionados) vendaQuery = vendaQuery.in("funil", funisFiltrados);
     if (campanhasSel) vendaQuery = vendaQuery.eq("campanha", campanhasSel);
     if (origensSel) vendaQuery = vendaQuery.eq("origem", origensSel);
     const { data: vendasRows } = await vendaQuery;
-    const totalFechados = (vendasRows ?? []).filter((v: any) => v.status === "Fechado").length;
+    const totalFechados = (vendasRows ?? []).filter((v: any) => v.status === "Fechado" && v.email_cliente).length;
     const totalPropostas = (vendasRows ?? []).filter((v: any) => ["Fechado", "Negociação", "Proposta"].includes(v.status)).length;
 
     setData({ leads: totalLeads, mql: totalMQL, reunioesAgendadas: totalAgendadas, reunioesRealizadas: totalRealizadas, propostas: totalPropostas, fechados: totalFechados });
