@@ -115,19 +115,19 @@ export default function FunilXPTO() {
       .from("leads_geografia")
       .select("id")
       .eq("pipeline_id", pipelineId)
-      .in("rating", [3, 5])
+      .eq("rating", 5)
       .gte("created_at", start)
       .lte("created_at", end + "T23:59:59");
     const totalMQL = (mqlRows ?? []).length;
 
     const { data: reunRows } = await supabase
-      .from("metricas_diarias")
-      .select("reunioes_agendadas, compareceram_real")
-      .eq("funil", funilSel)
+      .from("reunioes_agendadas")
+      .select("compareceu")
+      .eq("pipeline_id", pipelineId)
       .gte("data", start)
       .lte("data", end);
-    const totalAgendadas = (reunRows ?? []).reduce((s: number, r: any) => s + (r.reunioes_agendadas ?? 0), 0);
-    const totalRealizadas = (reunRows ?? []).reduce((s: number, r: any) => s + (r.compareceram_real ?? 0), 0);
+    const totalAgendadas = (reunRows ?? []).length;
+    const totalRealizadas = (reunRows ?? []).filter((r: any) => r.compareceu === true).length;
 
     let vendaQuery = supabase
       .from("vendas")
