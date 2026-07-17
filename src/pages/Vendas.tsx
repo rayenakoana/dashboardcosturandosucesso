@@ -19,6 +19,7 @@ const STATUS_OPTIONS = ["Lead", "MQL", "Reunião", "Fechado", "Perdido"];
 const initialForm = {
   nome_cliente: "",
   empresa: "",
+  email_cliente: "",
   responsavel: "",
   segmento: "",
   produto: "",
@@ -205,6 +206,7 @@ export default function Vendas() {
     setForm({
       nome_cliente: v.nome_cliente || "",
       empresa: v.empresa || "",
+      email_cliente: v.email_cliente || "",
       responsavel: v.responsavel || "",
       segmento: v.segmento || "",
       produto: v.produto || "",
@@ -278,6 +280,10 @@ export default function Vendas() {
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Empresa</Label><Input value={form.empresa} onChange={e => set("empresa", e.target.value)} className="bg-muted/50" placeholder="Nome da empresa" /></div>
                 <div><Label>Responsável</Label><Input value={form.responsavel} onChange={e => set("responsavel", e.target.value)} className="bg-muted/50" placeholder="Responsável" /></div>
+              </div>
+              <div>
+                <Label>E-mail do cliente</Label>
+                <Input type="email" value={form.email_cliente} onChange={e => set("email_cliente", e.target.value)} className="bg-muted/50" placeholder="email@empresa.com.br" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Segmento</Label>
