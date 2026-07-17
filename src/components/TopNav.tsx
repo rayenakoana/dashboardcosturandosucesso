@@ -1,23 +1,44 @@
 import { NavLink, useLocation } from "react-router-dom";
 import {
   BarChart3, Settings, DollarSign, ShoppingCart, Layers,
-  CalendarPlus, Target, Radio,
+  CalendarPlus, Target, Radio, Maximize, Minimize, GitMerge,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
 
 const items = [
-  { title: "Dashboard",   url: "/",              icon: BarChart3 },
-  { title: "Comercial",   url: "/vendas",        icon: ShoppingCart },
-  { title: "Input Diário", url: "/input-diario", icon: CalendarPlus },
-  { title: "Safras",      url: "/safras",        icon: Layers },
-  { title: "Marketing",   url: "/custos",        icon: DollarSign },
-  { title: "Metas",       url: "/metas",         icon: Target },
-  { title: "Live",        url: "/live",          icon: Radio },
-  { title: "Config",      url: "/configuracoes", icon: Settings },
+  { title: "Dashboard",    url: "/",              icon: BarChart3 },
+  { title: "Funil XPTO",  url: "/funil-xpto",    icon: GitMerge },
+  { title: "Comercial",   url: "/vendas",         icon: ShoppingCart },
+  { title: "Input Diário", url: "/input-diario",  icon: CalendarPlus },
+  { title: "Safras",      url: "/safras",         icon: Layers },
+  { title: "Marketing",   url: "/custos",         icon: DollarSign },
+  { title: "Metas",       url: "/metas",          icon: Target },
+  { title: "Live",        url: "/live",           icon: Radio },
+  { title: "Config",      url: "/configuracoes",  icon: Settings },
 ];
+
+const FULLSCREEN_PAGES = ["/", "/funil-xpto", "/live"];
 
 export function TopNav() {
   const { pathname } = useLocation();
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const showFullscreen = FULLSCREEN_PAGES.includes(pathname);
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 backdrop-blur-xl bg-background/70">
       <div className="mx-auto max-w-[1600px] px-4 md:px-6 h-16 flex items-center justify-between gap-4">
@@ -40,10 +61,7 @@ export function TopNav() {
           {items.map(({ title, url, icon: Icon }) => {
             const active = url === "/" ? pathname === "/" : pathname.startsWith(url);
             return (
-              <NavLink
-                key={url}
-                to={url}
-                title={title}
+              <NavLink key={url} to={url} title={title}
                 className={cn(
                   "group relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
                   active
@@ -57,6 +75,17 @@ export function TopNav() {
             );
           })}
         </nav>
+
+        {showFullscreen && (
+          <button
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/60 text-muted-foreground hover:text-foreground hover:border-border transition-all text-xs font-medium shrink-0"
+          >
+            {isFullscreen ? <Minimize className="h-3.5 w-3.5" /> : <Maximize className="h-3.5 w-3.5" />}
+            <span className="hidden sm:inline">{isFullscreen ? "Minimizar" : "Tela cheia"}</span>
+          </button>
+        )}
       </div>
     </header>
   );
