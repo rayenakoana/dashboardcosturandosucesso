@@ -12,7 +12,7 @@ import { ArrowLeft, TrendingUp, Trophy, Zap } from "lucide-react";
 const FUNIL_CORES: Record<string, string> = {
   "Segredos da Confecção": "#E8192C",
   "UniForce": "#C9A017",
-  "Imersões Paraguai": "#4A9EFF",
+  "Imersão Paraguai": "#4A9EFF",
   "CS Club": "#7C3AED",
   "Imersão Europa": "#10B981",
   "Imersão China": "#F97316",
@@ -21,7 +21,7 @@ const FUNIL_CORES: Record<string, string> = {
 const FUNIS_ORDEM = [
   "Segredos da Confecção",
   "UniForce",
-  "Imersões Paraguai",
+  "Imersão Paraguai",
   "CS Club",
   "Imersão Europa",
   "Imersão China",
