@@ -73,7 +73,8 @@ function ConvRate({ real, meta, label }: { real: number; meta: number; label: st
 }
 
 export default function FunilXPTO() {
-  const [funilSel, setFunilSel] = useState<string>("Imersões Paraguai");
+  // "todos" = array vazio significa todos os funis selecionados
+  const [funisSel, setFunisSel] = useState<string[]>([]);
   const [periodo, setPeriodo] = useState<"hoje" | "semana" | "mes" | "personalizado">("mes");
   const [customStart, setCustomStart] = useState(getMesInicio());
   const [customEnd, setCustomEnd] = useState(getHoje());
@@ -92,49 +93,72 @@ export default function FunilXPTO() {
     : customStart;
   const end = periodo === "personalizado" ? customEnd : getHoje();
 
+  const todosSelecionados = funisSel.length === 0;
+  const funisFiltrados = todosSelecionados ? FUNIS_XPTO : FUNIS_XPTO.filter(f => funisSel.includes(f));
+  const pipelineIdsFiltrados = funisFiltrados.map(f => PIPELINE_IDS[f]);
+
   const periodoLabel = periodo === "hoje" ? "Hoje"
     : periodo === "semana" ? "Últimos 7 dias"
     : periodo === "mes" ? "Este mês"
     : `${customStart} → ${customEnd}`;
 
-  const pipelineId = PIPELINE_IDS[funilSel];
-  const cor = FUNIL_CORES[funilSel] ?? "#E8192C";
+  const funilLabel = todosSelecionados ? "Todos os funis"
+    : funisSel.length === 1 ? funisSel[0]
+    : `${funisSel.length} funis`;
+
   const activeFilters = (campanhasSel ? 1 : 0) + (origensSel ? 1 : 0);
+
+  // cor principal: primeiro funil selecionado, ou vermelho se todos
+  const corPrincipal = todosSelecionados ? "#E8192C" : (FUNIL_CORES[funisSel[0]] ?? "#E8192C");
+
+  function toggleFunil(funil: string) {
+    setFunisSel(prev =>
+      prev.includes(funil) ? prev.filter(f => f !== funil) : [...prev, funil]
+    );
+  }
 
   async function fetchData() {
     setLoading(true);
-    const { data: leadsRows } = await supabase
+
+    // Leads
+    let leadsQuery = supabase
       .from("leads_diarios_por_funil")
       .select("total_leads")
-      .eq("pipeline_id", pipelineId)
       .gte("data", start)
       .lte("data", end);
+    if (!todosSelecionados) leadsQuery = leadsQuery.in("pipeline_id", pipelineIdsFiltrados);
+    const { data: leadsRows } = await leadsQuery;
     const totalLeads = (leadsRows ?? []).reduce((s: number, r: any) => s + r.total_leads, 0);
 
-    const { data: mqlRows } = await supabase
+    // MQL (rating 5)
+    let mqlQuery = supabase
       .from("leads_geografia")
       .select("id")
-      .eq("pipeline_id", pipelineId)
       .eq("rating", 5)
       .gte("created_at", start)
       .lte("created_at", end + "T23:59:59");
+    if (!todosSelecionados) mqlQuery = mqlQuery.in("pipeline_id", pipelineIdsFiltrados);
+    const { data: mqlRows } = await mqlQuery;
     const totalMQL = (mqlRows ?? []).length;
 
-    const { data: reunRows } = await supabase
+    // Reuniões
+    let reunQuery = supabase
       .from("reunioes_agendadas")
       .select("compareceu")
-      .eq("pipeline_id", pipelineId)
       .gte("data", start)
       .lte("data", end);
+    if (!todosSelecionados) reunQuery = reunQuery.in("pipeline_id", pipelineIdsFiltrados);
+    const { data: reunRows } = await reunQuery;
     const totalAgendadas = (reunRows ?? []).length;
     const totalRealizadas = (reunRows ?? []).filter((r: any) => r.compareceu === true).length;
 
+    // Vendas
     let vendaQuery = supabase
       .from("vendas")
-      .select("status")
-      .eq("funil", funilSel)
+      .select("status, funil")
       .gte("data_entrada", start)
       .lte("data_entrada", end);
+    if (!todosSelecionados) vendaQuery = vendaQuery.in("funil", funisFiltrados);
     if (campanhasSel) vendaQuery = vendaQuery.eq("campanha", campanhasSel);
     if (origensSel) vendaQuery = vendaQuery.eq("origem", origensSel);
     const { data: vendasRows } = await vendaQuery;
@@ -145,13 +169,13 @@ export default function FunilXPTO() {
     setLoading(false);
   }
 
-  useEffect(() => { fetchData(); }, [funilSel, periodo, customStart, customEnd, campanhasSel, origensSel]);
+  useEffect(() => { fetchData(); }, [funisSel, periodo, customStart, customEnd, campanhasSel, origensSel]);
 
   const pct = (a: number, b: number) => b > 0 ? (a / b) * 100 : 0;
   const maxVal = Math.max(data.leads, 1);
 
   const etapas = [
-    { label: "Leads recebidos", val: data.leads, color: cor },
+    { label: "Leads recebidos", val: data.leads, color: corPrincipal },
     { label: "MQL — qualificados", val: data.mql, color: "#7C3AED" },
     { label: "Reuniões agendadas", val: data.reunioesAgendadas, color: "#4A9EFF" },
     { label: "Reuniões realizadas", val: data.reunioesRealizadas, color: "#10B981" },
@@ -172,19 +196,41 @@ export default function FunilXPTO() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-display font-bold text-2xl uppercase tracking-wide">Funil XPTO</h1>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest mt-0.5">{periodoLabel} · {funilSel}</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-widest mt-0.5">{periodoLabel} · {funilLabel}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {FUNIS_XPTO.map((f) => (
-            <button key={f} onClick={() => setFunilSel(f)}
-              className={cn("text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border transition-all",
-                funilSel === f ? "text-white border-transparent" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40"
-              )}
-              style={funilSel === f ? { background: FUNIL_CORES[f], borderColor: FUNIL_CORES[f] } : {}}
-            >
-              {f}
-            </button>
-          ))}
+          {/* Chip "Todos" */}
+          <button
+            onClick={() => setFunisSel([])}
+            className={cn(
+              "text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border transition-all",
+              todosSelecionados
+                ? "text-white bg-primary border-primary"
+                : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40"
+            )}
+          >
+            Todos
+          </button>
+
+          {/* Chips individuais */}
+          {FUNIS_XPTO.map((f) => {
+            const selecionado = funisSel.includes(f);
+            return (
+              <button
+                key={f}
+                onClick={() => toggleFunil(f)}
+                className={cn(
+                  "text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border transition-all",
+                  selecionado ? "text-white border-transparent" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40"
+                )}
+                style={selecionado ? { background: FUNIL_CORES[f], borderColor: FUNIL_CORES[f] } : {}}
+              >
+                {f}
+              </button>
+            );
+          })}
+
+          {/* Botão filtros */}
           <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
             <SheetTrigger asChild>
               <button className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border border-border bg-muted/30 text-muted-foreground hover:border-primary/40 transition-all">
@@ -267,7 +313,7 @@ export default function FunilXPTO() {
 
       <GlassCard>
         <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-6">
-          Funil de conversão — {funilSel}
+          Funil de conversão — {funilLabel}
         </h3>
         {loading ? (
           <div className="space-y-3">
