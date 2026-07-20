@@ -162,12 +162,12 @@ export default function FunilXPTO() {
     const { data: propRows } = await propQuery;
     const totalPropostas = (propRows ?? []).length;
 
-    // Vendas (fechados)
+    // Vendas (fechados) - filtra por data_fechamento, já que é quando a venda de fato fechou
     let vendaQuery = supabase
       .from("vendas")
       .select("status, funil, email_cliente")
-      .gte("data_entrada", start)
-      .lte("data_entrada", end);
+      .gte("data_fechamento", start)
+      .lte("data_fechamento", end);
     if (!todosSelecionados) vendaQuery = vendaQuery.in("funil", funisFiltrados);
     if (campanhasSel) vendaQuery = vendaQuery.eq("campanha", campanhasSel);
     if (origensSel) vendaQuery = vendaQuery.eq("origem", origensSel);
