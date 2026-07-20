@@ -152,7 +152,17 @@ export default function FunilXPTO() {
     const totalAgendadas = (reunRows ?? []).length;
     const totalRealizadas = (reunRows ?? []).filter((r: any) => r.compareceu === true).length;
 
-    // Vendas
+    // Propostas (propostas_crm real)
+    let propQuery = supabase
+      .from("propostas_crm")
+      .select("deal_id")
+      .gte("data", start)
+      .lte("data", end);
+    if (!todosSelecionados) propQuery = propQuery.in("pipeline_id", pipelineIdsFiltrados);
+    const { data: propRows } = await propQuery;
+    const totalPropostas = (propRows ?? []).length;
+
+    // Vendas (fechados)
     let vendaQuery = supabase
       .from("vendas")
       .select("status, funil, email_cliente")
@@ -163,7 +173,6 @@ export default function FunilXPTO() {
     if (origensSel) vendaQuery = vendaQuery.eq("origem", origensSel);
     const { data: vendasRows } = await vendaQuery;
     const totalFechados = (vendasRows ?? []).filter((v: any) => v.status === "Fechado" && v.email_cliente).length;
-    const totalPropostas = (vendasRows ?? []).filter((v: any) => ["Fechado", "Negociação", "Proposta"].includes(v.status)).length;
 
     setData({ leads: totalLeads, mql: totalMQL, reunioesAgendadas: totalAgendadas, reunioesRealizadas: totalRealizadas, propostas: totalPropostas, fechados: totalFechados });
     setLoading(false);
