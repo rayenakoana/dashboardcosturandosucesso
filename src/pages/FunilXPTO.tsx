@@ -130,11 +130,11 @@ export default function FunilXPTO() {
     const { data: leadsRows } = await leadsQuery;
     const totalLeads = (leadsRows ?? []).reduce((s: number, r: any) => s + r.total_leads, 0);
 
-    // MQL (rating 5)
+    // MQL (rating 3 e 5)
     let mqlQuery = supabase
       .from("leads_geografia")
       .select("id")
-      .eq("rating", 5)
+      .in("rating", [3, 5])
       .gte("created_at", start)
       .lte("created_at", end + "T23:59:59");
     if (!todosSelecionados) mqlQuery = mqlQuery.in("pipeline_id", pipelineIdsFiltrados);
