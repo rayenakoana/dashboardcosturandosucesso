@@ -172,7 +172,7 @@ export default function FunilXPTO() {
     if (campanhasSel) vendaQuery = vendaQuery.eq("campanha", campanhasSel);
     if (origensSel) vendaQuery = vendaQuery.eq("origem", origensSel);
     const { data: vendasRows } = await vendaQuery;
-    const totalFechados = (vendasRows ?? []).filter((v: any) => v.status === "Fechado" && v.email_cliente).length;
+    const totalFechados = (vendasRows ?? []).filter((v: any) => v.status === "Fechado").length;
 
     setData({ leads: totalLeads, mql: totalMQL, reunioesAgendadas: totalAgendadas, reunioesRealizadas: totalRealizadas, propostas: totalPropostas, fechados: totalFechados });
     setLoading(false);
