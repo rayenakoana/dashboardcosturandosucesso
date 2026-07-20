@@ -181,7 +181,6 @@ export default function FunilXPTO() {
   useEffect(() => { fetchData(); }, [funisSel, periodo, customStart, customEnd, campanhasSel, origensSel]);
 
   const pct = (a: number, b: number) => b > 0 ? (a / b) * 100 : 0;
-  const maxVal = Math.max(data.leads, 1);
 
   const etapas = [
     { label: "Leads recebidos", val: data.leads, color: corPrincipal },
@@ -191,6 +190,8 @@ export default function FunilXPTO() {
     { label: "Propostas", val: data.propostas, color: "#C9A017" },
     { label: "Fechados", val: data.fechados, color: "#555" },
   ];
+
+  const maxVal = Math.max(...etapas.map((e) => e.val), 1);
 
   const conversoes = [
     { real: pct(data.mql, data.leads), meta: METAS.leads_para_mql, label: "qualificados" },
@@ -331,7 +332,7 @@ export default function FunilXPTO() {
         ) : (
           <div>
             {etapas.map((etapa, i) => {
-              const width = maxVal > 0 ? Math.max((etapa.val / maxVal) * 100, etapa.val > 0 ? 8 : 2) : 2;
+              const width = maxVal > 0 ? Math.max((etapa.val / maxVal) * 100, etapa.val > 0 ? 3 : 1) : 1;
               return (
                 <div key={etapa.label}>
                   <div className="flex items-center gap-3">
