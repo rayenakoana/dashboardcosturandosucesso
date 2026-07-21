@@ -153,7 +153,7 @@ export default function Index() {
     queryFn: async () => {
       let q = supabase
         .from("leads_diarios_por_funil")
-        .select("total_leads, pipeline_id")
+        .select("total_leads, total_leads_pagos, pipeline_id")
         .gte("data", start)
         .lte("data", end);
       if (!todosFunisSelecionados) q = q.in("pipeline_id", pipelineIdsFiltrados);
@@ -233,6 +233,7 @@ export default function Index() {
 
   // === KPIs automáticos (RD CRM + Google Calendar) ===
   const totalLeadsDiarios = leadsDiarioRaw.reduce((s: number, r: any) => s + (r.total_leads || 0), 0);
+  const totalLeadsPagos = leadsDiarioRaw.reduce((s: number, r: any) => s + (r.total_leads_pagos || 0), 0);
   const totalMQLDiarios = mqlDiarioRaw.length;
   const totalAgendadas = reunioesDiarioRaw.length;
   const totalCompareceramDiarios = reunioesDiarioRaw.filter((r: any) => r.compareceu).length;
@@ -241,11 +242,12 @@ export default function Index() {
   const pctLeadVenda = totalLeadsDiarios > 0 ? (fechadasSafra.length / totalLeadsDiarios) * 100 : 0;
 
   // === KPIs de Eficiência ===
+  const totalCustosAds = filteredCustos.filter(c => c.categoria === "Ads").reduce((s, c) => s + Number(c.valor), 0);
   const totalCustos = filteredCustos.reduce((s, c) => s + Number(c.valor), 0);
   const totalLeads = filteredVendas.length;
-  const cpl = totalLeadsDiarios > 0 ? totalCustos / totalLeadsDiarios : 0;
-  const cac = vendasFechamentoNoPeriodo.length > 0 ? totalCustos / vendasFechamentoNoPeriodo.length : 0;
-  const roi = totalCustos > 0 ? ((faturamento - totalCustos) / totalCustos * 100) : 0;
+  const cpl = totalLeadsPagos > 0 ? totalCustosAds / totalLeadsPagos : 0;
+  const cac = vendasFechamentoNoPeriodo.length > 0 ? totalCustosAds / vendasFechamentoNoPeriodo.length : 0;
+  const roi = totalCustosAds > 0 ? ((faturamento - totalCustosAds) / totalCustosAds * 100) : 0;
 
   // === Metas de Vendas (por mês selecionado) ===
   const mesRefAtual = useMemo(() => {
@@ -632,7 +634,7 @@ export default function Index() {
           {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[120px] rounded-xl" />) : (
             <>
               <KPICard title="CAC" value={`R$ ${cac.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={BadgeDollarSign} subtitle="Custo por Aquisição" />
-              <KPICard title="CPL" value={`R$ ${cpl.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={Target} subtitle="Custo por Lead" />
+              <KPICard title="CPL" value={`R$ ${cpl.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} icon={Target} subtitle={`${totalLeadsPagos} leads via Ads`} />
               <KPICard title="ROI Real" value={`${roi.toFixed(1)}%`} icon={TrendingUp} trend={roi > 0 ? "up" : roi < 0 ? "down" : "neutral"} subtitle={roi > 0 ? "Positivo" : roi < 0 ? "Negativo" : "Neutro"} />
               <KPICard title="Show-up Rate" value={`${showUpRate.toFixed(1)}%`} icon={Users} subtitle={`${totalReal}/${totalConfirmado} reuniões`} />
             </>
