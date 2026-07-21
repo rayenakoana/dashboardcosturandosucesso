@@ -361,12 +361,18 @@ export default function Index() {
   }, [filteredVendas]);
 
   const showUpData = useMemo(() => {
-    return filteredReunioes.slice(0, 12).reverse().map(r => ({
-      data: r.data,
-      Confirmado: r.sdr_confirmado,
-      Real: r.compareceram_real,
-    }));
-  }, [filteredReunioes]);
+    const dateMap: Record<string, { confirmado: number; real: number }> = {};
+    reunioesDiarioRaw.forEach((r: any) => {
+      if (!r.data) return;
+      if (!dateMap[r.data]) dateMap[r.data] = { confirmado: 0, real: 0 };
+      dateMap[r.data].confirmado += 1;
+      if (r.compareceu) dateMap[r.data].real += 1;
+    });
+    return Object.entries(dateMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-12)
+      .map(([data, vals]) => ({ data, Confirmado: vals.confirmado, Real: vals.real }));
+  }, [reunioesDiarioRaw]);
 
   // === Daily performance pivot table ===
   const funilNames = useMemo(() => {
@@ -797,7 +803,7 @@ export default function Index() {
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="h-[280px] flex items-center justify-center text-muted-foreground text-sm">Sem dados de reuniões no período</div>
+          <div className="h-[280px] flex items-center justify-center text-muted-foreground text-sm">Sem dados no período</div>
         )}
       </GlassCard>
 
