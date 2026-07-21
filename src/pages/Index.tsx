@@ -93,8 +93,6 @@ export default function Index() {
   const { data: metaRenovacaoCfg = [] } = useConfiguracoes("Meta Renovação");
   const { data: metaVolumeCfg = [] } = useConfiguracoes("Meta Volume Vendas");
 
-  const isLoading = loadingVendas || loadingCustos || loadingReunioes || loadingMetricas;
-
   const [period, setPeriod] = useState("month");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
@@ -149,6 +147,23 @@ export default function Index() {
       return data ?? [];
     },
   });
+
+  const { data: leadsDiarioRaw = [], isLoading: loadingLeadsDiario } = useQuery({
+    queryKey: ["ritmo_leads_diario", start, end, filterFunis],
+    queryFn: async () => {
+      let q = supabase
+        .from("leads_diarios_por_funil")
+        .select("total_leads, pipeline_id")
+        .gte("data", start)
+        .lte("data", end);
+      if (!todosFunisSelecionados) q = q.in("pipeline_id", pipelineIdsFiltrados);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const isLoading = loadingVendas || loadingCustos || loadingReunioes || loadingMetricas || loadingMqlDiario || loadingReunioesDiario || loadingLeadsDiario;
 
   // Vendas filtradas por data_entrada (visão de Safra / Marketing)
   const filteredVendas = useMemo(() => {
@@ -216,11 +231,11 @@ export default function Index() {
   // === KPIs de Marketing (por data_entrada / Safra) ===
   const fechadasSafra = filteredVendas.filter(v => v.status === "Fechado" && v.data_fechamento);
 
-  // === KPIs from metricas_diarias ===
-  const totalLeadsDiarios = filteredMetricas.reduce((s, m) => s + m.leads_recebidos, 0);
-  const totalMQLDiarios = filteredMetricas.reduce((s, m) => s + m.leads_qualificados, 0);
-  const totalAgendadas = filteredMetricas.reduce((s, m) => s + m.reunioes_agendadas, 0);
-  const totalCompareceramDiarios = filteredMetricas.reduce((s, m) => s + m.compareceram_real, 0);
+  // === KPIs automáticos (RD CRM + Google Calendar) ===
+  const totalLeadsDiarios = leadsDiarioRaw.reduce((s: number, r: any) => s + (r.total_leads || 0), 0);
+  const totalMQLDiarios = mqlDiarioRaw.length;
+  const totalAgendadas = reunioesDiarioRaw.length;
+  const totalCompareceramDiarios = reunioesDiarioRaw.filter((r: any) => r.compareceu).length;
   const pctAgendamento = totalMQLDiarios > 0 ? (totalAgendadas / totalMQLDiarios) * 100 : 0;
   const pctShowUpDiario = totalAgendadas > 0 ? (totalCompareceramDiarios / totalAgendadas) * 100 : 0;
   const pctLeadVenda = totalLeadsDiarios > 0 ? (fechadasSafra.length / totalLeadsDiarios) * 100 : 0;
@@ -264,8 +279,8 @@ export default function Index() {
   const pctRenovacao = metaRenovacao > 0 ? (totalRenovacoes / metaRenovacao) * 100 : 0;
   const totalVendasUnidades = vendasFechamentoNoPeriodo.length;
 
-  const totalConfirmado = filteredReunioes.reduce((s, r) => s + r.sdr_confirmado, 0);
-  const totalReal = filteredReunioes.reduce((s, r) => s + r.compareceram_real, 0);
+  const totalConfirmado = totalAgendadas;
+  const totalReal = totalCompareceramDiarios;
   const showUpRate = totalConfirmado > 0 ? (totalReal / totalConfirmado) * 100 : 0;
 
   // === Insights ===
