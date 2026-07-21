@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useConfiguracoes } from "@/hooks/useConfiguracoes";
+import { useCustosMarketing } from "@/hooks/useCustosMarketing";
 import { GlassCard } from "@/components/GlassCard";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Filter, TrendingDown, TrendingUp, Minus } from "lucide-react";
@@ -49,6 +50,7 @@ function getSemanaAtras() {
 
 interface FunilData {
   leads: number;
+  leadsPagos: number;
   mql: number;
   reunioesAgendadas: number;
   reunioesRealizadas: number;
@@ -81,11 +83,12 @@ export default function FunilXPTO() {
   const [campanhasSel, setCampanhasSel] = useState<string>("");
   const [origensSel, setOrigensSel] = useState<string>("");
   const [filterOpen, setFilterOpen] = useState(false);
-  const [data, setData] = useState<FunilData>({ leads: 0, mql: 0, reunioesAgendadas: 0, reunioesRealizadas: 0, propostas: 0, fechados: 0 });
+  const [data, setData] = useState<FunilData>({ leads: 0, leadsPagos: 0, mql: 0, reunioesAgendadas: 0, reunioesRealizadas: 0, propostas: 0, fechados: 0 });
   const [loading, setLoading] = useState(true);
 
   const { data: campanhas } = useConfiguracoes("Campanha");
   const { data: origens } = useConfiguracoes("Origem");
+  const { data: custos = [] } = useCustosMarketing();
 
   const start = periodo === "hoje" ? getHoje()
     : periodo === "semana" ? getSemanaAtras()
@@ -108,6 +111,19 @@ export default function FunilXPTO() {
 
   const activeFilters = (campanhasSel ? 1 : 0) + (origensSel ? 1 : 0);
 
+  // Custos filtrados pelo mesmo período e funil(is) selecionados (mesma lógica do Dashboard Geral)
+  const totalCustosAds = custos
+    .filter((c: any) => {
+      if (c.categoria !== "Ads") return false;
+      if (c.data < start || c.data > end) return false;
+      if (!todosSelecionados && !funisFiltrados.map(f => f.toUpperCase()).includes((c.produto || "").toUpperCase())) return false;
+      return true;
+    })
+    .reduce((s: number, c: any) => s + Number(c.valor), 0);
+
+  const cpl = data.leadsPagos > 0 ? totalCustosAds / data.leadsPagos : 0;
+  const cac = data.fechados > 0 ? totalCustosAds / data.fechados : 0;
+
   // cor principal: primeiro funil selecionado, ou vermelho se todos
   const corPrincipal = todosSelecionados ? "#E8192C" : (FUNIL_CORES[funisSel[0]] ?? "#E8192C");
 
@@ -123,12 +139,13 @@ export default function FunilXPTO() {
     // Leads
     let leadsQuery = supabase
       .from("leads_diarios_por_funil")
-      .select("total_leads")
+      .select("total_leads, total_leads_pagos")
       .gte("data", start)
       .lte("data", end);
     if (!todosSelecionados) leadsQuery = leadsQuery.in("pipeline_id", pipelineIdsFiltrados);
     const { data: leadsRows } = await leadsQuery;
     const totalLeads = (leadsRows ?? []).reduce((s: number, r: any) => s + r.total_leads, 0);
+    const totalLeadsPagos = (leadsRows ?? []).reduce((s: number, r: any) => s + (r.total_leads_pagos || 0), 0);
 
     // MQL (rating 3 e 5)
     let mqlQuery = supabase
@@ -174,7 +191,7 @@ export default function FunilXPTO() {
     const { data: vendasRows } = await vendaQuery;
     const totalFechados = (vendasRows ?? []).filter((v: any) => v.status === "Fechado").length;
 
-    setData({ leads: totalLeads, mql: totalMQL, reunioesAgendadas: totalAgendadas, reunioesRealizadas: totalRealizadas, propostas: totalPropostas, fechados: totalFechados });
+    setData({ leads: totalLeads, leadsPagos: totalLeadsPagos, mql: totalMQL, reunioesAgendadas: totalAgendadas, reunioesRealizadas: totalRealizadas, propostas: totalPropostas, fechados: totalFechados });
     setLoading(false);
   }
 
@@ -310,8 +327,18 @@ export default function FunilXPTO() {
         {[
           { label: "Total de leads", val: loading ? "—" : String(data.leads), sub: "Meta: 300/mês", color: "text-primary" },
           { label: "Taxa de fechamento", val: loading ? "—" : `${pct(data.fechados, data.leads).toFixed(1)}%`, sub: "Meta: 10%", color: "text-foreground" },
-          { label: "CPL", val: "R$ —", sub: "Cadastre custos", color: "text-amber-400" },
-          { label: "CAC", val: "R$ —", sub: "Cadastre custos", color: "text-amber-400" },
+          {
+            label: "CPL",
+            val: loading ? "—" : totalCustosAds === 0 ? "R$ —" : `R$ ${cpl.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`,
+            sub: loading ? "" : totalCustosAds === 0 ? "Cadastre custos" : `${data.leadsPagos} leads via Ads`,
+            color: "text-amber-400",
+          },
+          {
+            label: "CAC",
+            val: loading ? "—" : totalCustosAds === 0 ? "R$ —" : `R$ ${cac.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`,
+            sub: loading ? "" : totalCustosAds === 0 ? "Cadastre custos" : "Custo por Aquisição",
+            color: "text-amber-400",
+          },
         ].map((k) => (
           <GlassCard key={k.label}>
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">{k.label}</div>
