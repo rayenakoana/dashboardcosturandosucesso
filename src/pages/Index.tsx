@@ -59,6 +59,17 @@ function getDateRange(period: string, customStart: string, customEnd: string) {
 
 const tooltipStyle = { background: "#111", border: "1px solid hsl(0 0% 12%)", borderRadius: "8px", fontSize: 12 };
 
+function PieTooltip({ active, payload }: any) {
+  if (!active || !payload || !payload.length) return null;
+  const { name, value } = payload[0];
+  return (
+    <div style={{ ...tooltipStyle, padding: "8px 12px", whiteSpace: "nowrap" }}>
+      <div style={{ color: "#fff", fontWeight: 600 }}>{name}</div>
+      <div style={{ color: "#ccc" }}>{value} leads</div>
+    </div>
+  );
+}
+
 const PIPELINE_IDS: Record<string, string> = {
   "Segredos da Confecção": "699effbf7b4346001f83c691",
   "UniForce": "6a04bd740b69f50013dd4c1a",
@@ -735,7 +746,7 @@ export default function Index() {
                   labelLine={{ stroke: "hsl(0 0% 30%)" }}>
                   {motivosData.map((_, i) => <Cell key={i} fill={`url(#gradPie${i % COLORS.length})`} />)}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ zIndex: 50 }} />
+                <Tooltip content={<PieTooltip />} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ zIndex: 50 }} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
