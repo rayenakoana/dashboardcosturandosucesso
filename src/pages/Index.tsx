@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { KPICard } from "@/components/KPICard";
 import { GlassCard } from "@/components/GlassCard";
@@ -57,6 +59,15 @@ function getDateRange(period: string, customStart: string, customEnd: string) {
 
 const tooltipStyle = { background: "#111", border: "1px solid hsl(0 0% 12%)", borderRadius: "8px", fontSize: 12 };
 
+const PIPELINE_IDS: Record<string, string> = {
+  "Segredos da Confecção": "699effbf7b4346001f83c691",
+  "UniForce": "6a04bd740b69f50013dd4c1a",
+  "Imersão Paraguai": "699f00342be5b20013e23f9c",
+  "CS Club": "6848412da06be900147fd766",
+  "Imersão Europa": "6a3ab5572a7c51002575739f",
+  "Imersão China": "6a3ab56ba02ee90021dd1c3b",
+};
+
 function ChartSkeleton({ height = 280 }: { height?: number }) {
   return (
     <div className="space-y-3" style={{ height }}>
@@ -104,6 +115,40 @@ export default function Index() {
   ].filter(Boolean).length;
 
   const { start, end } = getDateRange(period, customStart, customEnd);
+
+  const pipelineIdsFiltrados = filterFunis.map(f => PIPELINE_IDS[f]).filter(Boolean);
+  const todosFunisSelecionados = filterFunis.length === 0;
+
+  const { data: mqlDiarioRaw = [], isLoading: loadingMqlDiario } = useQuery({
+    queryKey: ["ritmo_mql_diario", start, end, filterFunis],
+    queryFn: async () => {
+      let q = supabase
+        .from("leads_geografia")
+        .select("created_at, pipeline_id")
+        .in("rating", [3, 5])
+        .gte("created_at", start)
+        .lte("created_at", end + "T23:59:59");
+      if (!todosFunisSelecionados) q = q.in("pipeline_id", pipelineIdsFiltrados);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: reunioesDiarioRaw = [], isLoading: loadingReunioesDiario } = useQuery({
+    queryKey: ["ritmo_reunioes_diario", start, end, filterFunis],
+    queryFn: async () => {
+      let q = supabase
+        .from("reunioes_agendadas")
+        .select("data, pipeline_id, compareceu")
+        .gte("data", start)
+        .lte("data", end);
+      if (!todosFunisSelecionados) q = q.in("pipeline_id", pipelineIdsFiltrados);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
   // Vendas filtradas por data_entrada (visão de Safra / Marketing)
   const filteredVendas = useMemo(() => {
@@ -326,19 +371,25 @@ export default function Index() {
       });
   }, [filteredMetricas]);
 
-  // === Conversion line chart data ===
+  // === Conversion line chart data (automático: leads_geografia + reunioes_agendadas) ===
   const conversionLineData = useMemo(() => {
     const dateMap: Record<string, { mql: number; agendadas: number; compareceram: number }> = {};
-    filteredMetricas.forEach(m => {
-      if (!dateMap[m.data]) dateMap[m.data] = { mql: 0, agendadas: 0, compareceram: 0 };
-      dateMap[m.data].mql += m.leads_qualificados;
-      dateMap[m.data].agendadas += m.reunioes_agendadas;
-      dateMap[m.data].compareceram += m.compareceram_real;
+    mqlDiarioRaw.forEach((m: any) => {
+      const dia = (m.created_at || "").split("T")[0];
+      if (!dia) return;
+      if (!dateMap[dia]) dateMap[dia] = { mql: 0, agendadas: 0, compareceram: 0 };
+      dateMap[dia].mql += 1;
+    });
+    reunioesDiarioRaw.forEach((r: any) => {
+      if (!r.data) return;
+      if (!dateMap[r.data]) dateMap[r.data] = { mql: 0, agendadas: 0, compareceram: 0 };
+      dateMap[r.data].agendadas += 1;
+      if (r.compareceu) dateMap[r.data].compareceram += 1;
     });
     return Object.entries(dateMap)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([data, vals]) => ({ data, "Leads Qualificados": vals.mql, "Reuniões Agendadas": vals.agendadas, "Compareceram": vals.compareceram }));
-  }, [filteredMetricas]);
+  }, [mqlDiarioRaw, reunioesDiarioRaw]);
 
   return (
     <div className="space-y-8">
@@ -579,7 +630,7 @@ export default function Index() {
         <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
           <TrendingUp className="h-3.5 w-3.5" /> Ritmo do Funil — Conversão Diária
         </h3>
-        {isLoading ? <ChartSkeleton /> : conversionLineData.length > 0 ? (
+        {(loadingMqlDiario || loadingReunioesDiario) ? <ChartSkeleton /> : conversionLineData.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart data={conversionLineData}>
               <defs>
@@ -599,7 +650,7 @@ export default function Index() {
             </ComposedChart>
           </ResponsiveContainer>
         ) : (
-          <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">Sem dados de input diário no período</div>
+          <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">Sem dados no período</div>
         )}
       </GlassCard>
 
