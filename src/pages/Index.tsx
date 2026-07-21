@@ -735,7 +735,7 @@ export default function Index() {
                   labelLine={{ stroke: "hsl(0 0% 30%)" }}>
                   {motivosData.map((_, i) => <Cell key={i} fill={`url(#gradPie${i % COLORS.length})`} />)}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} />
+                <Tooltip contentStyle={tooltipStyle} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ zIndex: 50 }} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
