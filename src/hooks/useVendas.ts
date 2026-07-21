@@ -6,12 +6,21 @@ export function useVendas() {
   return useQuery({
     queryKey: ["vendas"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("vendas")
-        .select("*")
-        .order("data_entrada", { ascending: false });
-      if (error) throw error;
-      return data;
+      const pageSize = 1000;
+      let allRows: any[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("vendas")
+          .select("*")
+          .order("data_entrada", { ascending: false })
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        allRows = allRows.concat(data ?? []);
+        if (!data || data.length < pageSize) break;
+        from += pageSize;
+      }
+      return allRows;
     },
   });
 }
