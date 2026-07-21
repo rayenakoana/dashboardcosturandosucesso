@@ -292,8 +292,8 @@ export default function Index() {
 
   const insights = useMemo(() => {
     const alerts: { msg: string; severity: "warning" | "destructive" }[] = [];
-    const mqlCount = filteredVendas.filter(v => ["MQL", "Reunião", "Fechado"].includes(v.status)).length;
-    const reuniaoCount = filteredVendas.filter(v => ["Reunião", "Fechado"].includes(v.status)).length;
+    const mqlCount = totalMQLDiarios;
+    const reuniaoCount = totalAgendadas;
 
     if (totalLeads > 0) {
       const convLeadMql = (mqlCount / totalLeads) * 100;
@@ -314,21 +314,17 @@ export default function Index() {
       alerts.push({ msg: `⚠️ Custo de Lead Elevado: CPL atual R$ ${cpl.toFixed(0)} está ${(((cpl - cplHistorico) / cplHistorico) * 100).toFixed(0)}% acima da média histórica (R$ ${cplHistorico.toFixed(0)})`, severity: "destructive" });
     }
     return alerts;
-  }, [filteredVendas, fechadasSafra, totalLeads, totalConfirmado, showUpRate, cpl, cplHistorico]);
+  }, [totalMQLDiarios, totalAgendadas, fechadasSafra, totalLeads, totalConfirmado, showUpRate, cpl, cplHistorico]);
 
   // === Chart data ===
   const funnelData = useMemo(() => {
-    const leadCount = filteredVendas.length;
-    const mqlCount = filteredVendas.filter(v => ["MQL", "Reunião", "Fechado"].includes(v.status)).length;
-    const reuniaoCount = filteredVendas.filter(v => ["Reunião", "Fechado"].includes(v.status)).length;
-    const fechadoCount = fechadasSafra.length;
     return [
-      { name: "Leads", value: leadCount, fill: "#C8102E" },
-      { name: "MQL", value: mqlCount, fill: "#E8384F" },
-      { name: "Reunião", value: reuniaoCount, fill: "#FF6B6B" },
-      { name: "Fechado", value: fechadoCount, fill: "#FF8E8E" },
+      { name: "Leads", value: totalLeadsDiarios, fill: "#C8102E" },
+      { name: "MQL", value: totalMQLDiarios, fill: "#E8384F" },
+      { name: "Reunião", value: totalAgendadas, fill: "#FF6B6B" },
+      { name: "Fechado", value: fechadasSafra.length, fill: "#FF8E8E" },
     ];
-  }, [filteredVendas, fechadasSafra]);
+  }, [totalLeadsDiarios, totalMQLDiarios, totalAgendadas, fechadasSafra]);
 
   const segmentoData = useMemo(() => {
     const map: Record<string, number> = {};
