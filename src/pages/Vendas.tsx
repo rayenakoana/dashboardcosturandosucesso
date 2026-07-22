@@ -73,6 +73,7 @@ export default function Vendas() {
   const [dateEnd, setDateEnd] = useState("");
   const [filtroResponsavel, setFiltroResponsavel] = useState("all");
   const [filtroProdutoFunil, setFiltroProdutoFunil] = useState("all");
+  const [filtroStatus, setFiltroStatus] = useState("all");
   const [filterFunis, setFilterFunis] = useState<string[]>([]);
   const toggleFunilFiltro = (nome: string) => {
     setFilterFunis(prev => prev.includes(nome) ? prev.filter(f => f !== nome) : [...prev, nome]);
@@ -119,6 +120,7 @@ export default function Vendas() {
         if (!inRange(v.data_entrada) && !inRange(v.data_fechamento)) return false;
       }
       if (filtroResponsavel !== "all" && v.responsavel !== filtroResponsavel) return false;
+      if (filtroStatus !== "all" && v.status !== filtroStatus) return false;
       if (filtroProdutoFunil !== "all") {
         const f = filtroProdutoFunil.toLowerCase();
         if ((v.produto || "").toLowerCase() !== f && (v.funil || "").toLowerCase() !== f) return false;
@@ -145,7 +147,7 @@ export default function Vendas() {
     });
 
     return result;
-  }, [vendas, search, dateStart, dateEnd, filtroResponsavel, filtroProdutoFunil, filterFunis, sortKey, sortDir]);
+  }, [vendas, search, dateStart, dateEnd, filtroResponsavel, filtroProdutoFunil, filtroStatus, filterFunis, sortKey, sortDir]);
 
   const resumo = useMemo(() => {
     const total = vendasFiltradas.reduce((acc, v) => acc + (Number(v.valor) || 0), 0);
@@ -175,10 +177,10 @@ export default function Vendas() {
 
   const limparFiltros = () => {
     setSearch(""); setDateStart(""); setDateEnd("");
-    setFiltroResponsavel("all"); setFiltroProdutoFunil("all"); setFilterFunis([]);
+    setFiltroResponsavel("all"); setFiltroProdutoFunil("all"); setFiltroStatus("all"); setFilterFunis([]);
   };
-  const hasFiltros = !!(search || dateStart || dateEnd || filtroResponsavel !== "all" || filtroProdutoFunil !== "all" || filterFunis.length > 0);
-  const painelFiltrosCount = [dateStart, dateEnd, filtroResponsavel !== "all", filtroProdutoFunil !== "all", filterFunis.length > 0].filter(Boolean).length;
+  const hasFiltros = !!(search || dateStart || dateEnd || filtroResponsavel !== "all" || filtroProdutoFunil !== "all" || filtroStatus !== "all" || filterFunis.length > 0);
+  const painelFiltrosCount = [dateStart, dateEnd, filtroResponsavel !== "all", filtroProdutoFunil !== "all", filtroStatus !== "all", filterFunis.length > 0].filter(Boolean).length;
 
   const aplicarPresetPeriodo = (preset: "hoje" | "mes" | "trimestre") => {
     const hoje = new Date();
@@ -439,12 +441,22 @@ export default function Vendas() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-2 block">Status</Label>
+                  <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+                    <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {STATUS_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <SheetFooter className="mt-8 flex-row gap-2 sm:justify-start">
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => { setDateStart(""); setDateEnd(""); setFiltroResponsavel("all"); setFiltroProdutoFunil("all"); }}
+                  onClick={() => { setDateStart(""); setDateEnd(""); setFiltroResponsavel("all"); setFiltroProdutoFunil("all"); setFiltroStatus("all"); }}
                 >
                   Limpar filtros
                 </Button>
@@ -499,7 +511,7 @@ export default function Vendas() {
               <TableHead className="w-20"></TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody key={`${search}|${dateStart}|${dateEnd}|${filtroResponsavel}|${filtroProdutoFunil}|${filtroStatus}|${filterFunis.join(",")}`}>
             {vendasFiltradas.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
