@@ -98,6 +98,7 @@ export default function CSLive() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const metaAudioRef = useRef<HTMLAudioElement | null>(null);
   const [metaHit, setMetaHit] = useState(false);
+  const [dinheiro, setDinheiro] = useState<{ id: number; left: number; delay: number; emoji: string }[]>([]);
   const metaJaComemorada = useRef(false);
 
   useEffect(() => {
@@ -168,17 +169,31 @@ export default function CSLive() {
   function demoTrigger() { celebrate(15000); }
 
   function celebrarMeta() {
-    // Confete e brilhos em múltiplas rajadas, mais intensos e demorados que a comemoração normal
-    const cores = ["#FFD700", "#FFF4C2", "#E8192C", "#ffffff", "#FF8E00"];
+    // Confete dourado em múltiplas rajadas, mais intensas e demoradas que a comemoração normal
+    const cores = ["#FFD700", "#FFF4C2", "#FFC700", "#ffffff", "#FF8E00"];
     const rajada = (delay: number, particleCount: number, spread: number, x: number) =>
-      setTimeout(() => confetti({ particleCount, spread, origin: { x, y: 0.5 }, colors: cores }), delay);
-    rajada(0, 200, 100, 0.5);
-    rajada(300, 120, 70, 0.15);
-    rajada(300, 120, 70, 0.85);
-    rajada(900, 150, 90, 0.5);
-    rajada(1400, 100, 70, 0.25);
-    rajada(1400, 100, 70, 0.75);
-    rajada(2200, 150, 100, 0.5);
+      setTimeout(() => confetti({ particleCount, spread, origin: { x, y: 0.5 }, colors: cores, gravity: 0.7, scalar: 1.1 }), delay);
+    rajada(0, 220, 100, 0.5);
+    rajada(300, 140, 70, 0.15);
+    rajada(300, 140, 70, 0.85);
+    rajada(900, 180, 90, 0.5);
+    rajada(1400, 120, 70, 0.25);
+    rajada(1400, 120, 70, 0.75);
+    rajada(2200, 180, 100, 0.5);
+    rajada(3200, 150, 100, 0.5);
+    rajada(4500, 150, 100, 0.5);
+    rajada(6000, 150, 100, 0.5);
+
+    // Chuva de dinheiro
+    const emojis = ["💰", "💵", "💸"];
+    const gotas = Array.from({ length: 30 }, (_, i) => ({
+      id: Date.now() + i,
+      left: Math.random() * 100,
+      delay: Math.random() * 8,
+      emoji: emojis[i % emojis.length],
+    }));
+    setDinheiro(gotas);
+    setTimeout(() => setDinheiro([]), 9500);
 
     setMetaHit(true);
     setTimeout(() => setMetaHit(false), 9500);
@@ -218,15 +233,49 @@ export default function CSLive() {
         />
       )}
 
-      {/* Texto META BATIDA passando na horizontal, depois piscando */}
+      {/* Chuva de dinheiro */}
+      {dinheiro.map((d) => (
+        <div
+          key={d.id}
+          className="pointer-events-none fixed top-0 z-30 text-4xl md:text-5xl"
+          style={{
+            left: `${d.left}%`,
+            animation: `meta-cair 3.5s linear ${d.delay}s 1`,
+          }}
+        >
+          {d.emoji}
+        </div>
+      ))}
+
+      {/* Faixa META BATIDA passando na horizontal (estilo faixa dourada) */}
       {metaHit && (
-        <div className="pointer-events-none fixed inset-x-0 top-1/2 -translate-y-1/2 z-30 overflow-hidden flex justify-center">
+        <div className="pointer-events-none fixed inset-x-0 top-1/2 -translate-y-1/2 z-30 overflow-hidden">
           <div
-            className="whitespace-nowrap font-display font-bold text-6xl md:text-8xl"
+            className="whitespace-nowrap font-display font-bold text-5xl md:text-7xl py-6"
+            style={{
+              color: "#3c3406",
+              background: "linear-gradient(90deg, rgba(255,215,0,0.95), rgba(255,193,7,0.95))",
+              boxShadow: "0 0 60px rgba(255,215,0,0.5)",
+              animation: "meta-scroll 3s linear forwards",
+            }}
+          >
+            META BATIDA!!!! &nbsp;&nbsp;&nbsp; META BATIDA!!!! &nbsp;&nbsp;&nbsp; META BATIDA!!!! &nbsp;&nbsp;&nbsp; META BATIDA!!!!
+          </div>
+        </div>
+      )}
+
+      {/* Texto META BATIDA gigante centralizado, piscando */}
+      {metaHit && (
+        <div
+          className="pointer-events-none fixed inset-0 z-30 flex items-center justify-center"
+          style={{ animation: "meta-blink-in 1s step-start 3s forwards" }}
+        >
+          <div
+            className="font-display font-bold text-7xl md:text-9xl text-center px-4"
             style={{
               color: "#FFD700",
-              textShadow: "0 0 30px rgba(255,215,0,0.6)",
-              animation: "meta-scroll 3s linear forwards, meta-blink 1s step-start 3s 6",
+              textShadow: "0 0 50px rgba(255,215,0,0.8), 0 0 100px rgba(255,215,0,0.5)",
+              animation: "meta-blink 1s step-start 3s 6",
             }}
           >
             META BATIDA
@@ -238,9 +287,17 @@ export default function CSLive() {
           from { transform: translateX(100vw); }
           to { transform: translateX(-100%); }
         }
+        @keyframes meta-blink-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
         @keyframes meta-blink {
           0%, 100% { opacity: 1; }
           50% { opacity: 0; }
+        }
+        @keyframes meta-cair {
+          from { transform: translateY(-60px); opacity: 1; }
+          to { transform: translateY(105vh); opacity: 0.9; }
         }
       `}</style>
 
