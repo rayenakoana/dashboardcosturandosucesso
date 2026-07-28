@@ -96,6 +96,9 @@ export default function CSLive() {
   const [pulse, setPulse] = useState(false);
   const initialized = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const metaAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [metaHit, setMetaHit] = useState(false);
+  const metaJaComemorada = useRef(false);
 
   useEffect(() => {
     if (!initialized.current) {
@@ -164,10 +167,78 @@ export default function CSLive() {
   // Demo trigger (manual celebration) for QA
   function demoTrigger() { celebrate(15000); }
 
+  function celebrarMeta() {
+    // Confete e brilhos em múltiplas rajadas, mais intensos e demorados que a comemoração normal
+    const cores = ["#FFD700", "#FFF4C2", "#E8192C", "#ffffff", "#FF8E00"];
+    const rajada = (delay: number, particleCount: number, spread: number, x: number) =>
+      setTimeout(() => confetti({ particleCount, spread, origin: { x, y: 0.5 }, colors: cores }), delay);
+    rajada(0, 200, 100, 0.5);
+    rajada(300, 120, 70, 0.15);
+    rajada(300, 120, 70, 0.85);
+    rajada(900, 150, 90, 0.5);
+    rajada(1400, 100, 70, 0.25);
+    rajada(1400, 100, 70, 0.75);
+    rajada(2200, 150, 100, 0.5);
+
+    setMetaHit(true);
+    setTimeout(() => setMetaHit(false), 5000);
+
+    toast.success("🏆 META BATIDA!!!!", { duration: 8000 });
+
+    try {
+      if (metaAudioRef.current) {
+        metaAudioRef.current.currentTime = 0;
+        void metaAudioRef.current.play().catch(() => {});
+      }
+    } catch { /* ignore */ }
+  }
+
+  useEffect(() => {
+    if (meta <= 0) return;
+    if (!metaJaComemorada.current && faturamento >= meta) {
+      metaJaComemorada.current = true;
+      celebrarMeta();
+    }
+    if (faturamento < meta) {
+      metaJaComemorada.current = false;
+    }
+  }, [faturamento, meta]);
+
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-8 md:p-16 relative overflow-hidden">
       {/* audio with silent fallback */}
       <audio ref={audioRef} src="/sounds/applause.mp3" preload="auto" />
+      <audio ref={metaAudioRef} src="/sounds/celebracao_meta.mp3" preload="auto" />
+
+      {/* Gold background overlay quando bate a meta */}
+      {metaHit && (
+        <div
+          className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-700"
+          style={{ background: "radial-gradient(circle at 50% 30%, rgba(255,215,0,0.35), transparent 70%)" }}
+        />
+      )}
+
+      {/* Faixa META BATIDA passando na horizontal */}
+      {metaHit && (
+        <div className="pointer-events-none fixed inset-x-0 top-1/2 -translate-y-1/2 z-30 overflow-hidden">
+          <div
+            className="whitespace-nowrap font-display font-bold text-4xl md:text-6xl py-4"
+            style={{
+              color: "#3c3406",
+              background: "rgba(255,215,0,0.92)",
+              animation: "meta-scroll 4.5s linear",
+            }}
+          >
+            META BATIDA!!!!&nbsp;&nbsp;&nbsp;&nbsp;META BATIDA!!!!&nbsp;&nbsp;&nbsp;&nbsp;META BATIDA!!!!&nbsp;&nbsp;&nbsp;&nbsp;META BATIDA!!!!
+          </div>
+        </div>
+      )}
+      <style>{`
+        @keyframes meta-scroll {
+          from { transform: translateX(100%); }
+          to { transform: translateX(-100%); }
+        }
+      `}</style>
 
       {/* back link */}
       <Link
@@ -182,6 +253,13 @@ export default function CSLive() {
         className="absolute top-6 right-6 text-xs px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground z-10"
       >
         <Zap className="inline h-3 w-3 mr-1" /> Testar comemoração
+      </button>
+
+      <button
+        onClick={celebrarMeta}
+        className="absolute top-6 right-48 text-xs px-3 py-2 rounded-lg border border-gold text-gold hover:bg-gold/10 z-10"
+      >
+        <Trophy className="inline h-3 w-3 mr-1" /> Testar meta batida
       </button>
 
       {/* Emoji pop */}
