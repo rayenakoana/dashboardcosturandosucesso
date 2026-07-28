@@ -181,7 +181,7 @@ export default function CSLive() {
     rajada(2200, 150, 100, 0.5);
 
     setMetaHit(true);
-    setTimeout(() => setMetaHit(false), 5000);
+    setTimeout(() => setMetaHit(false), 9500);
 
     toast.success("🏆 META BATIDA!!!!", { duration: 8000 });
 
@@ -218,25 +218,29 @@ export default function CSLive() {
         />
       )}
 
-      {/* Faixa META BATIDA passando na horizontal */}
+      {/* Texto META BATIDA passando na horizontal, depois piscando */}
       {metaHit && (
-        <div className="pointer-events-none fixed inset-x-0 top-1/2 -translate-y-1/2 z-30 overflow-hidden">
+        <div className="pointer-events-none fixed inset-x-0 top-1/2 -translate-y-1/2 z-30 overflow-hidden flex justify-center">
           <div
-            className="whitespace-nowrap font-display font-bold text-4xl md:text-6xl py-4"
+            className="whitespace-nowrap font-display font-bold text-6xl md:text-8xl"
             style={{
-              color: "#3c3406",
-              background: "rgba(255,215,0,0.92)",
-              animation: "meta-scroll 4.5s linear",
+              color: "#FFD700",
+              textShadow: "0 0 30px rgba(255,215,0,0.6)",
+              animation: "meta-scroll 3s linear forwards, meta-blink 1s step-start 3s 6",
             }}
           >
-            META BATIDA!!!!&nbsp;&nbsp;&nbsp;&nbsp;META BATIDA!!!!&nbsp;&nbsp;&nbsp;&nbsp;META BATIDA!!!!&nbsp;&nbsp;&nbsp;&nbsp;META BATIDA!!!!
+            META BATIDA
           </div>
         </div>
       )}
       <style>{`
         @keyframes meta-scroll {
-          from { transform: translateX(100%); }
+          from { transform: translateX(100vw); }
           to { transform: translateX(-100%); }
+        }
+        @keyframes meta-blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
         }
       `}</style>
 
