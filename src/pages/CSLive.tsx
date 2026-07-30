@@ -248,11 +248,16 @@ export default function CSLive() {
       <audio ref={audioRef} src="/sounds/applause.mp3" preload="auto" />
       <audio ref={metaAudioRef} src="/sounds/celebracao_meta.mp3" preload="auto" />
 
-      {/* Fundo dourado persistente enquanto a meta estiver batida */}
+      {/* Fundo dourado persistente enquanto a meta estiver batida (substitui o brilho ambiente vermelho) */}
       {meta > 0 && faturamento >= meta && (
         <div
           className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-700"
-          style={{ background: "radial-gradient(circle at 50% 30%, rgba(255,215,0,0.35), transparent 70%)" }}
+          style={{
+            background:
+              "radial-gradient(ellipse 60% 45% at 20% 15%, rgba(255,215,0,0.5), transparent 60%)," +
+              "radial-gradient(ellipse 50% 40% at 85% 85%, rgba(255,215,0,0.45), transparent 65%)," +
+              "radial-gradient(ellipse 70% 50% at 50% 50%, rgba(255,215,0,0.35), transparent 70%)",
+          }}
         />
       )}
 
@@ -417,7 +422,7 @@ export default function CSLive() {
           <span>{formatBRL(meta)}</span>
         </div>
         {meta > 0 && (
-          <div className={`text-center mt-3 text-sm ${faturamento >= meta ? "text-gold" : "text-primary/80"}`}>
+          <div className={`text-center mt-3 ${faturamento >= meta ? "text-gold text-xl font-bold" : "text-sm text-primary/80"}`}>
             {faturamento >= meta
               ? "🎉 Meta batida!"
               : `Faltam ${formatBRL(meta - faturamento)} para bater a meta`}
