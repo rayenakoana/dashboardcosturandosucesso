@@ -183,20 +183,32 @@ export default function CSLive() {
     rajada(3200, 150, 100, 0.5);
     rajada(4500, 150, 100, 0.5);
     rajada(6000, 150, 100, 0.5);
+    // Segundo ciclo (acompanha a repetição da moto + fogos no áudio, por volta dos 9.5s)
+    rajada(9500, 220, 100, 0.5);
+    rajada(9800, 140, 70, 0.15);
+    rajada(9800, 140, 70, 0.85);
+    rajada(10400, 180, 90, 0.5);
+    rajada(10900, 120, 70, 0.25);
+    rajada(10900, 120, 70, 0.75);
+    rajada(11700, 180, 100, 0.5);
+    rajada(12700, 150, 100, 0.5);
+    rajada(14000, 150, 100, 0.5);
+    rajada(15500, 150, 100, 0.5);
+    rajada(17000, 150, 100, 0.5);
 
     // Chuva de dinheiro
     const emojis = ["💰", "💵", "💸"];
-    const gotas = Array.from({ length: 30 }, (_, i) => ({
+    const gotas = Array.from({ length: 55 }, (_, i) => ({
       id: Date.now() + i,
       left: Math.random() * 100,
-      delay: Math.random() * 8,
+      delay: Math.random() * 17,
       emoji: emojis[i % emojis.length],
     }));
     setDinheiro(gotas);
-    setTimeout(() => setDinheiro([]), 9500);
+    setTimeout(() => setDinheiro([]), 19000);
 
     setMetaHit(true);
-    setTimeout(() => setMetaHit(false), 9500);
+    setTimeout(() => setMetaHit(false), 19000);
 
     toast.success("🏆 META BATIDA!!!!", { duration: 8000 });
 
@@ -275,7 +287,7 @@ export default function CSLive() {
             style={{
               color: "#FFD700",
               textShadow: "0 0 50px rgba(255,215,0,0.8), 0 0 100px rgba(255,215,0,0.5)",
-              animation: "meta-blink 1s step-start 3s 6",
+              animation: "meta-blink 1s step-start 3s 16",
             }}
           >
             META BATIDA
