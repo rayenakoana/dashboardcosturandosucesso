@@ -220,8 +220,19 @@ export default function CSLive() {
     } catch { /* ignore */ }
   }
 
+  const primeiraChecagemMeta = useRef(true);
+
   useEffect(() => {
     if (meta <= 0) return;
+
+    // Na primeira checagem (abertura/recarga da página), só registra o estado atual
+    // sem disparar a comemoração — ela só deve tocar quando a meta é batida "ao vivo".
+    if (primeiraChecagemMeta.current) {
+      primeiraChecagemMeta.current = false;
+      metaJaComemorada.current = faturamento >= meta;
+      return;
+    }
+
     if (!metaJaComemorada.current && faturamento >= meta) {
       metaJaComemorada.current = true;
       celebrarMeta();
@@ -392,7 +403,9 @@ export default function CSLive() {
         </div>
         <div className="relative h-6 rounded-full bg-muted/40 border border-border overflow-hidden">
           <div
-            className="absolute inset-y-0 left-0 bg-gradient-red animate-pulse-glow transition-all duration-700"
+            className={`absolute inset-y-0 left-0 animate-pulse-glow transition-all duration-700 ${
+              meta > 0 && faturamento >= meta ? "bg-gradient-to-r from-[#C9A017] to-[#FFD700]" : "bg-gradient-red"
+            }`}
             style={{ width: `${pctMeta}%` }}
           />
           {/* gold marker */}
@@ -404,7 +417,7 @@ export default function CSLive() {
           <span>{formatBRL(meta)}</span>
         </div>
         {meta > 0 && (
-          <div className="text-center mt-3 text-sm text-primary/80">
+          <div className={`text-center mt-3 text-sm ${faturamento >= meta ? "text-gold" : "text-primary/80"}`}>
             {faturamento >= meta
               ? "🎉 Meta batida!"
               : `Faltam ${formatBRL(meta - faturamento)} para bater a meta`}
