@@ -237,8 +237,8 @@ export default function CSLive() {
       <audio ref={audioRef} src="/sounds/applause.mp3" preload="auto" />
       <audio ref={metaAudioRef} src="/sounds/celebracao_meta.mp3" preload="auto" />
 
-      {/* Gold background overlay quando bate a meta */}
-      {metaHit && (
+      {/* Fundo dourado persistente enquanto a meta estiver batida */}
+      {meta > 0 && faturamento >= meta && (
         <div
           className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-700"
           style={{ background: "radial-gradient(circle at 50% 30%, rgba(255,215,0,0.35), transparent 70%)" }}
