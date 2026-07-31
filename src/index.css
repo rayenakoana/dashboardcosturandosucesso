@@ -121,9 +121,9 @@
     pointer-events: none;
     z-index: 0;
     background:
-      radial-gradient(ellipse 60% 45% at 20% 15%, hsl(355 82% 51% / 0.28), transparent 60%),
-      radial-gradient(ellipse 50% 40% at 85% 85%, hsl(45 78% 44% / 0.16), transparent 65%),
-      radial-gradient(ellipse 70% 50% at 50% 50%, hsl(355 82% 51% / 0.14), transparent 70%);
+      radial-gradient(ellipse 60% 45% at 20% 15%, hsl(355 82% 51% / 0.4), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 85% 85%, hsl(45 78% 44% / 0.28), transparent 65%),
+      radial-gradient(ellipse 70% 50% at 50% 50%, hsl(355 82% 51% / 0.22), transparent 70%);
     animation: ambient-pulse 12s ease-in-out infinite;
   }
 
@@ -152,9 +152,24 @@
 
 @layer components {
   .glass-card {
-    @apply rounded-xl border backdrop-blur-xl;
-    background: hsl(var(--card) / 0.7);
+    @apply rounded-xl border backdrop-blur-xl relative;
+    background: hsl(var(--card) / 0.55);
     border-color: hsl(var(--border));
+  }
+  .glass-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(180deg, hsl(0 0% 100% / 0.06), transparent 40%);
+  }
+
+  html.light .glass-card {
+    background: hsl(var(--card) / 0.7);
+  }
+  html.light .glass-card::before {
+    background: linear-gradient(180deg, hsl(0 0% 100% / 0.5), transparent 50%);
   }
 
   .glass-card-hover {
