@@ -2,9 +2,11 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   BarChart3, Settings, DollarSign, ShoppingCart, Layers,
   CalendarPlus, Target, Radio, Maximize, Minimize, GitMerge,
+  Sun, Moon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const items = [
   { title: "Dashboard",    url: "/",              icon: BarChart3 },
@@ -24,6 +26,7 @@ export function TopNav() {
   const { pathname } = useLocation();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const showFullscreen = FULLSCREEN_PAGES.includes(pathname);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handler = () => setIsFullscreen(!!document.fullscreenElement);
@@ -75,6 +78,14 @@ export function TopNav() {
             );
           })}
         </nav>
+
+        <button
+          onClick={toggleTheme}
+          title={theme === "dark" ? "Tema claro" : "Tema escuro"}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/60 text-muted-foreground hover:text-foreground hover:border-border transition-all text-xs font-medium shrink-0"
+        >
+          {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+        </button>
 
         {showFullscreen && (
           <button

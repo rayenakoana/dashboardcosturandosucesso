@@ -53,6 +53,54 @@
     --gradient-red-soft: linear-gradient(180deg, hsl(355 82% 51% / 0.85), hsl(355 72% 31% / 0.6));
     --gradient-gold: linear-gradient(135deg, hsl(45 78% 54%), hsl(45 78% 34%));
   }
+
+  /* ==== Tema claro ("glass") ==== */
+  html.light {
+    --background: 32 20% 96%;          /* #F7F5F2 */
+    --foreground: 20 10% 12%;          /* #1C1A17 */
+
+    --card: 0 0% 100%;
+    --card-foreground: 20 10% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 10% 12%;
+
+    --primary: 350 74% 45%;            /* #C8102E */
+    --primary-foreground: 0 0% 100%;
+    --primary-dark: 355 72% 31%;
+
+    --secondary: 32 15% 92%;
+    --secondary-foreground: 20 10% 12%;
+
+    --muted: 32 15% 92%;
+    --muted-foreground: 25 10% 45%;    /* #8a8478 */
+
+    --accent: 350 74% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --gold: 42 85% 34%;                /* #A67C0A */
+    --gold-foreground: 0 0% 100%;
+
+    --destructive: 0 74% 48%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 15% 88%;              /* #E4DFD8 */
+    --input: 30 15% 88%;
+    --ring: 350 74% 45%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 20 10% 20%;
+    --sidebar-primary: 350 74% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 32 15% 92%;
+    --sidebar-accent-foreground: 20 10% 12%;
+    --sidebar-border: 30 15% 88%;
+    --sidebar-ring: 350 74% 45%;
+
+    --gradient-red: linear-gradient(135deg, hsl(350 74% 45%), hsl(355 72% 31%));
+    --gradient-red-soft: linear-gradient(180deg, hsl(350 74% 45% / 0.85), hsl(355 72% 31% / 0.6));
+    --gradient-gold: linear-gradient(135deg, hsl(42 85% 44%), hsl(42 85% 30%));
+  }
 }
 
 @layer base {
@@ -79,6 +127,19 @@
     animation: ambient-pulse 12s ease-in-out infinite;
   }
 
+  html.light body::before {
+    background:
+      radial-gradient(ellipse 60% 45% at 20% 15%, hsl(350 74% 45% / 0.10), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 85% 85%, hsl(42 85% 44% / 0.06), transparent 65%),
+      radial-gradient(ellipse 70% 50% at 50% 50%, hsl(350 74% 45% / 0.05), transparent 70%);
+  }
+
+  html.light .glass-card,
+  html.light .glass-card-hover,
+  html.light .fchip {
+    box-shadow: 0 4px 24px rgba(28, 26, 23, 0.04);
+  }
+
   #root { position: relative; z-index: 1; }
 
   h1, h2, h3, h4, h5, h6 {
@@ -91,9 +152,9 @@
 
 @layer components {
   .glass-card {
-    @apply rounded-xl border;
-    background: #15151f;
-    border-color: #2a1c20;
+    @apply rounded-xl border backdrop-blur-xl;
+    background: hsl(var(--card) / 0.7);
+    border-color: hsl(var(--border));
   }
 
   .glass-card-hover {
@@ -106,10 +167,10 @@
 
   /* Funil filter chips (pill buttons), matching the approved prototype */
   .fchip {
-    @apply text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer;
-    background: #15151f;
-    border-color: #2a1c20;
-    color: #999;
+    @apply text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer backdrop-blur-xl;
+    background: hsl(var(--card) / 0.7);
+    border-color: hsl(var(--border));
+    color: hsl(var(--muted-foreground));
   }
   .fchip:hover { border-color: hsl(355 82% 51% / 0.5); }
   .fchip.active {
