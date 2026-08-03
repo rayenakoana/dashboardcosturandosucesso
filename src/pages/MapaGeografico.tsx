@@ -262,12 +262,48 @@ export default function MapaGeografico() {
   );
 }
 
+function useMapZoomPan() {
+  const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0 });
+  const dragging = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+
+  const onWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    setTransform(t => ({ ...t, scale: Math.min(8, Math.max(1, t.scale * delta)) }));
+  };
+  const onMouseDown = (e: React.MouseEvent) => {
+    dragging.current = { startX: e.clientX, startY: e.clientY, origX: transform.x, origY: transform.y };
+  };
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!dragging.current) return;
+    const dx = e.clientX - dragging.current.startX;
+    const dy = e.clientY - dragging.current.startY;
+    setTransform(t => ({ ...t, x: dragging.current!.origX + dx, y: dragging.current!.origY + dy }));
+  };
+  const onMouseUp = () => { dragging.current = null; };
+  const reset = () => setTransform({ scale: 1, x: 0, y: 0 });
+
+  return { transform, onWheel, onMouseDown, onMouseMove, onMouseUp, reset };
+}
+
+function ZoomHint({ onReset }: { onReset: () => void }) {
+  return (
+    <button
+      onClick={onReset}
+      className="absolute top-2 right-2 text-[10px] px-2 py-1 rounded-md bg-background/70 border border-border text-muted-foreground hover:text-foreground backdrop-blur"
+    >
+      resetar zoom
+    </button>
+  );
+}
+
 // ============================================================
 // Mapa mundial
 // ============================================================
 function WorldMap({ porPais, onClickBrasil, onHover }: { porPais: Record<string, number>; onClickBrasil: () => void; onHover: (i: any) => void }) {
   const [geo, setGeo] = useState<any>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const { transform, onWheel, onMouseDown, onMouseMove, onMouseUp, reset } = useMapZoomPan();
 
   useEffect(() => {
     fetch("/geo/world-countries.json")
@@ -294,33 +330,45 @@ function WorldMap({ porPais, onClickBrasil, onHover }: { porPais: Record<string,
 
   return (
     <div className="relative">
-      <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
-        {geo.map((d: any, i: number) => {
-          const nomeEn = d.properties.name;
-          const nomePt = nomeParaPtbr[nomeEn];
-          const leads = nomePt ? porPais[nomePt] : undefined;
-          const isBrasil = nomeEn === "Brazil";
-          const fill = leads ? (isBrasil ? "hsl(var(--primary))" : "hsl(var(--gold))") : "hsl(var(--muted) / 0.4)";
-          return (
-            <path
-              key={i}
-              d={path(d) || ""}
-              fill={fill}
-              stroke="hsl(var(--border))"
-              strokeWidth={0.4}
-              className={leads ? "cursor-pointer transition-opacity hover:opacity-80" : ""}
-              onMouseMove={(e) => {
-                if (!leads) return;
-                const rect = svgRef.current?.getBoundingClientRect();
-                onHover({ nome: nomePt, leads, x: e.clientX - (rect?.left || 0), y: e.clientY - (rect?.top || 0) });
-              }}
-              onMouseLeave={() => onHover(null)}
-              onClick={() => { if (isBrasil) onClickBrasil(); }}
-            />
-          );
-        })}
+      <svg
+        ref={svgRef}
+        viewBox={`0 0 ${width} ${height}`}
+        className="w-full h-auto cursor-grab active:cursor-grabbing"
+        onWheel={onWheel}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+      >
+        <g style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`, transformOrigin: "center" }}>
+          {geo.map((d: any, i: number) => {
+            const nomeEn = d.properties.name;
+            const nomePt = nomeParaPtbr[nomeEn];
+            const leads = nomePt ? porPais[nomePt] : undefined;
+            const isBrasil = nomeEn === "Brazil";
+            const fill = leads ? (isBrasil ? "hsl(var(--primary))" : "hsl(var(--gold))") : "hsl(var(--muted) / 0.4)";
+            return (
+              <path
+                key={i}
+                d={path(d) || ""}
+                fill={fill}
+                stroke="hsl(var(--border))"
+                strokeWidth={0.4 / transform.scale}
+                className={leads ? "cursor-pointer transition-opacity hover:opacity-80" : ""}
+                onMouseMove={(e) => {
+                  if (!leads) return;
+                  const rect = svgRef.current?.getBoundingClientRect();
+                  onHover({ nome: nomePt, leads, x: e.clientX - (rect?.left || 0), y: e.clientY - (rect?.top || 0) });
+                }}
+                onMouseLeave={() => onHover(null)}
+                onClick={() => { if (isBrasil) onClickBrasil(); }}
+              />
+            );
+          })}
+        </g>
       </svg>
-      <p className="text-[11px] text-muted-foreground mt-2">Clique no Brasil para detalhar por estado. Passe o mouse para ver os números.</p>
+      <ZoomHint onReset={reset} />
+      <p className="text-[11px] text-muted-foreground mt-2">Clique no Brasil para detalhar por estado. Role o mouse para zoom, arraste para mover.</p>
     </div>
   );
 }
@@ -331,6 +379,7 @@ function WorldMap({ porPais, onClickBrasil, onHover }: { porPais: Record<string,
 function BrazilMap({ porEstado, onClickEstado, onHover }: { porEstado: Record<string, { leads: number; uf: string }>; onClickEstado: (nome: string) => void; onHover: (i: any) => void }) {
   const [geo, setGeo] = useState<any>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const { transform, onWheel, onMouseDown, onMouseMove, onMouseUp, reset } = useMapZoomPan();
 
   useEffect(() => {
     fetch("/geo/br-states.json")
@@ -353,32 +402,44 @@ function BrazilMap({ porEstado, onClickEstado, onHover }: { porEstado: Record<st
 
   return (
     <div className="relative">
-      <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
-        {geo.map((d: any, i: number) => {
-          const nome = d.properties.name;
-          const info = porEstado[nome];
-          const leads = info?.leads || 0;
-          const intensity = leads > 0 ? 0.25 + (leads / max) * 0.75 : 0;
-          return (
-            <path
-              key={i}
-              d={path(d) || ""}
-              fill={leads > 0 ? `hsl(355 82% 51% / ${intensity})` : "hsl(var(--muted) / 0.4)"}
-              stroke="hsl(var(--border))"
-              strokeWidth={0.6}
-              className={leads > 0 ? "cursor-pointer transition-opacity hover:opacity-80" : ""}
-              onMouseMove={(e) => {
-                if (!leads) return;
-                const rect = svgRef.current?.getBoundingClientRect();
-                onHover({ nome, leads, x: e.clientX - (rect?.left || 0), y: e.clientY - (rect?.top || 0) });
-              }}
-              onMouseLeave={() => onHover(null)}
-              onClick={() => { if (leads > 0) onClickEstado(nome); }}
-            />
-          );
-        })}
+      <svg
+        ref={svgRef}
+        viewBox={`0 0 ${width} ${height}`}
+        className="w-full h-auto cursor-grab active:cursor-grabbing"
+        onWheel={onWheel}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+      >
+        <g style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`, transformOrigin: "center" }}>
+          {geo.map((d: any, i: number) => {
+            const nome = d.properties.name;
+            const info = porEstado[nome];
+            const leads = info?.leads || 0;
+            const intensity = leads > 0 ? 0.25 + (leads / max) * 0.75 : 0;
+            return (
+              <path
+                key={i}
+                d={path(d) || ""}
+                fill={leads > 0 ? `hsl(355 82% 51% / ${intensity})` : "hsl(var(--muted) / 0.4)"}
+                stroke="hsl(var(--border))"
+                strokeWidth={0.6 / transform.scale}
+                className={leads > 0 ? "cursor-pointer transition-opacity hover:opacity-80" : ""}
+                onMouseMove={(e) => {
+                  if (!leads) return;
+                  const rect = svgRef.current?.getBoundingClientRect();
+                  onHover({ nome, leads, x: e.clientX - (rect?.left || 0), y: e.clientY - (rect?.top || 0) });
+                }}
+                onMouseLeave={() => onHover(null)}
+                onClick={() => { if (leads > 0) onClickEstado(nome); }}
+              />
+            );
+          })}
+        </g>
       </svg>
-      <p className="text-[11px] text-muted-foreground mt-2">Clique num estado para ver as cidades. Cor mais forte = mais leads.</p>
+      <ZoomHint onReset={reset} />
+      <p className="text-[11px] text-muted-foreground mt-2">Clique num estado para ver as cidades. Role o mouse para zoom, arraste para mover.</p>
     </div>
   );
 }
