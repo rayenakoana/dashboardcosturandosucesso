@@ -2,7 +2,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   BarChart3, Settings, DollarSign, ShoppingCart, Layers,
   CalendarPlus, Target, Radio, Maximize, Minimize, GitMerge,
-  Sun, Moon,
+  Sun, Moon, Map,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -16,6 +16,7 @@ const items = [
   { title: "Safras",      url: "/safras",         icon: Layers },
   { title: "Marketing",   url: "/custos",         icon: DollarSign },
   { title: "Metas",       url: "/metas",          icon: Target },
+  { title: "Mapa",        url: "/mapa",           icon: Map },
   { title: "Live",        url: "/live",           icon: Radio },
   { title: "Config",      url: "/configuracoes",  icon: Settings },
 ];

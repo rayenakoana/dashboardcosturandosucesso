@@ -13,6 +13,7 @@ import Metas from "./pages/Metas";
 import Configuracoes from "./pages/Configuracoes";
 import CSLive from "./pages/CSLive";
 import FunilXPTO from "./pages/FunilXPTO";
+import MapaGeografico from "./pages/MapaGeografico";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ function Shell() {
           <Route path="/metas" element={<Metas />} />
           <Route path="/configuracoes" element={<Configuracoes />} />
           <Route path="/funil-xpto" element={<FunilXPTO />} />
+          <Route path="/mapa" element={<MapaGeografico />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
