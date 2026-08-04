@@ -3,7 +3,8 @@ import { GlassCard } from "@/components/GlassCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { CONFIG_TIPOS, ConfigTipo, useConfiguracoes, useAddConfiguracao, useDeleteConfiguracao } from "@/hooks/useConfiguracoes";
+import { CONFIG_TIPOS, ConfigTipo, useConfiguracoes, useAddConfiguracao, useDeleteConfiguracao, useUpdateConfiguracaoVisibilidade } from "@/hooks/useConfiguracoes";
+import { Switch } from "@/components/ui/switch";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWebhookUrl } from "@/hooks/useWebhook";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Upload, Link, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 
 
@@ -21,6 +23,7 @@ export default function Configuracoes() {
   const { data: items = [], isLoading } = useConfiguracoes(activeTab);
   const addMutation = useAddConfiguracao();
   const deleteMutation = useDeleteConfiguracao();
+  const visibilidadeMutation = useUpdateConfiguracaoVisibilidade();
   const { url: webhookUrl, save: saveWebhook } = useWebhookUrl();
   const [webhookInput, setWebhookInput] = useState(webhookUrl);
 
@@ -45,6 +48,13 @@ export default function Configuracoes() {
     deleteMutation.mutate(id, {
       onSuccess: () => toast.success("Item removido"),
       onError: () => toast.error("Erro ao remover"),
+    });
+  };
+
+  const handleToggleVisibilidade = (id: string, visivelAtual: boolean) => {
+    visibilidadeMutation.mutate({ id, visivel: !visivelAtual }, {
+      onSuccess: () => toast.success(!visivelAtual ? "Funil visível no dashboard" : "Funil ocultado do dashboard"),
+      onError: () => toast.error("Erro ao atualizar visibilidade"),
     });
   };
 
@@ -171,20 +181,41 @@ export default function Configuracoes() {
                   <Plus className="h-4 w-4" /> Adicionar
                 </Button>
               </div>
+              {tipo === "Funil" && (
+                <p className="text-xs text-muted-foreground mb-3">
+                  Use o interruptor para mostrar ou esconder um funil em todo o dashboard (filtros, gráficos e listas), sem perder o histórico dele.
+                </p>
+              )}
               {isLoading ? (
                 <p className="text-muted-foreground text-sm">Carregando...</p>
               ) : items.length === 0 ? (
                 <p className="text-muted-foreground text-sm">Nenhum item cadastrado</p>
               ) : (
                 <div className="space-y-1.5">
-                  {items.map(item => (
-                    <div key={item.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group">
-                      <span className="text-sm">{item.valor}</span>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive" onClick={() => handleDelete(item.id)} disabled={deleteMutation.isPending}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  ))}
+                  {items.map(item => {
+                    const visivel = (item as any).visivel !== false;
+                    return (
+                      <div key={item.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group">
+                        <span className={cn("text-sm", tipo === "Funil" && !visivel && "text-muted-foreground line-through")}>{item.valor}</span>
+                        <div className="flex items-center gap-3">
+                          {tipo === "Funil" && (
+                            <div className="flex items-center gap-2">
+                              <Label htmlFor={`vis-${item.id}`} className="text-xs text-muted-foreground">{visivel ? "Visível" : "Oculto"}</Label>
+                              <Switch
+                                id={`vis-${item.id}`}
+                                checked={visivel}
+                                onCheckedChange={() => handleToggleVisibilidade(item.id, visivel)}
+                                disabled={visibilidadeMutation.isPending}
+                              />
+                            </div>
+                          )}
+                          <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive" onClick={() => handleDelete(item.id)} disabled={deleteMutation.isPending}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </TabsContent>

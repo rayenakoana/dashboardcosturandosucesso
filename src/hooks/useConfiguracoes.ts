@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { FUNIS_ORDEM_CANONICA } from "@/lib/funis";
 
 export type ConfigTipo = "Funil" | "Produto" | "Campanha" | "Origem" | "Segmento" | "Motivo de Perda" | "Meta Venda Geral" | "Meta Renovação" | "Meta Volume Vendas";
 
@@ -44,4 +45,27 @@ export function useDeleteConfiguracao() {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["configuracoes"] }),
   });
+}
+
+export function useUpdateConfiguracaoVisibilidade() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, visivel }: { id: string; visivel: boolean }) => {
+      const { error } = await supabase.from("configuracoes").update({ visivel }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["configuracoes"] }),
+  });
+}
+
+// Lista de funis marcados como visíveis (tipo "Funil", visivel != false), já na ordem canônica.
+// Usar este hook em vez de arrays hardcoded, para que o toggle em Configurações reflita em todo o app.
+export function useFunisVisiveis() {
+  const { data: funis = [], isLoading } = useConfiguracoes("Funil");
+  const nomesVisiveis = funis
+    .filter((f: any) => f.visivel !== false)
+    .map((f: any) => f.valor as string);
+  const ordenados = FUNIS_ORDEM_CANONICA.filter(f => nomesVisiveis.includes(f));
+  const extras = nomesVisiveis.filter(f => !FUNIS_ORDEM_CANONICA.includes(f));
+  return { funisVisiveis: [...ordenados, ...extras], isLoading };
 }

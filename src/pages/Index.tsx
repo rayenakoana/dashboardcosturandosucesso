@@ -12,6 +12,7 @@ import { useCustosMarketing } from "@/hooks/useCustosMarketing";
 import { usePerformanceReunioes } from "@/hooks/usePerformanceReunioes";
 import { useMetricasDiarias } from "@/hooks/useMetricasDiarias";
 import { useConfiguracoes } from "@/hooks/useConfiguracoes";
+import { PIPELINE_IDS } from "@/lib/funis";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -69,15 +70,6 @@ function PieTooltip({ active, payload }: any) {
     </div>
   );
 }
-
-const PIPELINE_IDS: Record<string, string> = {
-  "Segredos da Confecção": "699effbf7b4346001f83c691",
-  "UniForce": "6a04bd740b69f50013dd4c1a",
-  "Imersão Paraguai": "699f00342be5b20013e23f9c",
-  "CS Club": "6848412da06be900147fd766",
-  "Imersão Europa": "6a3ab5572a7c51002575739f",
-  "Imersão China": "6a3ab56ba02ee90021dd1c3b",
-};
 
 function ChartSkeleton({ height = 280 }: { height?: number }) {
   return (
@@ -439,7 +431,7 @@ export default function Index() {
         >
           Todos os funis
         </button>
-        {funis.map(f => {
+        {funis.filter((f: any) => f.visivel !== false).map(f => {
           const active = filterFunis.includes(f.valor);
           return (
             <button

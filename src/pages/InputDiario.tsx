@@ -127,7 +127,7 @@ export default function InputDiario() {
             <Label className="text-xs">Funil</Label>
             <Select value={form.funil} onValueChange={v => set("funil", v)}>
               <SelectTrigger className="bg-muted/50 h-9 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
-              <SelectContent>{funis.map(f => <SelectItem key={f.id} value={f.valor}>{f.valor}</SelectItem>)}</SelectContent>
+              <SelectContent>{funis.filter((f: any) => f.visivel !== false).map(f => <SelectItem key={f.id} value={f.valor}>{f.valor}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div>

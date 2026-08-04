@@ -1,38 +1,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useConfiguracoes } from "@/hooks/useConfiguracoes";
+import { useConfiguracoes, useFunisVisiveis } from "@/hooks/useConfiguracoes";
 import { useCustosMarketing } from "@/hooks/useCustosMarketing";
 import { GlassCard } from "@/components/GlassCard";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Filter, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const FUNIS_XPTO = [
-  "Segredos da Confecção",
-  "UniForce",
-  "Imersão Paraguai",
-  "CS Club",
-  "Imersão Europa",
-  "Imersão China",
-];
-
-const PIPELINE_IDS: Record<string, string> = {
-  "Segredos da Confecção": "699effbf7b4346001f83c691",
-  "UniForce": "6a04bd740b69f50013dd4c1a",
-  "Imersão Paraguai": "699f00342be5b20013e23f9c",
-  "CS Club": "6848412da06be900147fd766",
-  "Imersão Europa": "6a3ab5572a7c51002575739f",
-  "Imersão China": "6a3ab56ba02ee90021dd1c3b",
-};
-
-const FUNIL_CORES: Record<string, string> = {
-  "Segredos da Confecção": "#E8192C",
-  "UniForce": "#C9A017",
-  "Imersão Paraguai": "#4A9EFF",
-  "CS Club": "#7C3AED",
-  "Imersão Europa": "#10B981",
-  "Imersão China": "#F97316",
-};
+import { PIPELINE_IDS, FUNIL_CORES } from "@/lib/funis";
 
 const METAS = {
   leads_para_mql: 50,
@@ -89,6 +63,7 @@ export default function FunilXPTO() {
   const { data: campanhas } = useConfiguracoes("Campanha");
   const { data: origens } = useConfiguracoes("Origem");
   const { data: custos = [] } = useCustosMarketing();
+  const { funisVisiveis: FUNIS_XPTO } = useFunisVisiveis();
 
   const start = periodo === "hoje" ? getHoje()
     : periodo === "semana" ? getSemanaAtras()

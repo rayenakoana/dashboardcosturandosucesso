@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { GlassCard } from "@/components/GlassCard";
 import { Users } from "lucide-react";
+import { useFunisVisiveis } from "@/hooks/useConfiguracoes";
+import { FUNIL_CORES } from "@/lib/funis";
 
 interface Props {
   start: string;
@@ -13,24 +15,6 @@ interface LeadRow {
   funil: string;
   total_leads: number;
 }
-
-const FUNIS_ORDEM = [
-  "Segredos da Confecção",
-  "UniForce",
-  "Imersão Paraguai",
-  "CS Club",
-  "Imersão Europa",
-  "Imersão China",
-];
-
-const FUNIL_CORES: Record<string, string> = {
-  "Segredos da Confecção": "#E8192C",
-  "UniForce": "#C9A017",
-  "Imersão Paraguai": "#4A9EFF",
-  "CS Club": "#7C3AED",
-  "Imersão Europa": "#10B981",
-  "Imersão China": "#F97316",
-};
 
 type Periodo = "hoje" | "semana" | "mes" | "personalizado";
 
@@ -54,6 +38,7 @@ export function LeadsDiariosCard({ start, end }: Props) {
   const [funilSelecionado, setFunilSelecionado] = useState<string>("todos");
   const [customStart, setCustomStart] = useState(getMesInicio());
   const [customEnd, setCustomEnd] = useState(getHoje());
+  const { funisVisiveis: FUNIS_ORDEM } = useFunisVisiveis();
 
   const periodoStart =
     periodo === "hoje" ? getHoje() :

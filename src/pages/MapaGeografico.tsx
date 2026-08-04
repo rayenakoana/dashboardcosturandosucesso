@@ -3,17 +3,9 @@ import * as d3 from "d3-geo";
 import { feature } from "topojson-client";
 import { GlassCard } from "@/components/GlassCard";
 import { useLeadsGeografia } from "@/hooks/useLeadsGeografia";
+import { useFunisVisiveis } from "@/hooks/useConfiguracoes";
 import { Globe2, MapPin, ArrowLeft, Download } from "lucide-react";
-
-const PIPELINE_IDS: Record<string, string> = {
-  "Segredos da Confecção": "699effbf7b4346001f83c691",
-  "UniForce": "6a04bd740b69f50013dd4c1a",
-  "Imersão Paraguai": "699f00342be5b20013e23f9c",
-  "CS Club": "6848412da06be900147fd766",
-  "Imersão Europa": "6a3ab5572a7c51002575739f",
-  "Imersão China": "6a3ab56ba02ee90021dd1c3b",
-};
-const FUNIS = Object.keys(PIPELINE_IDS);
+import { PIPELINE_IDS } from "@/lib/funis";
 
 // Nomes dos países como aparecem no world-countries.json (Natural Earth) vs. nomes que usamos internamente
 const NOME_PAIS_MAPA: Record<string, string> = {
@@ -40,6 +32,7 @@ type View = "mundo" | "estados" | "cidades";
 
 export default function MapaGeografico() {
   const { data: rows = [], isLoading } = useLeadsGeografia();
+  const { funisVisiveis: FUNIS } = useFunisVisiveis();
   const [funisSel, setFunisSel] = useState<string[]>([]);
   const [view, setView] = useState<View>("mundo");
   const [estadoSelecionado, setEstadoSelecionado] = useState<string | null>(null);

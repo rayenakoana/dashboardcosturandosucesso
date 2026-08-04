@@ -5,27 +5,9 @@ import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useVendas } from "@/hooks/useVendas";
-import { useConfiguracoes } from "@/hooks/useConfiguracoes";
+import { useConfiguracoes, useFunisVisiveis } from "@/hooks/useConfiguracoes";
 import { ArrowLeft, TrendingUp, Trophy, Zap } from "lucide-react";
-
-// Cores fixas por funil (ordem: Segredos, UniForce, Paraguai, Club, Europa, China)
-const FUNIL_CORES: Record<string, string> = {
-  "Segredos da Confecção": "#E8192C",
-  "UniForce": "#C9A017",
-  "Imersão Paraguai": "#4A9EFF",
-  "CS Club": "#7C3AED",
-  "Imersão Europa": "#10B981",
-  "Imersão China": "#F97316",
-};
-
-const FUNIS_ORDEM = [
-  "Segredos da Confecção",
-  "UniForce",
-  "Imersão Paraguai",
-  "CS Club",
-  "Imersão Europa",
-  "Imersão China",
-];
+import { FUNIL_CORES } from "@/lib/funis";
 
 const EMOJIS = ["🎉", "🔥", "💰", "🚀", "🏆", "⚡", "✨"];
 
@@ -38,6 +20,7 @@ export default function CSLive() {
   const queryClient = useQueryClient();
   const { data: metaCfg = [] } = useConfiguracoes("Meta Venda Geral");
   const { data: funis = [] } = useConfiguracoes("Funil");
+  const { funisVisiveis: FUNIS_ORDEM } = useFunisVisiveis();
   const [filterFunis, setFilterFunis] = useState<string[]>([]);
   const toggleFunil = (nome: string) => {
     setFilterFunis(prev => prev.includes(nome) ? prev.filter(f => f !== nome) : [...prev, nome]);

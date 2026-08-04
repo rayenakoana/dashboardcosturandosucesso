@@ -131,7 +131,7 @@ export default function GestaoSafras() {
               <SelectTrigger className="bg-muted/50 h-8 text-xs w-[160px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="Todos">Todos</SelectItem>
-                {funis.map(f => <SelectItem key={f.id} value={f.valor}>{f.valor}</SelectItem>)}
+                {funis.filter((f: any) => f.visivel !== false).map(f => <SelectItem key={f.id} value={f.valor}>{f.valor}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

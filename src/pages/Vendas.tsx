@@ -305,7 +305,7 @@ export default function Vendas() {
                 <div><Label>Funil</Label>
                   <Select value={form.funil} onValueChange={v => set("funil", v)}>
                     <SelectTrigger className="bg-muted/50"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>{funis.map(s => <SelectItem key={s.id} value={s.valor}>{s.valor}</SelectItem>)}</SelectContent>
+                    <SelectContent>{funis.filter((f: any) => f.visivel !== false).map(s => <SelectItem key={s.id} value={s.valor}>{s.valor}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div><Label>Fonte / Origem</Label>
@@ -408,7 +408,7 @@ export default function Vendas() {
                     Funil <span className="text-[11px]">(selecione um ou vários)</span>
                   </Label>
                   <div className="space-y-1.5">
-                    {funis.map(f => (
+                    {funis.filter((f: any) => f.visivel !== false).map(f => (
                       <label key={f.id} className="flex items-center gap-2 text-sm cursor-pointer">
                         <input
                           type="checkbox"
