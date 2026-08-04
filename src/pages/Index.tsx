@@ -125,6 +125,7 @@ export default function Index() {
       let q = supabase
         .from("leads_geografia")
         .select("created_at, pipeline_id")
+        .eq("deletado", false)
         .in("rating", [3, 5])
         .gte("created_at", start)
         .lte("created_at", end + "T23:59:59");

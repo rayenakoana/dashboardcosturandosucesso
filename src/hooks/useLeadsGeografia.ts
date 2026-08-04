@@ -27,6 +27,7 @@ export function useLeadsGeografia() {
         const { data, error } = await supabase
           .from("leads_geografia")
           .select("deal_id, pipeline_id, pais, uf, estado, regiao, cidade, estado_organizacao, rating, created_at")
+          .eq("deletado", false)
           .range(from, from + PAGE_SIZE - 1);
         if (error) throw error;
         if (!data || data.length === 0) break;

@@ -37,7 +37,7 @@ export function WorldToBrazilMap({ countryData, stateData }: WorldToBrazilMapPro
   useEffect(() => {
     async function fetchLeadsGeografia() {
       try {
-        const { data, error } = await supabase.from('leads_geografia').select('uf');
+        const { data, error } = await supabase.from('leads_geografia').select('uf').eq('deletado', false);
 
         if (error) {
           console.error("Erro no Supabase:", error);

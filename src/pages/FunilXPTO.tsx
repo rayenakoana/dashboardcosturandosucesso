@@ -126,6 +126,7 @@ export default function FunilXPTO() {
     let mqlQuery = supabase
       .from("leads_geografia")
       .select("id")
+      .eq("deletado", false)
       .in("rating", [3, 5])
       .gte("created_at", start)
       .lte("created_at", end + "T23:59:59");
