@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import { KPICard } from "@/components/KPICard";
 import { GlassCard } from "@/components/GlassCard";
 import { SDRPodium } from "@/components/SDRPodium";
-import { WorldToBrazilMap } from "@/components/WorldToBrazilMap";
 import { LeadsDiariosCard } from "@/components/LeadsDiariosCard";
 import { useVendas } from "@/hooks/useVendas";
 import { useCustosMarketing } from "@/hooks/useCustosMarketing";
@@ -678,9 +677,6 @@ export default function Index() {
 
       {/* Performance por SDR (pódio) */}
       <SDRPodium start={start} end={end} />
-
-      {/* Origem geográfica dos leads */}
-      <WorldToBrazilMap />
 
       {/* Chegada de leads por funil */}
       <LeadsDiariosCard start={start} end={end} />
