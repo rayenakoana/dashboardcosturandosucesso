@@ -17,6 +17,7 @@ import CSLive from "./pages/CSLive";
 import FunilXPTO from "./pages/FunilXPTO";
 import MapaGeografico from "./pages/MapaGeografico";
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
 import AdminLayout from "./pages/admin/AdminLayout";
 import Usuarios from "./pages/admin/Usuarios";
 import NotFound from "./pages/NotFound";
@@ -45,6 +46,7 @@ function Shell() {
 
           {/* Login */}
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Área administrativa (protegida) */}
           <Route
