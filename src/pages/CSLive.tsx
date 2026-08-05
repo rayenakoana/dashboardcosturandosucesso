@@ -50,7 +50,7 @@ export default function CSLive() {
 
   // Leads do dia por funil
   const [leadsHoje, setLeadsHoje] = useState<Record<string, number>>({});
-  const totalLeadsHoje = Object.values(leadsHoje).reduce((s, v) => s + v, 0);
+  const totalLeadsHoje = FUNIS_ORDEM.reduce((s, f) => s + (leadsHoje[f] ?? 0), 0);
 
   const hoje = new Date().toISOString().split("T")[0];
 
