@@ -24,6 +24,7 @@ export default function Metas() {
   const [saving, setSaving] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
   const [funilValues, setFunilValues] = useState<Record<string, string>>({});
+  const [funilQtdValues, setFunilQtdValues] = useState<Record<string, string>>({});
   const [savingFunis, setSavingFunis] = useState(false);
   const { funisVisiveis } = useFunisVisiveis();
 
@@ -44,11 +45,15 @@ export default function Metas() {
       setValues(v);
 
       const fv: Record<string, string> = {};
+      const fq: Record<string, string> = {};
       funisVisiveis.forEach(nome => {
         const item = allMetas.find((m: any) => m.tipo === "Meta Funil" && m.funil === nome && m.mes_ref === mesRef);
         fv[nome] = item ? item.valor : "";
+        const itemQtd = allMetas.find((m: any) => m.tipo === "Meta Funil Qtd" && m.funil === nome && m.mes_ref === mesRef);
+        fq[nome] = itemQtd ? itemQtd.valor : "";
       });
       setFunilValues(fv);
+      setFunilQtdValues(fq);
     }
   }, [mesRef, allMetas, isLoading, funisVisiveis.join(",")]);
 
@@ -85,6 +90,15 @@ export default function Metas() {
         const val = (funilValues[nome] || "").trim();
         if (val) {
           await supabase.from("configuracoes").insert({ tipo: "Meta Funil", funil: nome, valor: val, mes_ref: mesRef });
+        }
+
+        const existingQtd = allMetas.find((m: any) => m.tipo === "Meta Funil Qtd" && m.funil === nome && m.mes_ref === mesRef);
+        if (existingQtd) {
+          await supabase.from("configuracoes").delete().eq("id", existingQtd.id);
+        }
+        const valQtd = (funilQtdValues[nome] || "").trim();
+        if (valQtd) {
+          await supabase.from("configuracoes").insert({ tipo: "Meta Funil Qtd", funil: nome, valor: valQtd, mes_ref: mesRef });
         }
       }
       qc.invalidateQueries({ queryKey: ["configuracoes"] });
@@ -187,17 +201,32 @@ export default function Metas() {
         {funisVisiveis.length === 0 ? (
           <p className="text-muted-foreground text-sm">Nenhum funil visível cadastrado</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="space-y-4">
             {funisVisiveis.map(nome => (
-              <div key={nome} className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">{nome} (R$)</Label>
-                <Input
-                  type="number"
-                  value={funilValues[nome] || ""}
-                  onChange={e => setFunilValues(prev => ({ ...prev, [nome]: e.target.value }))}
-                  placeholder="0"
-                  className="bg-muted/50 border-border h-10"
-                />
+              <div key={nome} className="grid grid-cols-1 sm:grid-cols-[1fr,180px,180px] gap-3 items-end border-b border-border/40 pb-4 last:border-0 last:pb-0">
+                <div>
+                  <Label className="text-sm font-medium">{nome}</Label>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Nº de vendas (meta)</Label>
+                  <Input
+                    type="number"
+                    value={funilQtdValues[nome] || ""}
+                    onChange={e => setFunilQtdValues(prev => ({ ...prev, [nome]: e.target.value }))}
+                    placeholder="0"
+                    className="bg-muted/50 border-border h-10"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Valor total (R$)</Label>
+                  <Input
+                    type="number"
+                    value={funilValues[nome] || ""}
+                    onChange={e => setFunilValues(prev => ({ ...prev, [nome]: e.target.value }))}
+                    placeholder="0"
+                    className="bg-muted/50 border-border h-10"
+                  />
+                </div>
               </div>
             ))}
           </div>

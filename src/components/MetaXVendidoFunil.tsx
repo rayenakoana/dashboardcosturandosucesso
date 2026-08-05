@@ -26,6 +26,11 @@ export function MetaXVendidoFunil() {
         );
         const meta = metaItem ? Number(metaItem.valor) : 0;
 
+        const metaQtdItem = (metasFunil as any[]).find(
+          m => m.tipo === "Meta Funil Qtd" && m.funil === funil && m.mes_ref === mesRef
+        );
+        const metaQtd = metaQtdItem ? Number(metaQtdItem.valor) : 0;
+
         const vendasDoFunil = vendas.filter((v: any) => {
           if (v.funil !== funil || !isFechado(v)) return false;
           if (!v.data_fechamento) return false;
@@ -35,10 +40,11 @@ export function MetaXVendidoFunil() {
         const totalVendido = vendasDoFunil.reduce((sum: number, v: any) => sum + (Number(v.valor) || 0), 0);
         const qtdVendas = vendasDoFunil.length;
         const pct = meta > 0 ? Math.min(100, (totalVendido / meta) * 100) : 0;
+        const pctQtd = metaQtd > 0 ? Math.min(100, (qtdVendas / metaQtd) * 100) : 0;
 
-        return { funil, meta, totalVendido, qtdVendas, pct };
+        return { funil, meta, metaQtd, totalVendido, qtdVendas, pct, pctQtd };
       })
-      .filter(l => l.meta > 0 || l.totalVendido > 0);
+      .filter(l => l.meta > 0 || l.metaQtd > 0 || l.totalVendido > 0);
   }, [vendas, metasFunil, funisVisiveis, mesRef]);
 
   const isLoading = loadingVendas || loadingMetas;
@@ -61,39 +67,57 @@ export function MetaXVendidoFunil() {
           Configure em Administrativo → Metas.
         </div>
       ) : (
-        <div className="space-y-5">
-          {linhas.map(({ funil, meta, totalVendido, qtdVendas, pct }) => (
+        <div className="space-y-6">
+          {linhas.map(({ funil, meta, metaQtd, totalVendido, qtdVendas, pct, pctQtd }) => (
             <div key={funil}>
-              <div className="flex items-center justify-between mb-1.5 gap-2 flex-wrap">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span
-                    className="h-2.5 w-2.5 rounded-full shrink-0"
-                    style={{ background: FUNIL_CORES[funil] || "#C8102E" }}
-                  />
-                  <span className="text-sm font-medium truncate">{funil}</span>
-                  <span className="text-xs text-muted-foreground shrink-0">
-                    {qtdVendas} {qtdVendas === 1 ? "venda" : "vendas"}
+              <div className="flex items-center gap-2 mb-2.5">
+                <span
+                  className="h-2.5 w-2.5 rounded-full shrink-0"
+                  style={{ background: FUNIL_CORES[funil] || "#C8102E" }}
+                />
+                <span className="text-sm font-medium truncate">{funil}</span>
+              </div>
+
+              {/* Barra de quantidade de vendas */}
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-1 gap-2">
+                  <span className="text-[11px] text-muted-foreground">Vendas</span>
+                  <span className="text-xs font-mono text-muted-foreground">
+                    {qtdVendas}{metaQtd > 0 && ` / ${metaQtd}`}
+                    {metaQtd > 0 && <span className="ml-1.5 text-foreground/70">({pctQtd.toFixed(0)}%)</span>}
                   </span>
                 </div>
-                <span className="text-xs font-mono text-muted-foreground shrink-0">
-                  R$ {totalVendido.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
-                  {meta > 0 && ` / R$ ${meta.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`}
-                </span>
-              </div>
-              <div className="h-2.5 rounded-full bg-muted/60 overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all"
-                  style={{
-                    width: `${meta > 0 ? pct : 0}%`,
-                    background: FUNIL_CORES[funil] || "#C8102E",
-                  }}
-                />
-              </div>
-              {meta > 0 && (
-                <div className="text-[11px] text-muted-foreground mt-1 text-right">
-                  {pct.toFixed(0)}% da meta
+                <div className="h-2 rounded-full bg-muted/60 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all opacity-70"
+                    style={{
+                      width: `${metaQtd > 0 ? pctQtd : 0}%`,
+                      background: FUNIL_CORES[funil] || "#C8102E",
+                    }}
+                  />
                 </div>
-              )}
+              </div>
+
+              {/* Barra de valor R$ */}
+              <div>
+                <div className="flex items-center justify-between mb-1 gap-2">
+                  <span className="text-[11px] text-muted-foreground">Faturamento</span>
+                  <span className="text-xs font-mono text-muted-foreground">
+                    R$ {totalVendido.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
+                    {meta > 0 && ` / R$ ${meta.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`}
+                    {meta > 0 && <span className="ml-1.5 text-foreground/70">({pct.toFixed(0)}%)</span>}
+                  </span>
+                </div>
+                <div className="h-2.5 rounded-full bg-muted/60 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${meta > 0 ? pct : 0}%`,
+                      background: FUNIL_CORES[funil] || "#C8102E",
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           ))}
         </div>
