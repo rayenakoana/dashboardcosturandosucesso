@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { KPICard } from "@/components/KPICard";
 import { GlassCard } from "@/components/GlassCard";
 import { SDRPodium } from "@/components/SDRPodium";
+import { MetaXVendidoFunil } from "@/components/MetaXVendidoFunil";
 import { LeadsDiariosCard } from "@/components/LeadsDiariosCard";
 import { useVendas } from "@/hooks/useVendas";
 import { useCustosMarketing } from "@/hooks/useCustosMarketing";
@@ -630,6 +631,10 @@ export default function Index() {
           <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">Sem vendas fechadas no período</div>
         )}
       </GlassCard>
+
+      {/* Meta x Vendido por Funil */}
+      <MetaXVendidoFunil />
+
       {/* Marketing KPIs */}
       <div>
         <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">

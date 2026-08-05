@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ChevronLeft, ChevronRight, Target, Save } from "lucide-react";
-import { META_TIPOS, ConfigTipo, useConfiguracoes } from "@/hooks/useConfiguracoes";
+import { META_TIPOS, ConfigTipo, useConfiguracoes, useFunisVisiveis } from "@/hooks/useConfiguracoes";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -23,6 +23,9 @@ export default function Metas() {
   const [month, setMonth] = useState(now.getMonth());
   const [saving, setSaving] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
+  const [funilValues, setFunilValues] = useState<Record<string, string>>({});
+  const [savingFunis, setSavingFunis] = useState(false);
+  const { funisVisiveis } = useFunisVisiveis();
 
   const mesRef = `${year}-${String(month + 1).padStart(2, "0")}`;
   const mesLabel = new Date(year, month, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
@@ -39,8 +42,15 @@ export default function Metas() {
         else v[tipo] = "";
       });
       setValues(v);
+
+      const fv: Record<string, string> = {};
+      funisVisiveis.forEach(nome => {
+        const item = allMetas.find((m: any) => m.tipo === "Meta Funil" && m.funil === nome && m.mes_ref === mesRef);
+        fv[nome] = item ? item.valor : "";
+      });
+      setFunilValues(fv);
     }
-  }, [mesRef, allMetas, isLoading]);
+  }, [mesRef, allMetas, isLoading, funisVisiveis.join(",")]);
 
   const handleSaveAll = async () => {
     setSaving(true);
@@ -61,6 +71,28 @@ export default function Metas() {
       toast.error("Erro ao salvar metas");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveFunis = async () => {
+    setSavingFunis(true);
+    try {
+      for (const nome of funisVisiveis) {
+        const existing = allMetas.find((m: any) => m.tipo === "Meta Funil" && m.funil === nome && m.mes_ref === mesRef);
+        if (existing) {
+          await supabase.from("configuracoes").delete().eq("id", existing.id);
+        }
+        const val = (funilValues[nome] || "").trim();
+        if (val) {
+          await supabase.from("configuracoes").insert({ tipo: "Meta Funil", funil: nome, valor: val, mes_ref: mesRef });
+        }
+      }
+      qc.invalidateQueries({ queryKey: ["configuracoes"] });
+      toast.success("Metas por funil atualizadas");
+    } catch {
+      toast.error("Erro ao salvar metas por funil");
+    } finally {
+      setSavingFunis(false);
     }
   };
 
@@ -139,6 +171,42 @@ export default function Metas() {
           <Button onClick={handleSaveAll} disabled={saving} className="gap-2 bg-primary hover:bg-primary/90">
             <Save className="h-4 w-4" />
             {saving ? "Salvando..." : "Salvar Metas"}
+          </Button>
+        </div>
+      </GlassCard>
+
+      {/* Metas por funil */}
+      <GlassCard>
+        <h3 className="font-semibold text-sm mb-1 flex items-center gap-2">
+          <Target className="h-4 w-4 text-primary" /> Meta por Funil ({mesLabel})
+        </h3>
+        <p className="text-xs text-muted-foreground mb-5">
+          Defina quanto cada funil deve vender no mês. Isso alimenta o gráfico de Meta x Vendido no Dashboard Geral.
+        </p>
+
+        {funisVisiveis.length === 0 ? (
+          <p className="text-muted-foreground text-sm">Nenhum funil visível cadastrado</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {funisVisiveis.map(nome => (
+              <div key={nome} className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">{nome} (R$)</Label>
+                <Input
+                  type="number"
+                  value={funilValues[nome] || ""}
+                  onChange={e => setFunilValues(prev => ({ ...prev, [nome]: e.target.value }))}
+                  placeholder="0"
+                  className="bg-muted/50 border-border h-10"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex justify-end mt-5">
+          <Button onClick={handleSaveFunis} disabled={savingFunis} className="gap-2 bg-primary hover:bg-primary/90">
+            <Save className="h-4 w-4" />
+            {savingFunis ? "Salvando..." : "Salvar Metas por Funil"}
           </Button>
         </div>
       </GlassCard>
