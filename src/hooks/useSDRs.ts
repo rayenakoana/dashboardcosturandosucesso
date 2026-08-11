@@ -127,7 +127,7 @@ export function usePerformanceSDR(funil?: string) {
           const dealsAbertos = dealsDoSdr.filter(d => d.status !== "Fechado" && d.status !== "Perdido");
           const dealsEsfriando = dealsAbertos.filter(d => d.ultima_atividade_em && new Date(d.ultima_atividade_em) < limiteEsfriando);
           const dealsEmAndamento = dealsDoSdr.filter(d => d.status === "Em andamento");
-          const qualificacoes = dealsDoSdr.filter(d => (d.rating ?? 0) >= 2);
+          const qualificacoes = dealsDoSdr.filter(d => (d.rating ?? 0) >= 3);
 
           const temposPrimeiroContato = dealsDoSdr
             .filter(d => d.criado_em && d.status_andamento_em)
