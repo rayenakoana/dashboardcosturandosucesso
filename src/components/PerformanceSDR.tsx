@@ -50,6 +50,9 @@ export function PerformanceSDR({ funil, periodoStart, periodoEnd }: PerformanceS
 
   return (
     <div className="space-y-4">
+      <p className="text-xs text-muted-foreground bg-muted/30 border border-border rounded-lg px-3 py-2">
+        Qualificações contam a partir de 11/08/2026 — negociações qualificadas antes dessa data não entram na contagem.
+      </p>
       {performance.map((p, idx) => (
         <GlassCard key={p.sdr.id} className={cn(idx === 0 && "border-primary/45 shadow-[0_0_26px_-6px_hsl(var(--primary)/0.25)]")}>
           <div className="flex items-center gap-3.5 mb-4">
