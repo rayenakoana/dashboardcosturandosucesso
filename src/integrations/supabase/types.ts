@@ -38,6 +38,102 @@ export type Database = {
         }
         Relationships: []
       }
+      sdrs: {
+        Row: {
+          id: string
+          nome: string
+          foto_url: string | null
+          rd_user_id: string | null
+          ativo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          nome: string
+          foto_url?: string | null
+          rd_user_id?: string | null
+          ativo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          nome?: string
+          foto_url?: string | null
+          rd_user_id?: string | null
+          ativo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      deals_sdr_tracking: {
+        Row: {
+          deal_id: string
+          rd_user_id: string
+          status: string
+          rating: number | null
+          funil: string | null
+          criado_em: string | null
+          status_andamento_em: string | null
+          ultima_atividade_em: string | null
+          atualizado_em: string
+        }
+        Insert: {
+          deal_id: string
+          rd_user_id: string
+          status: string
+          rating?: number | null
+          funil?: string | null
+          criado_em?: string | null
+          status_andamento_em?: string | null
+          ultima_atividade_em?: string | null
+          atualizado_em?: string
+        }
+        Update: {
+          deal_id?: string
+          rd_user_id?: string
+          status?: string
+          rating?: number | null
+          funil?: string | null
+          criado_em?: string | null
+          status_andamento_em?: string | null
+          ultima_atividade_em?: string | null
+          atualizado_em?: string
+        }
+        Relationships: []
+      }
+      tasks_sdr_tracking: {
+        Row: {
+          task_id: string
+          deal_id: string | null
+          rd_user_id: string
+          status: string
+          data_agendada: string | null
+          data_conclusao: string | null
+          atualizado_em: string
+        }
+        Insert: {
+          task_id: string
+          deal_id?: string | null
+          rd_user_id: string
+          status: string
+          data_agendada?: string | null
+          data_conclusao?: string | null
+          atualizado_em?: string
+        }
+        Update: {
+          task_id?: string
+          deal_id?: string | null
+          rd_user_id?: string
+          status?: string
+          data_agendada?: string | null
+          data_conclusao?: string | null
+          atualizado_em?: string
+        }
+        Relationships: []
+      }
       custos_marketing: {
         Row: {
           categoria: string

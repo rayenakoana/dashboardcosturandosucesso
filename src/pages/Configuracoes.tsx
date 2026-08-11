@@ -14,6 +14,7 @@ import { Plus, Trash2, Upload, Link, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { SDRsConfigSection } from "@/components/SDRsConfigSection";
 
 
 
@@ -165,6 +166,8 @@ export default function Configuracoes() {
 
 
 
+
+      <SDRsConfigSection />
 
       <GlassCard>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ConfigTipo)}>

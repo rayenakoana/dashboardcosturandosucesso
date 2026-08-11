@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Filter, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PIPELINE_IDS, FUNIL_CORES } from "@/lib/funis";
+import { PerformanceSDR } from "@/components/PerformanceSDR";
 
 const METAS = {
   leads_para_mql: 50,
@@ -50,6 +51,7 @@ function ConvRate({ real, meta, label }: { real: number; meta: number; label: st
 
 export default function FunilXPTO() {
   // "todos" = array vazio significa todos os funis selecionados
+  const [aba, setAba] = useState<"funil" | "sdr">("funil");
   const [funisSel, setFunisSel] = useState<string[]>([]);
   const [periodo, setPeriodo] = useState<"hoje" | "semana" | "mes" | "personalizado">("mes");
   const [customStart, setCustomStart] = useState(getMesInicio());
@@ -202,6 +204,28 @@ export default function FunilXPTO() {
           <p className="text-xs text-muted-foreground uppercase tracking-widest mt-0.5">{periodoLabel} · {funilLabel}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Toggle Funil / SDR */}
+          <div className="inline-flex bg-muted/30 border border-border rounded-full p-1 mr-1">
+            <button
+              onClick={() => setAba("funil")}
+              className={cn(
+                "text-xs font-semibold uppercase tracking-wide px-3.5 py-1.5 rounded-full transition-all",
+                aba === "funil" ? "bg-primary text-white shadow-[0_0_14px_-2px_hsl(var(--primary)/0.5)]" : "text-muted-foreground"
+              )}
+            >
+              Funil
+            </button>
+            <button
+              onClick={() => setAba("sdr")}
+              className={cn(
+                "text-xs font-semibold uppercase tracking-wide px-3.5 py-1.5 rounded-full transition-all",
+                aba === "sdr" ? "bg-primary text-white shadow-[0_0_14px_-2px_hsl(var(--primary)/0.5)]" : "text-muted-foreground"
+              )}
+            >
+              SDR
+            </button>
+          </div>
+
           {/* Chip "Todos" */}
           <button
             onClick={() => setFunisSel([])}
@@ -299,6 +323,10 @@ export default function FunilXPTO() {
         </div>
       </div>
 
+      {aba === "sdr" ? (
+        <PerformanceSDR funil={todosSelecionados ? undefined : funisSel[0]} />
+      ) : (
+      <>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: "Total de leads", val: loading ? "—" : String(data.leads), sub: "Meta: 300/mês", color: "text-primary" },
@@ -357,6 +385,8 @@ export default function FunilXPTO() {
           </div>
         )}
       </GlassCard>
+      </>
+      )}
     </div>
   );
 }
