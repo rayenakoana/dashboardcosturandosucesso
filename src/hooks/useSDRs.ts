@@ -104,8 +104,16 @@ export function usePerformanceSDR(funil?: string) {
       const { data: deals, error: dealsError } = await dealsQuery;
       if (dealsError) throw dealsError;
 
-      const { data: tasks, error: tasksError } = await supabase.from("tasks_sdr_tracking").select("*");
+      const { data: allTasks, error: tasksError } = await supabase.from("tasks_sdr_tracking").select("*");
       if (tasksError) throw tasksError;
+
+      // Se está filtrando por funil, só conta tarefas de deals que pertencem a esse funil.
+      // Deals sem registro em deals_sdr_tracking (ex: sincronizados antes do tracking existir)
+      // são ignorados no filtro por funil, mas contam quando não há filtro.
+      const dealIdsNoFunil = funil ? new Set(deals?.map(d => d.deal_id)) : null;
+      const tasks = funil
+        ? (allTasks || []).filter(t => t.deal_id && dealIdsNoFunil!.has(t.deal_id))
+        : (allTasks || []);
 
       const limiteEsfriando = new Date();
       limiteEsfriando.setDate(limiteEsfriando.getDate() - DIAS_ESFRIANDO);
