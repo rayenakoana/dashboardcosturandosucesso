@@ -27,10 +27,12 @@ function Tile({ n, label, variant }: { n: string | number; label: string; varian
 
 interface PerformanceSDRProps {
   funil?: string;
+  periodoStart?: Date;
+  periodoEnd?: Date;
 }
 
-export function PerformanceSDR({ funil }: PerformanceSDRProps) {
-  const { data: performance = [], isLoading } = usePerformanceSDR(funil);
+export function PerformanceSDR({ funil, periodoStart, periodoEnd }: PerformanceSDRProps) {
+  const { data: performance = [], isLoading } = usePerformanceSDR(funil, periodoStart, periodoEnd);
 
   if (isLoading) {
     return <GlassCard><p className="text-muted-foreground text-sm">Carregando performance dos SDRs...</p></GlassCard>;

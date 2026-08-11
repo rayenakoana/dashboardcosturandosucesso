@@ -324,7 +324,7 @@ export default function FunilXPTO() {
       </div>
 
       {aba === "sdr" ? (
-        <PerformanceSDR funil={todosSelecionados ? undefined : funisSel[0]} />
+        <PerformanceSDR funil={todosSelecionados ? undefined : funisSel[0]} periodoStart={new Date(start + "T00:00:00")} periodoEnd={new Date(end + "T23:59:59")} />
       ) : (
       <>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

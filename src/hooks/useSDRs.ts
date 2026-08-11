@@ -35,9 +35,7 @@ export function useSDRs(somenteAtivos = false) {
       return data as SDR[];
     },
   });
-}
-
-export function useAddSDR() {
+}export function useAddSDR() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ nome, rd_user_id }: { nome: string; rd_user_id?: string }) => {
@@ -89,14 +87,20 @@ export function useUploadFotoSDR() {
 }
 
 /**
- * Performance por SDR, opcionalmente filtrada por funil.
+ * Performance por SDR, opcionalmente filtrada por funil e por período.
  * Agrega deals_sdr_tracking + tasks_sdr_tracking por rd_user_id.
+ *
+ * - Tarefas concluídas: filtradas por data_conclusao dentro do período
+ * - Tarefas agendadas: filtradas por data_agendada dentro do período
+ * - Qualificações: filtradas por qualificado_em dentro do período (evento, não estado atual)
+ * - Deals sob responsabilidade / esfriando / em andamento: estado atual (não filtrado por período)
+ * - Tempo médio 1º contato: considera deals cujo status_andamento_em caiu dentro do período
  */
-export function usePerformanceSDR(funil?: string) {
+export function usePerformanceSDR(funil?: string, periodoStart?: Date, periodoEnd?: Date) {
   const { data: sdrs = [] } = useSDRs(true);
 
   return useQuery({
-    queryKey: ["performance-sdr", funil, sdrs.map(s => s.id).join(",")],
+    queryKey: ["performance-sdr", funil, periodoStart?.toISOString(), periodoEnd?.toISOString(), sdrs.map(s => s.id).join(",")],
     enabled: sdrs.length > 0,
     queryFn: async (): Promise<SDRPerformance[]> => {
       let dealsQuery = supabase.from("deals_sdr_tracking").select("*");
@@ -108,12 +112,17 @@ export function usePerformanceSDR(funil?: string) {
       if (tasksError) throw tasksError;
 
       // Se está filtrando por funil, só conta tarefas de deals que pertencem a esse funil.
-      // Deals sem registro em deals_sdr_tracking (ex: sincronizados antes do tracking existir)
-      // são ignorados no filtro por funil, mas contam quando não há filtro.
       const dealIdsNoFunil = funil ? new Set(deals?.map(d => d.deal_id)) : null;
       const tasks = funil
         ? (allTasks || []).filter(t => t.deal_id && dealIdsNoFunil!.has(t.deal_id))
         : (allTasks || []);
+
+      const dentroDoPeriodo = (iso: string | null) => {
+        if (!iso) return false;
+        if (!periodoStart || !periodoEnd) return true;
+        const d = new Date(iso).getTime();
+        return d >= periodoStart.getTime() && d <= periodoEnd.getTime();
+      };
 
       const limiteEsfriando = new Date();
       limiteEsfriando.setDate(limiteEsfriando.getDate() - DIAS_ESFRIANDO);
@@ -127,10 +136,11 @@ export function usePerformanceSDR(funil?: string) {
           const dealsAbertos = dealsDoSdr.filter(d => d.status !== "Fechado" && d.status !== "Perdido");
           const dealsEsfriando = dealsAbertos.filter(d => d.ultima_atividade_em && new Date(d.ultima_atividade_em) < limiteEsfriando);
           const dealsEmAndamento = dealsDoSdr.filter(d => d.status === "Em andamento");
-          const qualificacoes = dealsDoSdr.filter(d => (d.rating ?? 0) >= 3);
+
+          const qualificacoes = dealsDoSdr.filter(d => dentroDoPeriodo((d as any).qualificado_em));
 
           const temposPrimeiroContato = dealsDoSdr
-            .filter(d => d.criado_em && d.status_andamento_em)
+            .filter(d => d.criado_em && d.status_andamento_em && dentroDoPeriodo(d.status_andamento_em))
             .map(d => new Date(d.status_andamento_em!).getTime() - new Date(d.criado_em!).getTime());
           const tempoMedioPrimeiroContatoMs = temposPrimeiroContato.length > 0
             ? temposPrimeiroContato.reduce((a, b) => a + b, 0) / temposPrimeiroContato.length
@@ -138,8 +148,8 @@ export function usePerformanceSDR(funil?: string) {
 
           return {
             sdr,
-            tarefasConcluidas: tasksDoSdr.filter(t => t.status === "concluida").length,
-            tarefasAgendadas: tasksDoSdr.filter(t => t.status === "agendada").length,
+            tarefasConcluidas: tasksDoSdr.filter(t => t.status === "concluida" && dentroDoPeriodo(t.data_conclusao)).length,
+            tarefasAgendadas: tasksDoSdr.filter(t => t.status === "agendada" && dentroDoPeriodo(t.data_agendada)).length,
             dealsSobResponsabilidade: dealsDoSdr.length,
             qualificacoes: qualificacoes.length,
             dealsEsfriando: dealsEsfriando.length,

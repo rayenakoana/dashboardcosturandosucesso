@@ -79,6 +79,8 @@ export type Database = {
           status_andamento_em: string | null
           ultima_atividade_em: string | null
           atualizado_em: string
+          deal_stage_order: number | null
+          qualificado_em: string | null
         }
         Insert: {
           deal_id: string
@@ -90,6 +92,8 @@ export type Database = {
           status_andamento_em?: string | null
           ultima_atividade_em?: string | null
           atualizado_em?: string
+          deal_stage_order?: number | null
+          qualificado_em?: string | null
         }
         Update: {
           deal_id?: string
@@ -101,6 +105,8 @@ export type Database = {
           status_andamento_em?: string | null
           ultima_atividade_em?: string | null
           atualizado_em?: string
+          deal_stage_order?: number | null
+          qualificado_em?: string | null
         }
         Relationships: []
       }
