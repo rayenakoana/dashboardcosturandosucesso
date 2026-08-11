@@ -100,7 +100,7 @@ export function usePerformanceSDR(funil?: string) {
     enabled: sdrs.length > 0,
     queryFn: async (): Promise<SDRPerformance[]> => {
       let dealsQuery = supabase.from("deals_sdr_tracking").select("*");
-      if (funil) dealsQuery = dealsQuery.eq("funil", funil);
+      if (funil) dealsQuery = dealsQuery.ilike("funil", funil);
       const { data: deals, error: dealsError } = await dealsQuery;
       if (dealsError) throw dealsError;
 
