@@ -103,13 +103,37 @@ export function usePerformanceSDR(funil?: string, periodoStart?: Date, periodoEn
     queryKey: ["performance-sdr", funil, periodoStart?.toISOString(), periodoEnd?.toISOString(), sdrs.map(s => s.id).join(",")],
     enabled: sdrs.length > 0,
     queryFn: async (): Promise<SDRPerformance[]> => {
-      let dealsQuery = supabase.from("deals_sdr_tracking").select("*");
-      if (funil) dealsQuery = dealsQuery.ilike("funil", funil);
-      const { data: deals, error: dealsError } = await dealsQuery;
-      if (dealsError) throw dealsError;
+      // Supabase/PostgREST limita a 1000 linhas por página por padrão.
+      // Como deals_sdr_tracking e tasks_sdr_tracking já passaram de 1000 registros
+      // (backfill de 11/08), select("*") sem paginação trunca o resultado e sub-conta
+      // tudo quando não há filtro de funil (que reduz o total abaixo de 1000).
+      const fetchAllPages = async <T,>(
+        buildQuery: () => any
+      ): Promise<T[]> => {
+        const pageSize = 1000;
+        let page = 0;
+        let all: T[] = [];
+        while (true) {
+          const from = page * pageSize;
+          const to = from + pageSize - 1;
+          const { data, error } = await buildQuery().range(from, to);
+          if (error) throw error;
+          all = all.concat((data || []) as T[]);
+          if (!data || data.length < pageSize) break;
+          page++;
+        }
+        return all;
+      };
 
-      const { data: allTasks, error: tasksError } = await supabase.from("tasks_sdr_tracking").select("*");
-      if (tasksError) throw tasksError;
+      const deals = await fetchAllPages<any>(() => {
+        let q = supabase.from("deals_sdr_tracking").select("*").order("deal_id");
+        if (funil) q = q.ilike("funil", funil);
+        return q;
+      });
+
+      const allTasks = await fetchAllPages<any>(() =>
+        supabase.from("tasks_sdr_tracking").select("*").order("id")
+      );
 
       // Se está filtrando por funil, só conta tarefas de deals que pertencem a esse funil.
       const dealIdsNoFunil = funil ? new Set(deals?.map(d => d.deal_id)) : null;
