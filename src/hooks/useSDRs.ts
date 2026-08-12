@@ -132,7 +132,7 @@ export function usePerformanceSDR(funil?: string, periodoStart?: Date, periodoEn
       });
 
       const allTasks = await fetchAllPages<any>(() =>
-        supabase.from("tasks_sdr_tracking").select("*").order("id")
+        supabase.from("tasks_sdr_tracking").select("*").order("task_id")
       );
 
       // Se está filtrando por funil, só conta tarefas de deals que pertencem a esse funil.

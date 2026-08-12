@@ -32,10 +32,20 @@ interface PerformanceSDRProps {
 }
 
 export function PerformanceSDR({ funil, periodoStart, periodoEnd }: PerformanceSDRProps) {
-  const { data: performance = [], isLoading } = usePerformanceSDR(funil, periodoStart, periodoEnd);
+  const { data: performance = [], isLoading, isError, error } = usePerformanceSDR(funil, periodoStart, periodoEnd);
 
   if (isLoading) {
     return <GlassCard><p className="text-muted-foreground text-sm">Carregando performance dos SDRs...</p></GlassCard>;
+  }
+
+  if (isError) {
+    return (
+      <GlassCard>
+        <p className="text-destructive text-sm">
+          Erro ao carregar performance dos SDRs: {error instanceof Error ? error.message : "erro desconhecido"}
+        </p>
+      </GlassCard>
+    );
   }
 
   if (performance.length === 0) {
