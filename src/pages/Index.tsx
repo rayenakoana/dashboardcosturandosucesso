@@ -681,8 +681,9 @@ export default function Index() {
         )}
       </GlassCard>
 
-      {/* Performance por SDR (pódio) */}
+      {/* Performance por SDR (pódio) - OCULTO TEMPORARIAMENTE, ver Index.tsx linha ~685
       <SDRPodium start={start} end={end} />
+      */}
 
       {/* Chegada de leads por funil */}
       <LeadsDiariosCard start={start} end={end} />
