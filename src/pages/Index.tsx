@@ -567,8 +567,8 @@ export default function Index() {
               <KPICard title="% Show-up" value={`${pctShowUpDiario.toFixed(1)}%`} icon={Users}
                 subtitle={`Meta: 70% | ${totalCompareceramDiarios}/${totalAgendadas}`}
                 trend={pctShowUpDiario >= 70 ? "up" : pctShowUpDiario > 0 ? "down" : "neutral"} />
-              <KPICard title="Lead > Venda" value={`${pctLeadVenda.toFixed(1)}%`} icon={Target}
-                subtitle={`${fechadasSafra.length} vendas / ${totalLeadsDiarios} leads`}
+              <KPICard title="Conversão da Safra" value={`${pctLeadVenda.toFixed(1)}%`} icon={Target}
+                subtitle={`${fechadasSafra.length} de ${totalLeadsDiarios} leads do período já converteram`}
                 trend={pctLeadVenda >= 10 ? "up" : pctLeadVenda > 0 ? "down" : "neutral"} />
               <KPICard title="Total Leads Diários" value={totalLeadsDiarios} icon={BarChart3}
                 subtitle={`MQL: ${totalMQLDiarios}`} />
