@@ -10,6 +10,7 @@ export const PIPELINE_IDS: Record<string, string> = {
   "Imersão Europa": "6a3ab5572a7c51002575739f",
   "Imersão China": "6a3ab56ba02ee90021dd1c3b",
   "Supplytex": "699f332c5c43de0019d4f9ef",
+  "Funil Diagnóstico": "69d7f7289d03880026773178",
 };
 
 export const FUNIL_CORES: Record<string, string> = {
@@ -20,6 +21,7 @@ export const FUNIL_CORES: Record<string, string> = {
   "Imersão Europa": "#10B981",
   "Imersão China": "#F97316",
   "Supplytex": "#EC4899",
+  "Funil Diagnóstico": "#22D3EE",
 };
 
 // Ordem "padrão" de exibição quando não há preferência explícita do usuário.
@@ -31,4 +33,5 @@ export const FUNIS_ORDEM_CANONICA = [
   "Imersão Europa",
   "Imersão China",
   "Supplytex",
+  "Funil Diagnóstico",
 ];
