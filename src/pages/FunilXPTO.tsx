@@ -10,11 +10,11 @@ import { PIPELINE_IDS, FUNIL_CORES } from "@/lib/funis";
 import { PerformanceSDR } from "@/components/PerformanceSDR";
 
 const METAS = {
-  leads_para_mql: 50,
-  mql_para_reuniao: 75,
+  leads_para_mql: 35,
+  mql_para_reuniao: 70,
   reuniao_para_show: 70,
-  show_para_proposta: 60,
-  proposta_para_fechado: 60,
+  show_para_proposta: 70,
+  proposta_para_fechado: 30,
 };
 
 function getHoje() { return new Date().toISOString().split("T")[0]; }
