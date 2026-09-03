@@ -64,11 +64,11 @@ export function AppSidebar() {
 
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-[18px] border-b border-border">
-        <div className="w-8 h-8 rounded-lg bg-gradient-red flex items-center justify-center shrink-0 glow-red">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-            <path d="M12 3L4 7v10l8 4 8-4V7L12 3zm0 2.4 5.4 2.7L12 10.7 6.6 8.1 12 5.4zM6 9.4l5 2.5v5.4L6 14.8V9.4zm7 7.9v-5.4l5-2.5v5.4L13 17.3z"/>
-          </svg>
-        </div>
+        <img
+          src="/logo-cs.png"
+          alt="Costurando Sucesso"
+          className="h-8 w-auto object-contain shrink-0"
+        />
         <div>
           <div className="font-display font-extrabold text-[17px] leading-none tracking-wide">
             CS <span className="text-gradient">Dash</span>
