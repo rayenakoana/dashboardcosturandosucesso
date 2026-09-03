@@ -63,20 +63,12 @@ export function AppSidebar() {
     <aside className="flex flex-col w-56 shrink-0 border-r border-border bg-sidebar h-screen sticky top-0">
 
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-4 py-[18px] border-b border-border">
+      <div className="flex items-center justify-center px-4 py-4 border-b border-border">
         <img
           src="/logo-cs.png"
           alt="Costurando Sucesso"
-          className="h-8 w-auto object-contain shrink-0"
+          className="h-10 w-auto object-contain logo-adaptive"
         />
-        <div>
-          <div className="font-display font-extrabold text-[17px] leading-none tracking-wide">
-            CS <span className="text-gradient">Dash</span>
-          </div>
-          <div className="text-[9px] uppercase tracking-[0.16em] text-muted-foreground mt-1">
-            Costurando Sucesso
-          </div>
-        </div>
       </div>
 
       {/* Nav */}

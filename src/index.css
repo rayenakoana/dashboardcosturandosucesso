@@ -189,6 +189,14 @@
   .btn-primary-red:hover { box-shadow: 0 6px 24px hsl(355 82% 51% / 0.4); }
 }
 
+/* Logo adaptativa: branca no escuro, preta no claro */
+.logo-adaptive {
+  filter: brightness(0) invert(1);
+}
+html.light .logo-adaptive {
+  filter: brightness(0);
+}
+
 @keyframes ambient-pulse {
   0%, 100% { opacity: 0.8; }
   50%       { opacity: 1; }
