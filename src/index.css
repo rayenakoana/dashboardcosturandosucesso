@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --background: 240 22% 8%;          /* levemente mais claro que #0D0D1A */
+    --background: 240 22% 8%;
     --foreground: 0 0% 96%;
 
     --card: 240 20% 11%;
@@ -15,9 +15,9 @@
     --popover: 240 20% 12%;
     --popover-foreground: 0 0% 96%;
 
-    --primary: 355 82% 51%;            /* #E8192C */
+    --primary: 355 82% 51%;
     --primary-foreground: 0 0% 100%;
-    --primary-dark: 355 72% 31%;       /* #8a1520 */
+    --primary-dark: 355 72% 31%;
 
     --secondary: 240 20% 10%;
     --secondary-foreground: 0 0% 96%;
@@ -27,9 +27,6 @@
 
     --accent: 355 82% 51%;
     --accent-foreground: 0 0% 100%;
-
-    --gold: 45 78% 44%;                /* #C9A017 */
-    --gold-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -51,13 +48,11 @@
 
     --gradient-red: linear-gradient(135deg, hsl(355 82% 51%), hsl(355 72% 31%));
     --gradient-red-soft: linear-gradient(180deg, hsl(355 82% 51% / 0.85), hsl(355 72% 31% / 0.6));
-    --gradient-gold: linear-gradient(135deg, hsl(45 78% 54%), hsl(45 78% 34%));
   }
 
-  /* ==== Tema claro ("glass") ==== */
   html.light {
-    --background: 32 15% 90%;          /* levemente mais escuro que #F7F5F2 */
-    --foreground: 20 10% 12%;          /* #1C1A17 */
+    --background: 32 15% 90%;
+    --foreground: 20 10% 12%;
 
     --card: 32 12% 95%;
     --card-foreground: 20 10% 12%;
@@ -65,7 +60,7 @@
     --popover: 32 12% 95%;
     --popover-foreground: 20 10% 12%;
 
-    --primary: 350 74% 45%;            /* #C8102E */
+    --primary: 350 74% 45%;
     --primary-foreground: 0 0% 100%;
     --primary-dark: 355 72% 31%;
 
@@ -73,18 +68,15 @@
     --secondary-foreground: 20 10% 12%;
 
     --muted: 32 15% 92%;
-    --muted-foreground: 25 10% 45%;    /* #8a8478 */
+    --muted-foreground: 25 10% 45%;
 
     --accent: 350 74% 45%;
     --accent-foreground: 0 0% 100%;
 
-    --gold: 42 85% 34%;                /* #A67C0A */
-    --gold-foreground: 0 0% 100%;
-
     --destructive: 0 74% 48%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 15% 88%;              /* #E4DFD8 */
+    --border: 30 15% 88%;
     --input: 30 15% 88%;
     --ring: 350 74% 45%;
 
@@ -99,7 +91,6 @@
 
     --gradient-red: linear-gradient(135deg, hsl(350 74% 45%), hsl(355 72% 31%));
     --gradient-red-soft: linear-gradient(180deg, hsl(350 74% 45% / 0.85), hsl(355 72% 31% / 0.6));
-    --gradient-gold: linear-gradient(135deg, hsl(42 85% 44%), hsl(42 85% 30%));
   }
 }
 
@@ -113,7 +104,7 @@
     min-height: 100vh;
   }
 
-  /* Ambient radial glow behind content */
+  /* Ambient glow — sutil */
   body::before {
     content: "";
     position: fixed;
@@ -121,24 +112,12 @@
     pointer-events: none;
     z-index: 0;
     background:
-      radial-gradient(ellipse 60% 45% at 20% 15%, hsl(355 82% 51% / 0.4), transparent 60%),
-      radial-gradient(ellipse 50% 40% at 85% 85%, hsl(45 78% 44% / 0.28), transparent 65%),
-      radial-gradient(ellipse 70% 50% at 50% 50%, hsl(355 82% 51% / 0.22), transparent 70%);
-    animation: ambient-pulse 12s ease-in-out infinite;
+      radial-gradient(ellipse 50% 35% at 16% 10%, hsl(355 82% 51% / 0.13), transparent 65%),
+      radial-gradient(ellipse 40% 30% at 80% 90%, hsl(355 82% 51% / 0.07), transparent 65%);
+    animation: ambient-pulse 14s ease-in-out infinite;
   }
 
-  html.light body::before {
-    background:
-      radial-gradient(ellipse 60% 45% at 20% 15%, hsl(350 74% 45% / 0.10), transparent 60%),
-      radial-gradient(ellipse 50% 40% at 85% 85%, hsl(42 85% 44% / 0.06), transparent 65%),
-      radial-gradient(ellipse 70% 50% at 50% 50%, hsl(350 74% 45% / 0.05), transparent 70%);
-  }
-
-  html.light .glass-card,
-  html.light .glass-card-hover,
-  html.light .fchip {
-    box-shadow: 0 4px 24px rgba(28, 26, 23, 0.04);
-  }
+  html.light body::before { display: none; }
 
   #root { position: relative; z-index: 1; }
 
@@ -162,7 +141,7 @@
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
-    background: linear-gradient(180deg, hsl(0 0% 100% / 0.06), transparent 40%);
+    background: linear-gradient(180deg, hsl(0 0% 100% / 0.04), transparent 40%);
   }
 
   html.light .glass-card {
@@ -176,60 +155,53 @@
     @apply glass-card transition-all duration-300;
   }
   .glass-card-hover:hover {
-    border-color: hsl(355 82% 51% / 0.45);
-    box-shadow: 0 0 30px hsl(355 82% 51% / 0.10);
+    border-color: hsl(355 82% 51% / 0.35);
+    box-shadow: 0 0 24px hsl(355 82% 51% / 0.07);
   }
 
-  /* Funil filter chips (pill buttons), matching the approved prototype */
   .fchip {
     @apply text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer backdrop-blur-xl;
     background: hsl(var(--card) / 0.7);
     border-color: hsl(var(--border));
     color: hsl(var(--muted-foreground));
   }
-  .fchip:hover { border-color: hsl(355 82% 51% / 0.5); }
+  .fchip:hover { border-color: hsl(355 82% 51% / 0.4); }
   .fchip.active {
-    background: linear-gradient(135deg, #8a1520, #E8192C);
+    background: linear-gradient(135deg, #8a1520, #C8172A);
     color: #fff;
     border-color: transparent;
   }
 
-  .glow-red { box-shadow: 0 0 30px hsl(355 82% 51% / 0.25); }
-  .glow-gold { box-shadow: 0 0 30px hsl(45 78% 44% / 0.25); }
+  .glow-red { box-shadow: 0 0 20px hsl(355 82% 51% / 0.2); }
 
   .text-gradient {
     @apply bg-clip-text text-transparent;
     background-image: var(--gradient-red);
   }
-  .text-gradient-gold {
-    @apply bg-clip-text text-transparent;
-    background-image: var(--gradient-gold);
-  }
 
   .bg-gradient-red { background-image: var(--gradient-red); }
-  .bg-gradient-gold { background-image: var(--gradient-gold); }
 
   .btn-primary-red {
     @apply text-white font-medium rounded-lg transition-all;
     background-image: var(--gradient-red);
-    box-shadow: 0 4px 20px hsl(355 82% 51% / 0.3);
+    box-shadow: 0 4px 16px hsl(355 82% 51% / 0.25);
   }
-  .btn-primary-red:hover { box-shadow: 0 6px 30px hsl(355 82% 51% / 0.5); }
+  .btn-primary-red:hover { box-shadow: 0 6px 24px hsl(355 82% 51% / 0.4); }
 }
 
 @keyframes ambient-pulse {
-  0%, 100% { opacity: 0.9; transform: scale(1); }
-  50%      { opacity: 1;   transform: scale(1.05); }
+  0%, 100% { opacity: 0.8; }
+  50%       { opacity: 1; }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px hsl(355 82% 51% / 0.3); }
-  50%      { box-shadow: 0 0 50px hsl(355 82% 51% / 0.6); }
+  0%, 100% { box-shadow: 0 0 16px hsl(355 82% 51% / 0.25); }
+  50%      { box-shadow: 0 0 40px hsl(355 82% 51% / 0.5); }
 }
 
 @keyframes count-pop {
   0%   { transform: scale(1); }
-  30%  { transform: scale(1.15); color: hsl(45 78% 54%); }
+  30%  { transform: scale(1.15); }
   100% { transform: scale(1); }
 }
 
