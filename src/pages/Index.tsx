@@ -7,6 +7,7 @@ import { GlassCard } from "@/components/GlassCard";
 import { SDRPodium } from "@/components/SDRPodium";
 import { MetaXVendidoFunil } from "@/components/MetaXVendidoFunil";
 import { LeadsDiariosCard } from "@/components/LeadsDiariosCard";
+import { MarketingSection } from "@/components/MarketingSection";
 import { useVendas } from "@/hooks/useVendas";
 import { useCustosMarketing } from "@/hooks/useCustosMarketing";
 import { usePerformanceReunioes } from "@/hooks/usePerformanceReunioes";
@@ -67,6 +68,9 @@ function PieTooltip({ active, payload }: any) {
     <div style={{ ...tooltipStyle, padding: "8px 12px", whiteSpace: "nowrap" }}>
       <div style={{ color: "#fff", fontWeight: 600 }}>{name}</div>
       <div style={{ color: "#ccc" }}>{value} leads</div>
+      {/* ── SEÇÃO: MARKETING ── */}
+      <MarketingSection from={start} to={end} />
+
     </div>
   );
 }
@@ -79,6 +83,9 @@ function ChartSkeleton({ height = 280 }: { height?: number }) {
           <Skeleton key={i} className="flex-1 rounded-md" style={{ height: `${30 + Math.random() * 60}%` }} />
         ))}
       </div>
+      {/* ── SEÇÃO: MARKETING ── */}
+      <MarketingSection from={start} to={end} />
+
     </div>
   );
 }
@@ -808,6 +815,9 @@ export default function Index() {
           <div className="h-[280px] flex items-center justify-center text-muted-foreground text-sm">Sem dados no período</div>
         )}
       </GlassCard>
+
+      {/* ── SEÇÃO: MARKETING ── */}
+      <MarketingSection from={start} to={end} />
 
     </div>
   );
