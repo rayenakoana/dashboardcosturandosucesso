@@ -7,7 +7,6 @@ import { GlassCard } from "@/components/GlassCard";
 import { SDRPodium } from "@/components/SDRPodium";
 import { MetaXVendidoFunil } from "@/components/MetaXVendidoFunil";
 import { LeadsDiariosCard } from "@/components/LeadsDiariosCard";
-import { MarketingSection } from "@/components/MarketingSection";
 import { useVendas } from "@/hooks/useVendas";
 import { useCustosMarketing } from "@/hooks/useCustosMarketing";
 import { usePerformanceReunioes } from "@/hooks/usePerformanceReunioes";
@@ -810,8 +809,6 @@ export default function Index() {
         )}
       </GlassCard>
 
-      {/* ── SEÇÃO: MARKETING ── */}
-      <MarketingSection from={start} to={end} />
 
     </div>
   );
