@@ -567,7 +567,11 @@ export function MarketingSection({ from, to }: Props) {
           {porFormato.length > 0 && (
             <GlassCard>
               <SubTitle>Performance por formato de conteúdo</SubTitle>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className={cn(
+                "grid gap-6",
+                porFormato.length === 1 ? "grid-cols-1" :
+                porFormato.length === 2 ? "grid-cols-2" : "grid-cols-3"
+              )}>
                 {porFormato.map(f => (
                   <div key={f.tipo} className="space-y-3">
                     {/* Header do formato */}
