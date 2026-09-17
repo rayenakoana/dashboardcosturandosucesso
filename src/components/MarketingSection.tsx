@@ -25,6 +25,8 @@ const TT = {
     borderRadius: 10,
     fontSize: 11,
     color: "hsl(0 0% 96%)",
+    minWidth: 120,
+    padding: "8px 12px",
   },
   cursor: { fill: "hsl(0 0% 100% / 0.03)" },
 };
