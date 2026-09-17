@@ -33,15 +33,15 @@ export function useInstagramAccountDaily(from: string, to: string) {
   return useQuery({
     queryKey: ["instagram_account_daily", from, to],
     queryFn: async () => {
+      // Busca tudo e filtra no cliente — tabela pequena (snapshot diário, 2 contas)
       const { data, error } = await supabaseWpp
         .from("instagram_account_daily")
         .select("*")
-        .gte("date", from)
-        .lte("date", to)
         .order("date", { ascending: true })
-        .limit(500);
+        .limit(1000);
       if (error) throw error;
-      return (data ?? []) as InstagramAccountDaily[];
+      const rows = (data ?? []) as InstagramAccountDaily[];
+      return rows.filter(r => r.date >= from && r.date <= to);
     },
     staleTime: 1000 * 60 * 10,
   });
@@ -51,14 +51,21 @@ export function useInstagramPostInsights(from: string, to: string) {
   return useQuery({
     queryKey: ["instagram_post_insights", from, to],
     queryFn: async () => {
+      // Busca tudo e filtra no cliente — PostgREST não aceita dois filtros
+      // no mesmo campo timestamptz com schema wpp
       const { data, error } = await supabaseWpp
         .from("instagram_post_insights")
         .select("*")
-        .and(`posted_at.gte.${from}T00:00:00Z,posted_at.lte.${to}T23:59:59Z`)
         .order("posted_at", { ascending: false })
-        .limit(500);
+        .limit(1000);
       if (error) throw error;
-      return (data ?? []) as InstagramPostInsight[];
+      const rows = (data ?? []) as InstagramPostInsight[];
+      const fromTs = new Date(from + "T00:00:00Z").getTime();
+      const toTs   = new Date(to   + "T23:59:59Z").getTime();
+      return rows.filter(r => {
+        const t = new Date(r.posted_at).getTime();
+        return t >= fromTs && t <= toTs;
+      });
     },
     staleTime: 1000 * 60 * 10,
   });
