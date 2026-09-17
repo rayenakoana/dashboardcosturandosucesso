@@ -54,8 +54,7 @@ export function useInstagramPostInsights(from: string, to: string) {
       const { data, error } = await supabaseWpp
         .from("instagram_post_insights")
         .select("*")
-        .gte("posted_at", from)
-        .lte("posted_at", to + "T23:59:59Z")
+        .and(`posted_at.gte.${from}T00:00:00Z,posted_at.lte.${to}T23:59:59Z`)
         .order("posted_at", { ascending: false })
         .limit(500);
       if (error) throw error;
