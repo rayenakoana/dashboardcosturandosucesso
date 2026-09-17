@@ -25,9 +25,11 @@ const TT = {
     borderRadius: 10,
     fontSize: 11,
     color: "hsl(0 0% 96%)",
-    minWidth: 120,
+    minWidth: 130,
     padding: "8px 12px",
   },
+  labelStyle: { color: "hsl(0 0% 96%)", fontWeight: 600, marginBottom: 2 },
+  itemStyle: { color: "hsl(0 0% 80%)" },
   cursor: { fill: "hsl(0 0% 100% / 0.03)" },
 };
 
