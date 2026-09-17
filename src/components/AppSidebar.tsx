@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   BarChart3, ShoppingCart, CalendarPlus, Layers,
   DollarSign, Target, Settings, Users, Map,
-  Radio, GitMerge, LogOut, Sun, Moon, Maximize, Minimize, TrendingUp,
+  Radio, GitMerge, LogOut, Sun, Moon, Maximize, Minimize, TrendingUp, Instagram,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -15,6 +15,7 @@ const publicItems = [
   { title: "CS Live",         url: "/live",        icon: Radio },
   { title: "Funil XPTO",      url: "/funil-xpto",  icon: GitMerge },
   { title: "Marketing",        url: "/marketing",    icon: TrendingUp },
+  { title: "Instagram",        url: "/instagram",    icon: Instagram },
 ];
 
 const adminItems = [
