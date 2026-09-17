@@ -4,7 +4,7 @@ import { KPICard } from "@/components/KPICard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMetaAdsInsights } from "@/hooks/useMetaAdsInsights";
 import { useWppCampanhasResumo } from "@/hooks/useWppCampanhasResumo";
-import { useInstagramPostInsights, useInstagramAccountDaily } from "@/hooks/useInstagramInsights";
+import { useInstagramPostInsights, useInstagramAccountDaily, useInstagramProfileDaily } from "@/hooks/useInstagramInsights";
 import {
   TrendingUp, Megaphone, MessageCircle, DollarSign,
   Users, BarChart2, Send, CheckCheck, Eye, Instagram,
@@ -63,6 +63,7 @@ export function MarketingSection({ from, to }: Props) {
   const { data: wppData,        isLoading: loadingWpp  } = useWppCampanhasResumo(from, to);
   const { data: postsData = [], isLoading: loadingIG   } = useInstagramPostInsights(from, to);
   const { data: dailyData = []                          } = useInstagramAccountDaily(from, to);
+  const { data: profileData = []                        } = useInstagramProfileDaily(from, to);
 
   // ── META ────────────────────────────────────────────────
   const metaTotais = useMemo(() => metaData.reduce(
@@ -125,8 +126,65 @@ export function MarketingSection({ from, to }: Props) {
       .map(([date, v]) => ({ date, ...v }));
   }, [dailyData]);
 
-  // KPIs Instagram
-  const igEngTotal  = postsFiltered.reduce((s,p) => s + p.like_count + p.comments_count + p.shares + p.saved, 0);
+  // Profile views chart — por conta por dia
+  const profileChart = useMemo(() => {
+    const byDate: Record<string, Record<string,number>> = {};
+    profileData.forEach(d => {
+      if (!byDate[d.date]) byDate[d.date] = {};
+      byDate[d.date][d.username + '_views']  = d.profile_views;
+      byDate[d.date][d.username + '_clicks'] = d.website_clicks;
+    });
+    return Object.entries(byDate).sort(([a],[b]) => a.localeCompare(b))
+      .map(([date, v]) => ({ date, ...v }));
+  }, [profileData]);
+
+  const totalProfileViews  = profileData.reduce((s,d) => s + d.profile_views, 0);
+  const totalWebsiteClicks = profileData.reduce((s,d) => s + d.website_clicks, 0);
+
+  // Alcance vs Seguidores por semana
+  const alcanceVsSeguidores = useMemo(() => {
+    const weekMap: Record<string, { reach: number; posts: number; followers: number }> = {};
+    postsFiltered.forEach(p => {
+      const d = new Date(p.posted_at);
+      const ws = new Date(d); ws.setDate(d.getDate() - d.getDay());
+      const wk = ws.toISOString().split("T")[0];
+      if (!weekMap[wk]) weekMap[wk] = { reach: 0, posts: 0, followers: 0 };
+      weekMap[wk].reach += p.reach;
+      weekMap[wk].posts++;
+    });
+    // pega seguidores da semana do daily
+    dailyData.forEach(d => {
+      const dt = new Date(d.date);
+      const ws = new Date(dt); ws.setDate(dt.getDate() - dt.getDay());
+      const wk = ws.toISOString().split("T")[0];
+      if (weekMap[wk] && (!igAccount || d.username === igAccount)) {
+        weekMap[wk].followers = Math.max(weekMap[wk].followers, d.followers_count);
+      }
+    });
+    return Object.entries(weekMap).sort(([a],[b]) => a.localeCompare(b)).map(([wk, v], i) => ({
+      semana: `Sem ${i+1}`,
+      alcancePorPost: v.posts > 0 ? Math.round(v.reach / v.posts) : 0,
+      pctSeguidores: v.followers > 0 ? parseFloat(((v.reach / v.posts / v.followers) * 100).toFixed(1)) : 0,
+    }));
+  }, [postsFiltered, dailyData, igAccount]);
+
+  // Benchmark ER por post
+  const erBenchmark = useMemo(() => {
+    const faixas = { excelente: 0, bom: 0, medio: 0, baixo: 0 };
+    postsFiltered.forEach(p => {
+      const er = p.reach > 0 ? (p.like_count + p.comments_count + p.shares + p.saved) / p.reach * 100 : 0;
+      if (er >= 5) faixas.excelente++;
+      else if (er >= 3) faixas.bom++;
+      else if (er >= 1) faixas.medio++;
+      else faixas.baixo++;
+    });
+    return [
+      { faixa: '>5% Excelente', posts: faixas.excelente, color: '#4CAF87' },
+      { faixa: '3–5% Bom',      posts: faixas.bom,       color: P        },
+      { faixa: '1–3% Médio',    posts: faixas.medio,     color: P2       },
+      { faixa: '<1% Baixo',     posts: faixas.baixo,     color: 'hsl(240 15% 25%)' },
+    ];
+  }, [postsFiltered]);  = postsFiltered.reduce((s,p) => s + p.like_count + p.comments_count + p.shares + p.saved, 0);
   const igAlcance   = postsFiltered.reduce((s,p) => s + p.reach, 0);
   const igViews     = postsFiltered.reduce((s,p) => s + (p.views||0), 0);
   const igTaxaEng   = igAlcance > 0 ? (igEngTotal / igAlcance) * 100 : 0;
@@ -545,7 +603,91 @@ export function MarketingSection({ from, to }: Props) {
             </GlassCard>
           )}
 
-          {/* Linha 4: Hashtags mais usadas */}
+          {/* Linha 3: Profile views + Alcance vs Seguidores */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            {/* Profile views + cliques no link */}
+            {profileChart.length > 0 && (
+              <GlassCard>
+                <div className="flex items-center justify-between mb-3">
+                  <SubTitle>Visitas ao perfil & cliques no link</SubTitle>
+                  <div className="flex gap-3 text-[10px] text-muted-foreground">
+                    <span>👁 <span className="text-foreground font-semibold">{fmt(totalProfileViews)}</span> visitas</span>
+                    <span>🔗 <span className="text-foreground font-semibold">{fmt(totalWebsiteClicks)}</span> cliques</span>
+                  </div>
+                </div>
+                <ResponsiveContainer width="100%" height={160}>
+                  <AreaChart data={profileChart}>
+                    <defs>
+                      <linearGradient id="gradViews" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor={P}  stopOpacity={0.25}/>
+                        <stop offset="95%" stopColor={P}  stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="gradClicks" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor={P2} stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor={P2} stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="date" tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false}/>
+                    <YAxis tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false} tickFormatter={fmt}/>
+                    <Tooltip {...TT} formatter={(v:number) => fmt(v)}/>
+                    <Legend iconType="circle" iconSize={7} wrapperStyle={{fontSize:11,color:MUTED}}/>
+                    {igAccounts.map((acc, i) => (
+                      <Area key={`${acc}_views`} type="monotone"
+                        dataKey={`${acc}_views`}
+                        name={`${acc==="eduardocristianoriginal"?"EC":"CS"} — visitas`}
+                        stroke={i===0?P:P2} strokeWidth={2}
+                        fill={i===0?"url(#gradViews)":"url(#gradClicks)"} dot={false}/>
+                    ))}
+                  </AreaChart>
+                </ResponsiveContainer>
+              </GlassCard>
+            )}
+
+            {/* Alcance vs Seguidores */}
+            {alcanceVsSeguidores.length > 0 && (
+              <GlassCard>
+                <SubTitle>Alcance vs seguidores — % de novos públicos</SubTitle>
+                <p className="text-[10px] text-muted-foreground mb-3">
+                  Quanto do alcance veio de pessoas que não te seguem (quanto maior, melhor distribuição do algoritmo)
+                </p>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={alcanceVsSeguidores} barCategoryGap="35%">
+                    <XAxis dataKey="semana" tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false}/>
+                    <YAxis tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false} tickFormatter={v=>`${v}%`}/>
+                    <Tooltip {...TT} formatter={(v:number) => `${v}%`}/>
+                    <Bar dataKey="pctSeguidores" name="% alcance vs seguidores" fill={P} radius={[4,4,0,0]}>
+                      {alcanceVsSeguidores.map((_, i) => (
+                        <Cell key={i} fill={`hsl(355 82% 51% / ${0.5 + i * 0.1})`}/>
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </GlassCard>
+            )}
+          </div>
+
+          {/* Benchmark ER */}
+          {postsFiltered.length > 0 && (
+            <GlassCard>
+              <SubTitle>Benchmark de taxa de engajamento por post</SubTitle>
+              <div className="grid grid-cols-4 gap-3">
+                {erBenchmark.map(f => (
+                  <div key={f.faixa} className="rounded-lg p-3 text-center"
+                    style={{ background: `${f.color}12`, border: `1px solid ${f.color}25` }}>
+                    <div className="font-display font-bold text-2xl text-foreground">{f.posts}</div>
+                    <div className="text-[10px] font-semibold mt-1" style={{color: f.color}}>{f.faixa}</div>
+                    <div className="text-[9px] text-muted-foreground mt-0.5">
+                      {postsFiltered.length > 0 ? Math.round(f.posts/postsFiltered.length*100) : 0}% dos posts
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-3">
+                Acima de 5% é considerado excelente · acima de 3% é bom · abaixo de 1% precisa atenção
+              </p>
+            </GlassCard>
+          )}
           {hashtagData.length > 0 && (
             <GlassCard>
               <SubTitle>Hashtags mais usadas</SubTitle>

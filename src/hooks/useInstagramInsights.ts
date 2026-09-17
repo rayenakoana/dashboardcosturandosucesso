@@ -70,3 +70,29 @@ export function useInstagramPostInsights(from: string, to: string) {
     staleTime: 1000 * 60 * 10,
   });
 }
+
+export interface InstagramProfileDaily {
+  id: number;
+  account_id: string;
+  username: string;
+  date: string;
+  profile_views: number;
+  website_clicks: number;
+}
+
+export function useInstagramProfileDaily(from: string, to: string) {
+  return useQuery({
+    queryKey: ["instagram_profile_daily", from, to],
+    queryFn: async () => {
+      const { data, error } = await supabaseWpp
+        .from("instagram_profile_daily")
+        .select("*")
+        .order("date", { ascending: true })
+        .limit(500);
+      if (error) throw error;
+      const rows = (data ?? []) as InstagramProfileDaily[];
+      return rows.filter(r => r.date >= from && r.date <= to);
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+}
