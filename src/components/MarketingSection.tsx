@@ -184,7 +184,10 @@ export function MarketingSection({ from, to }: Props) {
       { faixa: '1–3% Médio',    posts: faixas.medio,     color: P2       },
       { faixa: '<1% Baixo',     posts: faixas.baixo,     color: 'hsl(240 15% 25%)' },
     ];
-  }, [postsFiltered]);  = postsFiltered.reduce((s,p) => s + p.like_count + p.comments_count + p.shares + p.saved, 0);
+  }, [postsFiltered]);
+
+  // KPIs Instagram
+  const igEngTotal  = postsFiltered.reduce((s,p) => s + p.like_count + p.comments_count + p.shares + p.saved, 0);
   const igAlcance   = postsFiltered.reduce((s,p) => s + p.reach, 0);
   const igViews     = postsFiltered.reduce((s,p) => s + (p.views||0), 0);
   const igTaxaEng   = igAlcance > 0 ? (igEngTotal / igAlcance) * 100 : 0;
