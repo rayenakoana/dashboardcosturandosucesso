@@ -57,6 +57,7 @@ const ACCOUNT_LABEL: Record<string, string> = {
 
 export function MarketingSection({ from, to }: Props) {
   const [tab, setTab] = useState<Tab>("meta");
+  const [igAccount, setIgAccount] = useState<string | null>(null);
 
   const { data: metaData = [], isLoading: loadingMeta } = useMetaAdsInsights(from, to);
   const { data: wppData,        isLoading: loadingWpp  } = useWppCampanhasResumo(from, to);
@@ -102,6 +103,9 @@ export function MarketingSection({ from, to }: Props) {
 
   // ── INSTAGRAM ────────────────────────────────────────────
   const igAccounts = useMemo(() => [...new Set(dailyData.map(d => d.username))], [dailyData]);
+  const postsFiltered = useMemo(() =>
+    igAccount ? postsData.filter(p => p.username === igAccount) : postsData
+  , [postsData, igAccount]);
 
   const lastFollowers:  Record<string,number> = {};
   const firstFollowers: Record<string,number> = {};
@@ -122,16 +126,16 @@ export function MarketingSection({ from, to }: Props) {
   }, [dailyData]);
 
   // KPIs Instagram
-  const igEngTotal  = postsData.reduce((s,p) => s + p.like_count + p.comments_count + p.shares + p.saved, 0);
-  const igAlcance   = postsData.reduce((s,p) => s + p.reach, 0);
-  const igViews     = postsData.reduce((s,p) => s + (p.views||0), 0);
+  const igEngTotal  = postsFiltered.reduce((s,p) => s + p.like_count + p.comments_count + p.shares + p.saved, 0);
+  const igAlcance   = postsFiltered.reduce((s,p) => s + p.reach, 0);
+  const igViews     = postsFiltered.reduce((s,p) => s + (p.views||0), 0);
   const igTaxaEng   = igAlcance > 0 ? (igEngTotal / igAlcance) * 100 : 0;
-  const igEngPost   = postsData.length > 0 ? igEngTotal / postsData.length : 0;
+  const igEngPost   = postsFiltered.length > 0 ? igEngTotal / postsFiltered.length : 0;
 
   // Por formato
   const porFormato = useMemo(() => {
     const m: Record<string,{posts:number;eng:number;reach:number}> = {};
-    postsData.forEach(p => {
+    postsFiltered.forEach(p => {
       const t = p.media_type==="VIDEO"?"Reel":p.media_type==="CAROUSEL_ALBUM"?"Carrossel":"Imagem";
       if (!m[t]) m[t] = {posts:0,eng:0,reach:0};
       m[t].posts++; m[t].eng += p.like_count+p.comments_count+p.shares+p.saved; m[t].reach += p.reach;
@@ -150,7 +154,7 @@ export function MarketingSection({ from, to }: Props) {
   // Melhor horário
   const horarioData = useMemo(() => {
     const m: Record<number,{eng:number;posts:number}> = {};
-    postsData.forEach(p => {
+    postsFiltered.forEach(p => {
       const h = new Date(p.posted_at).getHours();
       if (!m[h]) m[h] = {eng:0,posts:0};
       m[h].eng += p.like_count+p.comments_count+p.shares+p.saved;
@@ -168,7 +172,7 @@ export function MarketingSection({ from, to }: Props) {
   // Frequência semanal
   const weeklyData = useMemo(() => {
     const m: Record<string,{posts:number;eng:number;engPorPost?:number}> = {};
-    postsData.forEach(p => {
+    postsFiltered.forEach(p => {
       const d = new Date(p.posted_at);
       const ws = new Date(d); ws.setDate(d.getDate()-d.getDay());
       const wk = ws.toISOString().split("T")[0];
@@ -186,7 +190,7 @@ export function MarketingSection({ from, to }: Props) {
   // Hashtags
   const hashtagData = useMemo(() => {
     const m: Record<string,number> = {};
-    postsData.forEach(p => {
+    postsFiltered.forEach(p => {
       (p.caption||"").match(/#[\w\u00C0-\u024F]+/gi)?.forEach(t => {
         m[t.toLowerCase()] = (m[t.toLowerCase()]||0)+1;
       });
@@ -195,7 +199,7 @@ export function MarketingSection({ from, to }: Props) {
   }, [postsData]);
 
   // Top posts
-  const topPosts = useMemo(() => [...postsData]
+  const topPosts = useMemo(() => [...postsFiltered]
     .map(p => ({...p, eng: p.like_count+p.comments_count+p.shares+p.saved,
       taxaEng: p.reach>0 ? (p.like_count+p.comments_count+p.shares+p.saved)/p.reach*100 : 0}))
     .sort((a,b) => b.eng-a.eng).slice(0,10), [postsData]);
@@ -375,23 +379,42 @@ export function MarketingSection({ from, to }: Props) {
       {tab==="instagram" && (
         <div className="space-y-4">
 
-          {/* KPIs */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {/* Filtro de conta */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">Conta:</span>
+            <div className="flex gap-1 p-0.5 rounded-lg border border-border bg-card/40">
+              {([null, "eduardocristianoriginal", "costurandosucesso"] as (string|null)[]).map(acc => (
+                <button key={acc??"todas"} onClick={() => setIgAccount(acc)}
+                  className={cn("px-3 py-1 rounded-md text-xs font-semibold transition-all",
+                    igAccount===acc
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}>
+                  {acc===null?"Todas":acc==="eduardocristianoriginal"?"@EC":"@CS"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* KPIs — 2 linhas: seguidores + métricas */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {igAccounts.map(acc => {
               const f = lastFollowers[acc]??0;
               const g = f - (firstFollowers[acc]??f);
               return <KPICard key={acc}
-                title={acc==="eduardocristianoriginal"?"Seguidores EC":"Seguidores CS"}
+                title={acc==="eduardocristianoriginal"?"Seguidores @EC":"Seguidores @CS"}
                 value={fmt(f)} subtitle={`${g>=0?"+":""}${fmt(g)} no período`} icon={Users}/>;
             })}
-            <KPICard title="Posts no período" value={postsData.length}
+            <KPICard title="Posts no período" value={postsFiltered.length}
               subtitle={`Eng. médio: ${fmt(igEngPost)}/post`} icon={TrendingUp}/>
             <KPICard title="Engajamento total" value={fmt(igEngTotal)}
-              subtitle={`${fmt(postsData.length)} posts`} icon={Heart}/>
+              subtitle={`${fmt(igAlcance)} alcance`} icon={Heart}/>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
             <KPICard title="Taxa de engajamento" value={pct(igTaxaEng)}
-              subtitle="eng ÷ alcance" icon={TrendingUp} accent="gold"/>
+              subtitle="eng ÷ alcance × 100" icon={TrendingUp} accent="gold"/>
             <KPICard title="Views totais" value={fmt(igViews)}
-              subtitle={`${fmt(igAlcance)} alcance`} icon={Eye}/>
+              subtitle={`Reels e vídeos`} icon={Eye}/>
           </div>
 
           {/* Seguidores ao longo do tempo */}
@@ -610,7 +633,7 @@ export function MarketingSection({ from, to }: Props) {
             </GlassCard>
           )}
 
-          {!loadingIG && postsData.length===0 && (
+          {!loadingIG && postsFiltered.length===0 && (
             <div className="text-center text-muted-foreground text-sm py-8">
               Nenhum post encontrado no período selecionado.
             </div>

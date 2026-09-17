@@ -197,6 +197,18 @@ html.light .logo-adaptive {
   filter: brightness(0);
 }
 
+/* Scrollbar adaptada ao tema */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: hsl(240 15% 18%);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover { background: hsl(355 82% 51% / 0.4); }
+
+html.light ::-webkit-scrollbar-thumb { background: hsl(30 15% 80%); }
+html.light ::-webkit-scrollbar-thumb:hover { background: hsl(355 74% 45% / 0.4); }
+
 @keyframes ambient-pulse {
   0%, 100% { opacity: 0.8; }
   50%       { opacity: 1; }
