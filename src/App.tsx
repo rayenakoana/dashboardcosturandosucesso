@@ -21,7 +21,6 @@ import ResetPassword from "./pages/ResetPassword";
 import Usuarios from "./pages/admin/Usuarios";
 import NotFound from "./pages/NotFound";
 import MarketingDashboard from "./pages/MarketingDashboard";
-import InstagramDashboard from "./pages/InstagramDashboard";
 
 const queryClient = new QueryClient();
 
@@ -57,7 +56,6 @@ function Shell() {
           <Route path="/funil-xpto" element={<FunilXPTO />} />
           <Route path="/mapa" element={<MapaGeografico />} />
           <Route path="/marketing" element={<MarketingDashboard />} />
-          <Route path="/instagram" element={<InstagramDashboard />} />
 
           {/* Admin (protegidas) */}
           <Route path="/admin/comercial"     element={<ProtectedRoute><Vendas /></ProtectedRoute>} />
