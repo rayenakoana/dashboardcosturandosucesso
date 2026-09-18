@@ -917,6 +917,18 @@ export function MarketingSection({ from, to }: Props) {
             </GlassCard>
           )}
 
+          {/* Alertas fixos por lógica */}
+          {postsFiltered.length > 0 && (
+            <InstagramAlertas
+              postsFiltered={postsFiltered}
+              dailyFiltered={dailyFiltered}
+              porFormato={porFormato}
+              followersByAccount={followersByAccount}
+              followersForecast={followersForecast}
+              igTaxaEng={igTaxaEng}
+            />
+          )}
+
           {/* Análise & Insights com Claude API */}
           {postsFiltered.length > 0 && (
             <InstagramInsightsAI
@@ -1041,6 +1053,191 @@ function CheckCheck(p:any){return<svg {...p} xmlns="http://www.w3.org/2000/svg" 
 function Eye(p:any){return<svg {...p} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.641 0-8.573-3.007-9.964-7.178Z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>;}
 function Send(p:any){return<svg {...p} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/></svg>;}
 
+// ── Alertas fixos por lógica (sem IA) ──────────────────────────────────────────
+interface AlertasProps {
+  postsFiltered: any[];
+  dailyFiltered: any[];
+  porFormato: any[];
+  followersByAccount: Record<string, {first:number;last:number}>;
+  followersForecast: Record<string, {per_day:number;per_30:number;next_30:number}> | null;
+  igTaxaEng: number;
+}
+
+type NivelAlerta = "vermelho" | "amarelo" | "verde";
+
+interface Alerta {
+  nivel: NivelAlerta;
+  categoria: string;
+  mensagem: string;
+}
+
+function badgeAlerta(nivel: NivelAlerta) {
+  if (nivel === "vermelho") return "bg-red-500/10 border-red-500/30 text-red-400";
+  if (nivel === "amarelo")  return "bg-amber-500/10 border-amber-500/25 text-amber-400";
+  return "bg-emerald-500/10 border-emerald-500/25 text-emerald-400";
+}
+
+function labelNivel(nivel: NivelAlerta) {
+  if (nivel === "vermelho") return "Atenção";
+  if (nivel === "amarelo")  return "Observar";
+  return "Normal";
+}
+
+function InstagramAlertas({
+  postsFiltered, dailyFiltered, porFormato,
+  followersByAccount, followersForecast, igTaxaEng,
+}: AlertasProps) {
+
+  // ── Ritmo de publicação (posts/semana na última semana com dados) ──
+  const ritmoAlerta = useMemo((): Alerta | null => {
+    if (postsFiltered.length === 0) return null;
+    const sorted = [...postsFiltered].sort((a,b) => b.posted_at.localeCompare(a.posted_at));
+    const ultimo = new Date(sorted[0].posted_at);
+    const inicioSemana = new Date(ultimo);
+    inicioSemana.setDate(ultimo.getDate() - 6);
+    const postsUltimaSemana = postsFiltered.filter(p => new Date(p.posted_at) >= inicioSemana).length;
+    if (postsUltimaSemana < 2)
+      return { nivel: "vermelho", categoria: "Ritmo de publicação", mensagem: `${postsUltimaSemana} post(s) na última semana — ritmo muito baixo` };
+    if (postsUltimaSemana < 4)
+      return { nivel: "amarelo", categoria: "Ritmo de publicação", mensagem: `${postsUltimaSemana} posts na última semana — abaixo do ideal` };
+    return { nivel: "verde", categoria: "Ritmo de publicação", mensagem: `${postsUltimaSemana} posts na última semana` };
+  }, [postsFiltered]);
+
+  // ── Engajamento geral ──
+  const erAlerta = useMemo((): Alerta | null => {
+    if (postsFiltered.length === 0) return null;
+    if (igTaxaEng < 1)
+      return { nivel: "vermelho", categoria: "Taxa de engajamento", mensagem: `${igTaxaEng.toFixed(1)}% de ER médio — abaixo do mínimo aceitável` };
+    if (igTaxaEng < 2)
+      return { nivel: "amarelo", categoria: "Taxa de engajamento", mensagem: `${igTaxaEng.toFixed(1)}% de ER médio — abaixo do recomendado` };
+    return { nivel: "verde", categoria: "Taxa de engajamento", mensagem: `${igTaxaEng.toFixed(1)}% de ER médio` };
+  }, [igTaxaEng, postsFiltered.length]);
+
+  // ── Crescimento de seguidores ──
+  const crescimentoAlertas = useMemo((): Alerta[] => {
+    return Object.entries(followersByAccount).map(([acc, f]) => {
+      const forecast = followersForecast?.[acc];
+      const label = acc === "eduardocristianoriginal" ? "@EC" : "@CS";
+      const delta = f.last - f.first;
+      const perDay = forecast?.per_day ?? 0;
+      if (delta < 0 || perDay < 0)
+        return { nivel: "vermelho" as NivelAlerta, categoria: `Seguidores ${label}`, mensagem: `Perda líquida de ${Math.abs(delta)} seguidores no período` };
+      if (perDay < 1)
+        return { nivel: "amarelo" as NivelAlerta, categoria: `Seguidores ${label}`, mensagem: `Crescimento abaixo de +1/dia (tendência: ${perDay > 0 ? "+" : ""}${perDay}/dia)` };
+      return { nivel: "verde" as NivelAlerta, categoria: `Seguidores ${label}`, mensagem: `+${delta} no período · tendência +${perDay}/dia` };
+    });
+  }, [followersByAccount, followersForecast]);
+
+  // ── Por formato: ER e impacto em seguidores ──
+  const formatoAlertas = useMemo((): Alerta[] => {
+    if (porFormato.length === 0) return [];
+
+    // Cruzamento formato × seguidores (D+1 e D+2 após publicação)
+    const impactoFormato: Record<string, {gained: number; lost: number; posts: number}> = {};
+    postsFiltered.forEach(p => {
+      const tipo = p.media_type === "VIDEO" ? "Reel" : p.media_type === "CAROUSEL_ALBUM" ? "Carrossel" : "Imagem";
+      if (!impactoFormato[tipo]) impactoFormato[tipo] = { gained: 0, lost: 0, posts: 0 };
+      const postDate = p.posted_at.split("T")[0];
+      // D+1 e D+2
+      [1, 2].forEach(offset => {
+        const d = new Date(postDate);
+        d.setDate(d.getDate() + offset);
+        const targetDate = d.toISOString().split("T")[0];
+        const snap = dailyFiltered.find(s => s.date === targetDate && s.username === p.username);
+        if (snap) {
+          impactoFormato[tipo].gained += snap.followers_gained || 0;
+          impactoFormato[tipo].lost   += snap.followers_lost  || 0;
+        }
+      });
+      impactoFormato[tipo].posts++;
+    });
+
+    return porFormato.map(f => {
+      const imp = impactoFormato[f.tipo];
+      const mediaGained = imp && imp.posts > 0 ? (imp.gained / imp.posts).toFixed(1) : null;
+      const mediaLost   = imp && imp.posts > 0 ? (imp.lost   / imp.posts).toFixed(1) : null;
+      const saldoMedio  = imp && imp.posts > 0 ? (imp.gained - imp.lost) / imp.posts : null;
+
+      const erInfo = `ER ${f.taxaEng}%`;
+      const segInfo = mediaGained !== null
+        ? ` · +${mediaGained}/${mediaLost} seg. (D+1/D+2 por post)`
+        : "";
+
+      if (f.taxaEng < 1 || (saldoMedio !== null && saldoMedio < -2))
+        return { nivel: "vermelho" as NivelAlerta, categoria: `Formato — ${f.tipo}`, mensagem: `${erInfo}${segInfo}` };
+      if (f.taxaEng < 2 || (saldoMedio !== null && saldoMedio < 0))
+        return { nivel: "amarelo" as NivelAlerta, categoria: `Formato — ${f.tipo}`, mensagem: `${erInfo}${segInfo}` };
+      return { nivel: "verde" as NivelAlerta, categoria: `Formato — ${f.tipo}`, mensagem: `${erInfo}${segInfo}` };
+    });
+  }, [porFormato, postsFiltered, dailyFiltered]);
+
+  const todosAlertas: Alerta[] = [
+    ...(ritmoAlerta ? [ritmoAlerta] : []),
+    ...(erAlerta    ? [erAlerta]    : []),
+    ...crescimentoAlertas,
+    ...formatoAlertas,
+  ].sort((a,b) => {
+    const order = { vermelho: 0, amarelo: 1, verde: 2 };
+    return order[a.nivel] - order[b.nivel];
+  });
+
+  const temProblema = todosAlertas.some(a => a.nivel !== "verde");
+
+  return (
+    <GlassCard>
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/60 mb-3">
+        Alertas do período
+      </p>
+
+      {todosAlertas.length === 0 ? (
+        <p className="text-[11px] text-muted-foreground/50">Sem dados suficientes para gerar alertas.</p>
+      ) : (
+        <div className="space-y-2">
+          {/* Separador Geral */}
+          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 pt-1">Geral</p>
+          {[ritmoAlerta, erAlerta, ...crescimentoAlertas].filter(Boolean).map((a, i) => (
+            <div key={i} className={cn("flex items-start gap-2.5 px-3 py-2 rounded-lg border text-[11px]", badgeAlerta(a!.nivel))}>
+              <span className="font-bold shrink-0 text-[9px] uppercase tracking-widest mt-0.5 opacity-70">
+                {labelNivel(a!.nivel)}
+              </span>
+              <div className="min-w-0">
+                <span className="font-semibold">{a!.categoria}</span>
+                <span className="text-muted-foreground mx-1">—</span>
+                <span className="opacity-80">{a!.mensagem}</span>
+              </div>
+            </div>
+          ))}
+
+          {/* Separador Por formato */}
+          {formatoAlertas.length > 0 && (
+            <>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 pt-2">Por formato</p>
+              {formatoAlertas.map((a, i) => (
+                <div key={i} className={cn("flex items-start gap-2.5 px-3 py-2 rounded-lg border text-[11px]", badgeAlerta(a.nivel))}>
+                  <span className="font-bold shrink-0 text-[9px] uppercase tracking-widest mt-0.5 opacity-70">
+                    {labelNivel(a.nivel)}
+                  </span>
+                  <div className="min-w-0">
+                    <span className="font-semibold">{a.categoria}</span>
+                    <span className="text-muted-foreground mx-1">—</span>
+                    <span className="opacity-80">{a.mensagem}</span>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+
+          {!temProblema && (
+            <p className="text-[10px] text-emerald-400/60 pt-1">
+              Nenhum alerta crítico identificado no período.
+            </p>
+          )}
+        </div>
+      )}
+    </GlassCard>
+  );
+}
+
 // ── Análise & Insights com Claude API ──────────────────────────────────────────
 interface InsightsAIProps {
   postsFiltered: any[];
@@ -1076,47 +1273,94 @@ function InstagramInsightsAI({
 
     const melhorHorario = [...horarioData].sort((a,b)=>b.engMedio-a.engMedio)[0];
     const melhorFormato = porFormato[0];
+    const piorFormato   = porFormato[porFormato.length-1];
 
     const followersInfo = Object.entries(followersByAccount).map(([acc, f]) => {
       const forecast = followersForecast?.[acc];
       const delta = f.last - f.first;
       const gained = dailyFiltered.filter(d=>d.username===acc).reduce((s,d)=>s+(d.followers_gained||0),0);
       const lost   = dailyFiltered.filter(d=>d.username===acc).reduce((s,d)=>s+(d.followers_lost||0),0);
-      return `${acc==="eduardocristianoriginal"?"@EC":"@CS"}: ${f.last.toLocaleString("pt-BR")} seguidores, delta ${delta>=0?"+":""}${delta} no período, +${gained} novos, -${lost} saídas${forecast?`, tendência +${forecast.per_day}/dia, previsão ${forecast.next_30.toLocaleString("pt-BR")} em 30 dias`:""}`;
+      return `${acc==="eduardocristianoriginal"?"@EC":"@CS"}: ${f.last.toLocaleString("pt-BR")} seguidores, delta ${delta>=0?"+":""}${delta} no período, +${gained} novos, -${lost} saídas${forecast?`, tendência ${forecast.per_day>=0?"+":""}${forecast.per_day}/dia, previsão ${forecast.next_30.toLocaleString("pt-BR")} em 30 dias`:""}`;
     }).join("\n");
 
     const excelente = erBenchmark.find(f=>f.faixa.includes("Excelente"))?.posts ?? 0;
+    const baixo     = erBenchmark.find(f=>f.faixa.includes("Baixo"))?.posts ?? 0;
     const totalPosts = postsFiltered.length;
 
-    return `Você é um analista de dados de redes sociais. Com base EXCLUSIVAMENTE nos números abaixo, escreva uma análise em português brasileiro com 4 parágrafos curtos (máximo 2 frases cada). Não invente dados. Não mencione setor ou nicho. Use os números exatamente como fornecidos.
+    // Tendência de engajamento: últimos 7d vs 7d anteriores
+    const agora = new Date();
+    const d7 = new Date(agora); d7.setDate(agora.getDate()-7);
+    const d14 = new Date(agora); d14.getDate()-14;
+    const engUlt7  = postsFiltered.filter(p=>new Date(p.posted_at)>=d7).reduce((s,p)=>s+p.like_count+p.comments_count+p.shares+p.saved,0);
+    const engAntes7 = postsFiltered.filter(p=>new Date(p.posted_at)<d7 && new Date(p.posted_at)>=d14).reduce((s,p)=>s+p.like_count+p.comments_count+p.shares+p.saved,0);
+    const tendEng = engAntes7 > 0 ? Math.round((engUlt7-engAntes7)/engAntes7*100) : null;
+
+    // Ritmo
+    const sorted = [...postsFiltered].sort((a,b)=>b.posted_at.localeCompare(a.posted_at));
+    const diasPeriodo = sorted.length > 1
+      ? Math.max(1, Math.round((new Date(sorted[0].posted_at).getTime()-new Date(sorted[sorted.length-1].posted_at).getTime())/86400000))
+      : 1;
+    const postsSemana = parseFloat(((totalPosts/diasPeriodo)*7).toFixed(1));
+
+    return `Você é um analista de dados de redes sociais. Com base EXCLUSIVAMENTE nos números abaixo, escreva uma análise em português brasileiro com 4 seções curtas. Cada seção tem um título em negrito (formato **Título**) seguido de no máximo 2 frases. Não invente dados. Não mencione setor ou nicho. Não use emojis. Use os números exatamente como fornecidos.
 
 DADOS DO PERÍODO (${conta}):
 - Total de posts: ${totalPosts}
+- Ritmo: ${postsSemana} posts/semana
 - Taxa de engajamento média: ${igTaxaEng.toFixed(1)}%
 - Engajamento médio por post: ${Math.round(igEngPost)}
 - Posts com ER >5% (excelente): ${excelente} de ${totalPosts} (${totalPosts>0?Math.round(excelente/totalPosts*100):0}%)
-${melhorFormato ? `- Melhor formato: ${melhorFormato.tipo} com ${Math.round(melhorFormato.engPorPost)} eng/post e ${melhorFormato.taxaEng}% ER` : ""}
-${melhorHorario ? `- Melhor horário para postar: ${melhorHorario.hora} com ${melhorHorario.engMedio} eng. médio` : ""}
-${topPost ? `- Post destaque: ${topPost.er.toFixed(1)}% ER, publicado em ${topPost.posted_at?.split("T")[0]}, tipo ${topPost.media_type==="VIDEO"?"Reel":topPost.media_type==="CAROUSEL_ALBUM"?"Carrossel":"Imagem"}` : ""}
+- Posts com ER <1% (baixo): ${baixo} de ${totalPosts} (${totalPosts>0?Math.round(baixo/totalPosts*100):0}%)
+${tendEng !== null ? `- Tendência de engajamento: ${tendEng>=0?"+":""}${tendEng}% vs 7 dias anteriores` : ""}
+${melhorFormato ? `- Melhor formato: ${melhorFormato.tipo} — ${Math.round(melhorFormato.engPorPost)} eng/post, ${melhorFormato.taxaEng}% ER` : ""}
+${piorFormato && piorFormato !== melhorFormato ? `- Pior formato: ${piorFormato.tipo} — ${Math.round(piorFormato.engPorPost)} eng/post, ${piorFormato.taxaEng}% ER` : ""}
+${melhorHorario ? `- Melhor horário: ${melhorHorario.hora} com ${melhorHorario.engMedio} eng. médio` : ""}
+${topPost ? `- Post destaque: ${topPost.er.toFixed(1)}% ER em ${topPost.posted_at?.split("T")[0]} (${topPost.media_type==="VIDEO"?"Reel":topPost.media_type==="CAROUSEL_ALBUM"?"Carrossel":"Imagem"})` : ""}
 ${followersInfo}
 
-Estruture assim:
-1. Tendência de crescimento e seguidores
-2. Desempenho de engajamento
-3. O que está funcionando (formato e horário)
-4. Um alerta ou oportunidade baseado nos dados`;
+Estruture EXATAMENTE assim (4 seções, sem numeração, só o título em negrito e o texto):
+
+**Crescimento e seguidores**
+[texto]
+
+**Engajamento**
+[texto]
+
+**O que está funcionando**
+[texto]
+
+**Oportunidade ou alerta**
+[texto]`;
   };
+
+  // Parse das seções do texto retornado
+  function parseSections(text: string): { title: string; body: string }[] {
+    const sections: { title: string; body: string }[] = [];
+    const regex = /\*\*(.+?)\*\*\s*([\s\S]*?)(?=\n\*\*|$)/g;
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      const body = match[2].trim();
+      if (body) sections.push({ title: match[1].trim(), body });
+    }
+    // fallback: parágrafos simples se não encontrar padrão
+    if (sections.length === 0) {
+      text.split("\n").filter(l=>l.trim()).forEach((l,i) => {
+        sections.push({ title: `Seção ${i+1}`, body: l.replace(/^\d+\.\s*/,"") });
+      });
+    }
+    return sections;
+  }
 
   async function generate() {
     setLoading(true);
     setAnalysis("");
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/claude", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
-          max_tokens: 1000,
+          max_tokens: 1200,
           messages: [{ role: "user", content: buildPrompt() }],
         }),
       });
@@ -1131,9 +1375,11 @@ Estruture assim:
     }
   }
 
+  const sections = analysis ? parseSections(analysis) : [];
+
   return (
     <GlassCard>
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/60">
             Análise & Insights
@@ -1167,22 +1413,34 @@ Estruture assim:
       )}
 
       {loading && (
-        <div className="space-y-2 py-2">
-          {[1,2,3,4].map(i => (
-            <div key={i} className="h-3 rounded bg-muted/20 animate-pulse" style={{width:`${85-i*8}%`}}/>
+        <div className="space-y-3 py-2">
+          {[90,75,85,65].map((w,i) => (
+            <div key={i} className="space-y-1.5">
+              <div className="h-2.5 rounded bg-muted/30 animate-pulse w-24"/>
+              <div className="h-2 rounded bg-muted/20 animate-pulse" style={{width:`${w}%`}}/>
+              <div className="h-2 rounded bg-muted/15 animate-pulse" style={{width:`${w-15}%`}}/>
+            </div>
           ))}
         </div>
       )}
 
-      {analysis && !loading && (
-        <div className="space-y-3">
-          {analysis.split("\n").filter(l => l.trim()).map((para, i) => (
-            <p key={i} className="text-[11px] text-foreground/80 leading-relaxed">
-              {para.replace(/^\d+\.\s*/, "")}
-            </p>
+      {sections.length > 0 && !loading && (
+        <div className="space-y-0">
+          {sections.map((s, i) => (
+            <div key={i} className={cn(
+              "py-3",
+              i < sections.length - 1 && "border-b border-border/30"
+            )}>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 mb-1.5">
+                {s.title}
+              </p>
+              <p className="text-[11px] text-foreground/80 leading-relaxed">
+                {s.body}
+              </p>
+            </div>
           ))}
-          <p className="text-[9px] text-muted-foreground/40 pt-2 border-t border-border/30">
-            Análise gerada com base nos dados exibidos acima · não substitui julgamento humano
+          <p className="text-[9px] text-muted-foreground/30 pt-3">
+            Gerado com base nos dados exibidos · não substitui julgamento humano
           </p>
         </div>
       )}
