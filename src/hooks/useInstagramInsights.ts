@@ -8,6 +8,8 @@ export interface InstagramAccountDaily {
   date: string;
   followers_count: number;
   media_count: number;
+  followers_gained: number;
+  followers_lost: number;
 }
 
 export interface InstagramPostInsight {

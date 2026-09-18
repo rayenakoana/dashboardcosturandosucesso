@@ -545,10 +545,12 @@ export function MarketingSection({ from, to }: Props) {
             {visibleAccounts.map(acc => {
               const f = followersByAccount[acc];
               const delta = f ? f.last - f.first : 0;
+              const gained = dailyFiltered.filter(d => d.username === acc).reduce((s,d) => s + (d.followers_gained||0), 0);
+              const lost   = dailyFiltered.filter(d => d.username === acc).reduce((s,d) => s + (d.followers_lost||0),   0);
               return <KPICard key={acc}
                 title={acc==="eduardocristianoriginal"?"Seguidores @EC":"Seguidores @CS"}
                 value={fmt(f?.last ?? 0)}
-                subtitle={`${delta>=0?"+":""}${delta.toLocaleString("pt-BR")} no período`}
+                subtitle={`${delta>=0?"+":""}${delta.toLocaleString("pt-BR")} líquido · ↑${gained.toLocaleString("pt-BR")} ↓${lost.toLocaleString("pt-BR")}`}
                 icon={Users}/>;
             })}
             <KPICard title="Posts no período" value={postsFiltered.length}
@@ -596,6 +598,45 @@ export function MarketingSection({ from, to }: Props) {
                 <p className="text-[11px] text-muted-foreground py-4">
                   Dados insuficientes para o gráfico — acumula a partir do segundo dia de sync.
                 </p>
+              )}
+
+              {/* Crescimento detalhado por conta */}
+              {dailyFiltered.some(d => d.followers_gained > 0 || d.followers_lost > 0) && (
+                <div className="mt-4 pt-3 border-t border-border/40">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-2">
+                    Crescimento no período
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {visibleAccounts.map(acc => {
+                      const gained = dailyFiltered.filter(d => d.username === acc).reduce((s,d) => s + (d.followers_gained||0), 0);
+                      const lost   = dailyFiltered.filter(d => d.username === acc).reduce((s,d) => s + (d.followers_lost||0),   0);
+                      const net    = gained - lost;
+                      return (
+                        <div key={acc} className="rounded-lg p-3 bg-muted/10 border border-border/30">
+                          <p className="text-[10px] font-semibold text-primary mb-2">
+                            {acc==="eduardocristianoriginal"?"@EC":"@CS"}
+                          </p>
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-[10px]">
+                              <span className="text-muted-foreground">Novos seguidores</span>
+                              <span className="font-semibold text-emerald-400">+{gained.toLocaleString("pt-BR")}</span>
+                            </div>
+                            <div className="flex justify-between text-[10px]">
+                              <span className="text-muted-foreground">Deixaram de seguir</span>
+                              <span className="font-semibold text-destructive">-{lost.toLocaleString("pt-BR")}</span>
+                            </div>
+                            <div className="flex justify-between text-[10px] pt-1 border-t border-border/30">
+                              <span className="text-muted-foreground font-semibold">Líquido</span>
+                              <span className={cn("font-bold", net>=0?"text-emerald-400":"text-destructive")}>
+                                {net>=0?"+":""}{net.toLocaleString("pt-BR")}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
 
               {/* Previsibilidade */}
