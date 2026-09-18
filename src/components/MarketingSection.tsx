@@ -13,7 +13,7 @@ import {
 import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
-  Cell,
+  Cell, ReferenceLine,
 } from "recharts";
 import { cn } from "@/lib/utils";
 
@@ -1281,35 +1281,43 @@ function InstagramAlertas({
 
 // ── Impacto de conteúdo em seguidores ──────────────────────────────────────────
 interface ImpactoConteudoProps {
-  postsData: any[];       // todos os posts (sem filtro de conta)
-  dailyData: any[];       // todos os snapshots (sem filtro de conta)
+  postsData: any[];
+  dailyData: any[];
   igAccount: string | null;
 }
 
 function ImpactoConteudo({ postsData, dailyData, igAccount }: ImpactoConteudoProps) {
   const hoje = new Date();
-  const d30  = new Date(hoje); d30.setDate(hoje.getDate()-29);
-  const fmt8  = (d: Date) => d.toISOString().split("T")[0];
+  const d7   = new Date(hoje); d7.setDate(hoje.getDate()-6);
+  const fmtD = (d: Date) => d.toISOString().split("T")[0];
 
   const [filtroFormato, setFiltroFormato] = useState<string>("Todos");
-  const [de, setDe]   = useState(fmt8(d30));
-  const [ate, setAte] = useState(fmt8(hoje));
-  const [detalhePost, setDetalhePost] = useState<any | null>(null);
+  const [periodo, setPeriodo]             = useState<number>(7);
+  const [customDe,  setCustomDe]          = useState(fmtD(d7));
+  const [customAte, setCustomAte]         = useState(fmtD(hoje));
+  const [customMode, setCustomMode]       = useState(false);
+  const [detalhePost, setDetalhePost]     = useState<any | null>(null);
 
   const tipoLabel = (mt: string) => mt==="VIDEO"?"Reel":mt==="CAROUSEL_ALBUM"?"Carrossel":"Imagem";
+  const corTipo   = (t: string)  => t==="Reel"?"#4CAF87":t==="Imagem"?P:"hsl(210 70% 55%)";
 
-  // Posts filtrados por conta + período + formato
+  const de = useMemo(() => {
+    if (customMode) return customDe;
+    const d = new Date(hoje); d.setDate(hoje.getDate()-(periodo-1));
+    return fmtD(d);
+  }, [periodo, customMode, customDe]);
+
+  const ate = customMode ? customAte : fmtD(hoje);
+
   const postsFiltrados = useMemo(() => {
     return postsData.filter(p => {
       const d = p.posted_at.split("T")[0];
-      const contaOk = igAccount ? p.username === igAccount : true;
-      const periodoOk = d >= de && d <= ate;
-      const formatoOk = filtroFormato === "Todos" || tipoLabel(p.media_type) === filtroFormato;
-      return contaOk && periodoOk && formatoOk;
+      return (igAccount ? p.username===igAccount : true)
+        && d >= de && d <= ate
+        && (filtroFormato==="Todos" || tipoLabel(p.media_type)===filtroFormato);
     }).sort((a,b) => a.posted_at.localeCompare(b.posted_at));
   }, [postsData, igAccount, de, ate, filtroFormato]);
 
-  // Cruzamento post × seguidores (2 dias após publicação)
   const dadosPorPost = useMemo(() => {
     return postsFiltrados.map(p => {
       const postDate = p.posted_at.split("T")[0];
@@ -1319,50 +1327,60 @@ function ImpactoConteudo({ postsData, dailyData, igAccount }: ImpactoConteudoPro
         const snap = dailyData.find(s=>s.date===d.toISOString().split("T")[0]&&s.username===p.username);
         if (snap) { gained+=snap.followers_gained||0; lost+=snap.followers_lost||0; }
       });
-      const saldo = gained - lost;
-      const tipo  = tipoLabel(p.media_type);
-      const conta = p.username==="eduardocristianoriginal"?"@EC":"@CS";
-      const caption = (p.caption||"").slice(0,40)+(p.caption?.length>40?"…":"");
-      return { ...p, gained, lost, saldo, tipo, conta, caption, dataLabel: postDate };
+      const saldo  = gained - lost;
+      const tipo   = tipoLabel(p.media_type);
+      const conta  = p.username==="eduardocristianoriginal"?"@EC":"@CS";
+      const caption= (p.caption||"").slice(0,50)+(p.caption?.length>50?"…":"");
+      const eng    = p.like_count+p.comments_count+p.shares+p.saved;
+      const taxaEng= p.reach>0?parseFloat((eng/p.reach*100).toFixed(1)):0;
+      return { ...p, gained, lost, saldo, tipo, conta, caption, dataLabel: postDate, eng, taxaEng };
     });
   }, [postsFiltrados, dailyData]);
 
-  // Resumo por formato
+  // Resumo por formato — sempre calculado sobre todos os posts do período
   const resumoPorFormato = useMemo(() => {
-    const m: Record<string,{gained:number;lost:number;posts:number;eng:number;reach:number}> = {};
+    const m: Record<string,{gained:number;lost:number;posts:number}> = {};
     dadosPorPost.forEach(p => {
-      if (!m[p.tipo]) m[p.tipo]={gained:0,lost:0,posts:0,eng:0,reach:0};
+      if (!m[p.tipo]) m[p.tipo]={gained:0,lost:0,posts:0};
       m[p.tipo].gained+=p.gained; m[p.tipo].lost+=p.lost; m[p.tipo].posts++;
-      m[p.tipo].eng+=p.like_count+p.comments_count+p.shares+p.saved;
-      m[p.tipo].reach+=p.reach;
     });
     return Object.entries(m).map(([tipo,v])=>({
       tipo, posts:v.posts,
+      ganhos: v.gained,
+      perdas: v.lost,
+      saldo: v.gained-v.lost,
       saldoMedio: v.posts>0?parseFloat(((v.gained-v.lost)/v.posts).toFixed(1)):0,
-      gainedMedia: v.posts>0?parseFloat((v.gained/v.posts).toFixed(1)):0,
-      lostMedia:   v.posts>0?parseFloat((v.lost/v.posts).toFixed(1)):0,
-      taxaEng: v.reach>0?parseFloat(((v.eng/v.reach)*100).toFixed(1)):0,
-    })).sort((a,b)=>b.saldoMedio-a.saldoMedio);
+    })).sort((a,b)=>b.saldo-a.saldo);
   }, [dadosPorPost]);
 
-  const maxAbs = Math.max(...dadosPorPost.map(p=>Math.max(p.gained,p.lost)),1);
-  const corSaldo = (s:number) => s>0?"#4CAF87":s<0?"hsl(355 82% 51%)":"hsl(0 0% 50%)";
+  const maxAbs = Math.max(...dadosPorPost.map(p=>Math.max(Math.abs(p.saldo),1)),1);
 
-  const CustomTooltip = ({active,payload}: any) => {
+  const CustomTooltip = ({active,payload,label}: any) => {
     if (!active||!payload?.length) return null;
-    const p = payload[0].payload;
+    const p = payload[0]?.payload;
+    if (!p) return null;
     return (
-      <div style={TT.contentStyle} className="max-w-[220px]">
-        <p className="font-semibold mb-1">{p.dataLabel} · {p.tipo} · {p.conta}</p>
-        <p className="text-[10px] text-muted-foreground mb-1 truncate">{p.caption}</p>
-        <p style={{color:"#4CAF87"}} className="text-[11px]">+{p.gained} seguidores ganhos</p>
-        <p style={{color:"hsl(355 82% 51%)"}} className="text-[11px]">−{p.lost} seguidores perdidos</p>
-        <p className="font-bold text-[12px] mt-1" style={{color:corSaldo(p.saldo)}}>
-          Saldo: {p.saldo>=0?"+":""}{p.saldo}
-        </p>
+      <div style={TT.contentStyle}>
+        <p className="font-semibold text-[11px] mb-1">{p.dataLabel} · {p.tipo} · {p.conta}</p>
+        <p className="text-[10px] text-muted-foreground mb-2 leading-snug">{p.caption}</p>
+        <div className="flex gap-3">
+          <span className="text-[11px]" style={{color:"#4CAF87"}}>+{p.gained} ganhos</span>
+          <span className="text-[11px]" style={{color:"hsl(355 82% 51%)"}}>−{p.lost} perdas</span>
+          <span className="text-[11px] font-bold" style={{color: p.saldo>=0?"#4CAF87":"hsl(355 82% 51%)"}}>
+            saldo {p.saldo>=0?"+":""}{p.saldo}
+          </span>
+        </div>
+        <p className="text-[10px] text-muted-foreground mt-1">{p.taxaEng}% engajamento</p>
       </div>
     );
   };
+
+  function handleBarClick(data: any) {
+    if (data?.activePayload?.[0]?.payload) {
+      const p = data.activePayload[0].payload;
+      setDetalhePost(prev => prev?.post_id===p.post_id ? null : p);
+    }
+  }
 
   return (
     <GlassCard>
@@ -1373,24 +1391,32 @@ function ImpactoConteudo({ postsData, dailyData, igAccount }: ImpactoConteudoPro
             Impacto do conteúdo em seguidores
           </p>
           <p className="text-[10px] text-muted-foreground mt-0.5">
-            Ganho e perda de seguidores nos 2 dias após cada publicação
+            Ganho e perda nos 2 dias após cada publicação — clique numa barra para ver o post
           </p>
         </div>
+
         {/* Filtros */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Período */}
-          <div className="flex items-center gap-1.5 bg-card/60 border border-border rounded-lg px-2 py-1">
-            <span className="text-[9px] text-muted-foreground/60 uppercase tracking-widest">De</span>
-            <input type="date" value={de} onChange={e=>setDe(e.target.value)}
-              className="bg-transparent text-[11px] text-foreground outline-none w-[100px]"/>
-            <span className="text-[9px] text-muted-foreground/60 uppercase tracking-widest">até</span>
-            <input type="date" value={ate} onChange={e=>setAte(e.target.value)}
-              className="bg-transparent text-[11px] text-foreground outline-none w-[100px]"/>
+          {/* Período rápido */}
+          <div className="flex gap-1">
+            {([7,14,30] as number[]).map(p=>(
+              <button key={p} onClick={()=>{setPeriodo(p);setCustomMode(false);setDetalhePost(null)}}
+                className={cn("px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all border",
+                  !customMode&&periodo===p
+                    ?"bg-primary text-primary-foreground border-primary"
+                    :"border-border text-muted-foreground hover:text-foreground"
+                )}>{p}d</button>
+            ))}
+            <button onClick={()=>{setCustomMode(true);setDetalhePost(null)}}
+              className={cn("px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all border",
+                customMode?"bg-primary text-primary-foreground border-primary":"border-border text-muted-foreground hover:text-foreground"
+              )}>Personalizado</button>
           </div>
+
           {/* Formato */}
           <div className="flex gap-1">
             {["Todos","Reel","Imagem","Carrossel"].map(f=>(
-              <button key={f} onClick={()=>setFiltroFormato(f)}
+              <button key={f} onClick={()=>{setFiltroFormato(f);setDetalhePost(null)}}
                 className={cn("px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all border",
                   filtroFormato===f?"bg-primary text-primary-foreground border-primary":"border-border text-muted-foreground hover:text-foreground"
                 )}>{f}</button>
@@ -1399,54 +1425,93 @@ function ImpactoConteudo({ postsData, dailyData, igAccount }: ImpactoConteudoPro
         </div>
       </div>
 
+      {/* Período personalizado */}
+      {customMode && (
+        <div className="flex items-center gap-2 mb-4 bg-card/40 border border-border/50 rounded-lg px-3 py-2 w-fit">
+          <span className="text-[9px] text-muted-foreground/60 uppercase tracking-widest">De</span>
+          <input type="date" value={customDe} onChange={e=>setCustomDe(e.target.value)}
+            className="bg-transparent text-[11px] text-foreground outline-none w-[108px]"/>
+          <span className="text-[9px] text-muted-foreground/60 uppercase tracking-widest">até</span>
+          <input type="date" value={customAte} onChange={e=>setCustomAte(e.target.value)}
+            className="bg-transparent text-[11px] text-foreground outline-none w-[108px]"/>
+        </div>
+      )}
+
       {dadosPorPost.length === 0 ? (
-        <p className="text-[11px] text-muted-foreground/50 py-6 text-center">
+        <p className="text-[11px] text-muted-foreground/50 py-8 text-center">
           Nenhum post encontrado para os filtros selecionados.
         </p>
       ) : (
         <>
-          {/* Resumo por formato — cards compactos */}
-          {filtroFormato === "Todos" && resumoPorFormato.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
-              {resumoPorFormato.map(f=>(
-                <div key={f.tipo} className="rounded-lg border border-border/50 bg-card/30 p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">{f.tipo}</p>
-                    <span className="text-[9px] text-muted-foreground/50">{f.posts} posts</span>
-                  </div>
-                  <p className={cn("font-display font-bold text-xl leading-none",
-                    f.saldoMedio>0?"text-emerald-400":f.saldoMedio<0?"text-red-400":"text-muted-foreground")}>
-                    {f.saldoMedio>=0?"+":""}{f.saldoMedio}
-                    <span className="text-[10px] font-normal ml-1 text-muted-foreground">seg./post em média</span>
-                  </p>
-                  <div className="flex gap-3 mt-2">
-                    <span className="text-[10px] text-emerald-400/80">+{f.gainedMedia} ganhos</span>
-                    <span className="text-[10px] text-red-400/80">−{f.lostMedia} perdidos</span>
-                    <span className="text-[10px] text-muted-foreground/60">{f.taxaEng}% eng.</span>
-                  </div>
+          {/* Cards de resumo por formato */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
+            {resumoPorFormato.map(f=>(
+              <div key={f.tipo} className="rounded-lg border border-border/40 bg-card/20 px-3 py-2.5">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 mb-1.5">{f.tipo} · {f.posts}p</p>
+                <p className={cn("font-display font-bold text-lg leading-none",
+                  f.saldo>0?"text-emerald-400":f.saldo<0?"text-red-400":"text-muted-foreground")}>
+                  {f.saldo>=0?"+":""}{f.saldo}
+                  <span className="text-[9px] font-normal ml-1 text-muted-foreground">saldo</span>
+                </p>
+                <div className="flex gap-2 mt-1.5">
+                  <span className="text-[9px] text-emerald-400/70">+{f.ganhos}</span>
+                  <span className="text-[9px] text-red-400/70">−{f.perdas}</span>
+                  <span className="text-[9px] text-muted-foreground/50">{f.saldoMedio>=0?"+":""}{f.saldoMedio}/post</span>
                 </div>
-              ))}
+              </div>
+            ))}
+            {/* Total geral */}
+            <div className="rounded-lg border border-border/40 bg-card/20 px-3 py-2.5">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 mb-1.5">Total · {dadosPorPost.length}p</p>
+              {(() => {
+                const tot = dadosPorPost.reduce((s,p)=>({g:s.g+p.gained,l:s.l+p.lost}),{g:0,l:0});
+                const sal = tot.g-tot.l;
+                return <>
+                  <p className={cn("font-display font-bold text-lg leading-none",sal>0?"text-emerald-400":sal<0?"text-red-400":"text-muted-foreground")}>
+                    {sal>=0?"+":""}{sal}<span className="text-[9px] font-normal ml-1 text-muted-foreground">saldo</span>
+                  </p>
+                  <div className="flex gap-2 mt-1.5">
+                    <span className="text-[9px] text-emerald-400/70">+{tot.g}</span>
+                    <span className="text-[9px] text-red-400/70">−{tot.l}</span>
+                  </div>
+                </>;
+              })()}
             </div>
-          )}
+          </div>
 
-          {/* Gráfico por post */}
-          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-2">
-            Saldo por publicação — clique para detalhes
+          {/* Gráfico vertical por post */}
+          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-3">
+            Por publicação
           </p>
-          <ResponsiveContainer width="100%" height={Math.max(180, Math.min(dadosPorPost.length*18, 340))}>
-            <BarChart data={dadosPorPost} layout="vertical" margin={{left:0,right:40,top:0,bottom:0}}
-              onClick={e=>e?.activePayload && setDetalhePost(e.activePayload[0]?.payload)}>
-              <XAxis type="number" domain={[-maxAbs, maxAbs]} tickLine={false} axisLine={false}
-                tick={{fill:MUTED,fontSize:9}} tickFormatter={v=>v===0?"0":`${v>0?"+":""}${v}`}/>
-              <YAxis type="category" dataKey="dataLabel" width={72} tick={{fill:MUTED,fontSize:9}} tickLine={false} axisLine={false}
-                tickFormatter={(_,i)=>{
-                  const p=dadosPorPost[i];
-                  return p?`${p.dataLabel.slice(5)} ${p.tipo.slice(0,3)}`:""
-                }}/>
-              <Tooltip content={<CustomTooltip/>}/>
-              <Bar dataKey="saldo" radius={[0,4,4,0]} cursor="pointer" maxBarSize={16}>
+          <ResponsiveContainer width="100%" height={Math.max(160, Math.min(dadosPorPost.length*28+40, 320))}>
+            <BarChart data={dadosPorPost} margin={{top:8,right:8,left:0,bottom:40}} barCategoryGap="30%"
+              onClick={handleBarClick} style={{cursor:"pointer"}}>
+              <XAxis
+                dataKey="dataLabel"
+                tickLine={false} axisLine={false}
+                tick={{fill:MUTED, fontSize:9}}
+                interval={0}
+                angle={-45} textAnchor="end"
+                tickFormatter={(_,i) => {
+                  const p = dadosPorPost[i];
+                  return p ? `${p.dataLabel.slice(5)} ${p.tipo.slice(0,3)}` : "";
+                }}
+              />
+              <YAxis
+                tickLine={false} axisLine={false}
+                tick={{fill:MUTED, fontSize:9}}
+                tickFormatter={v=>(v>0?"+":"")+v}
+                domain={[-maxAbs, maxAbs]}
+              />
+              <ReferenceLine y={0} stroke={MUTED} strokeOpacity={0.3} strokeWidth={1}/>
+              <Tooltip content={<CustomTooltip/>} cursor={{fill:"hsl(0 0% 100% / 0.03)"}}/>
+              <Bar dataKey="saldo" maxBarSize={28} radius={4}>
                 {dadosPorPost.map((p,i)=>(
-                  <Cell key={i} fill={corSaldo(p.saldo)} opacity={detalhePost?.post_id===p.post_id?1:0.75}/>
+                  <Cell
+                    key={i}
+                    fill={p.saldo>0?"#4CAF87":p.saldo<0?"hsl(355 82% 51%)":MUTED}
+                    opacity={detalhePost ? (detalhePost.post_id===p.post_id?1:0.4) : 0.85}
+                  />
                 ))}
               </Bar>
             </BarChart>
@@ -1454,46 +1519,50 @@ function ImpactoConteudo({ postsData, dailyData, igAccount }: ImpactoConteudoPro
 
           {/* Detalhe do post clicado */}
           {detalhePost && (
-            <div className="mt-3 rounded-lg border border-border/40 bg-card/30 p-3 flex flex-wrap gap-4 items-start">
-              <div className="flex-1 min-w-[160px]">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 mb-1">Post selecionado</p>
-                <p className="text-[11px] font-semibold">{detalhePost.dataLabel} · {detalhePost.tipo} · {detalhePost.conta}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">{(detalhePost.caption||"").slice(0,80)}{(detalhePost.caption?.length||0)>80?"…":""}</p>
+            <div className="mt-3 rounded-xl border border-border/40 bg-card/30 p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 mb-0.5">Post selecionado</p>
+                  <p className="text-[12px] font-semibold">{detalhePost.dataLabel} · {detalhePost.tipo} · {detalhePost.conta}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug max-w-[420px]">{(detalhePost.caption||"").slice(0,100)}{(detalhePost.caption?.length||0)>100?"…":""}</p>
+                </div>
+                <button onClick={()=>setDetalhePost(null)} className="text-muted-foreground/30 hover:text-muted-foreground text-xs ml-4">✕</button>
               </div>
-              <div className="flex gap-4 flex-wrap">
-                <div className="text-center">
-                  <p className="text-[9px] text-muted-foreground/50 uppercase tracking-widest">Ganhou</p>
-                  <p className="font-bold text-emerald-400 text-lg">+{detalhePost.gained}</p>
+              <div className="flex gap-5 flex-wrap items-end">
+                <div>
+                  <p className="text-[9px] text-muted-foreground/50 uppercase tracking-widest mb-0.5">Seguidores ganhos</p>
+                  <p className="font-bold text-emerald-400 text-xl">+{detalhePost.gained}</p>
                 </div>
-                <div className="text-center">
-                  <p className="text-[9px] text-muted-foreground/50 uppercase tracking-widest">Perdeu</p>
-                  <p className="font-bold text-red-400 text-lg">−{detalhePost.lost}</p>
+                <div>
+                  <p className="text-[9px] text-muted-foreground/50 uppercase tracking-widest mb-0.5">Seguidores perdidos</p>
+                  <p className="font-bold text-red-400 text-xl">−{detalhePost.lost}</p>
                 </div>
-                <div className="text-center">
-                  <p className="text-[9px] text-muted-foreground/50 uppercase tracking-widest">Saldo</p>
-                  <p className={cn("font-bold text-lg", detalhePost.saldo>=0?"text-emerald-400":"text-red-400")}>
+                <div>
+                  <p className="text-[9px] text-muted-foreground/50 uppercase tracking-widest mb-0.5">Saldo</p>
+                  <p className={cn("font-bold text-xl",detalhePost.saldo>=0?"text-emerald-400":"text-red-400")}>
                     {detalhePost.saldo>=0?"+":""}{detalhePost.saldo}
                   </p>
                 </div>
-                <div className="text-center">
-                  <p className="text-[9px] text-muted-foreground/50 uppercase tracking-widest">Engaj.</p>
-                  <p className="font-bold text-foreground text-lg">
-                    {detalhePost.reach>0?((detalhePost.like_count+detalhePost.comments_count+detalhePost.shares+detalhePost.saved)/detalhePost.reach*100).toFixed(1):0}%
-                  </p>
+                <div>
+                  <p className="text-[9px] text-muted-foreground/50 uppercase tracking-widest mb-0.5">Engajamento</p>
+                  <p className="font-bold text-foreground text-xl">{detalhePost.taxaEng}%</p>
                 </div>
+                <div>
+                  <p className="text-[9px] text-muted-foreground/50 uppercase tracking-widest mb-0.5">Alcance</p>
+                  <p className="font-bold text-foreground text-xl">{fmt(detalhePost.reach)}</p>
+                </div>
+                {detalhePost.permalink && (
+                  <a href={detalhePost.permalink} target="_blank" rel="noopener noreferrer"
+                    className="text-[10px] text-primary hover:underline flex items-center gap-1 mb-1">
+                    Ver post <ExternalLink className="h-3 w-3"/>
+                  </a>
+                )}
               </div>
-              {detalhePost.permalink && (
-                <a href={detalhePost.permalink} target="_blank" rel="noopener noreferrer"
-                  className="text-[10px] text-primary hover:underline flex items-center gap-1 self-center">
-                  Ver post <ExternalLink className="h-3 w-3"/>
-                </a>
-              )}
-              <button onClick={()=>setDetalhePost(null)} className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground self-start ml-auto">✕</button>
             </div>
           )}
 
           <p className="text-[9px] text-muted-foreground/30 mt-3">
-            Seguidores ganhos e perdidos nos 2 dias após cada publicação · dados diários do Instagram
+            Saldo = seguidores ganhos menos perdidos nos 2 dias após cada publicação
           </p>
         </>
       )}
