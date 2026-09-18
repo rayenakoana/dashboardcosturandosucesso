@@ -540,23 +540,51 @@ export function MarketingSection({ from, to }: Props) {
             </div>
           </div>
 
-          {/* KPIs seguidores — por conta, respeita filtro */}
+          {/* KPIs — sempre 4 colunas, independente do filtro */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {visibleAccounts.map(acc => {
+            {/* Seguidores EC */}
+            {(!igAccount || igAccount === "eduardocristianoriginal") && (() => {
+              const acc = "eduardocristianoriginal";
               const f = followersByAccount[acc];
               const delta = f ? f.last - f.first : 0;
               const gained = dailyFiltered.filter(d => d.username === acc).reduce((s,d) => s + (d.followers_gained||0), 0);
-              const lost   = dailyFiltered.filter(d => d.username === acc).reduce((s,d) => s + (d.followers_lost||0),   0);
+              const lost   = dailyFiltered.filter(d => d.username === acc).reduce((s,d) => s + (d.followers_lost||0), 0);
               return <KPICard key={acc}
-                title={acc==="eduardocristianoriginal"?"Seguidores @EC":"Seguidores @CS"}
+                title="Seguidores @EC"
                 value={fmt(f?.last ?? 0)}
-                subtitle={`${delta>=0?"+":""}${delta.toLocaleString("pt-BR")} líquido · ↑${gained.toLocaleString("pt-BR")} ↓${lost.toLocaleString("pt-BR")}`}
+                subtitle={`${delta>=0?"+":""}${delta.toLocaleString("pt-BR")} líquido · ↑${gained} ↓${lost}`}
                 icon={Users}/>;
-            })}
+            })()}
+            {/* Seguidores CS */}
+            {(!igAccount || igAccount === "costurandosucesso") && (() => {
+              const acc = "costurandosucesso";
+              const f = followersByAccount[acc];
+              const delta = f ? f.last - f.first : 0;
+              const gained = dailyFiltered.filter(d => d.username === acc).reduce((s,d) => s + (d.followers_gained||0), 0);
+              const lost   = dailyFiltered.filter(d => d.username === acc).reduce((s,d) => s + (d.followers_lost||0), 0);
+              return <KPICard key={acc}
+                title="Seguidores @CS"
+                value={fmt(f?.last ?? 0)}
+                subtitle={`${delta>=0?"+":""}${delta.toLocaleString("pt-BR")} líquido · ↑${gained} ↓${lost}`}
+                icon={Users}/>;
+            })()}
+            {/* Quando filtra por uma conta só, preenche com KPIs extras */}
+            {igAccount && (
+              <KPICard title="Crescimento líquido" value={(() => {
+                const f = followersByAccount[igAccount];
+                return f ? `${f.last - f.first >= 0 ? "+" : ""}${(f.last - f.first).toLocaleString("pt-BR")}` : "—";
+              })()} subtitle="no período selecionado" icon={TrendingUp}/>
+            )}
             <KPICard title="Posts no período" value={postsFiltered.length}
               subtitle={`Eng. médio: ${fmt(igEngPost)}/post`} icon={TrendingUp}/>
-            <KPICard title="Engajamento total" value={fmt(igEngTotal)}
-              subtitle={`${fmt(igAlcance)} alcance`} icon={Heart}/>
+            {!igAccount && (
+              <KPICard title="Engajamento total" value={fmt(igEngTotal)}
+                subtitle={`${fmt(igAlcance)} alcance`} icon={Heart}/>
+            )}
+            {igAccount && (
+              <KPICard title="Engajamento total" value={fmt(igEngTotal)}
+                subtitle={`${fmt(igAlcance)} alcance`} icon={Heart}/>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <KPICard title="Taxa de engajamento" value={pct(igTaxaEng)}
@@ -569,32 +597,41 @@ export function MarketingSection({ from, to }: Props) {
           {followersChart.length > 0 && (
             <GlassCard>
               <SubTitle>Crescimento de seguidores</SubTitle>
-              {followersChart.length > 1 ? (
-                <ResponsiveContainer width="100%" height={180}>
-                  <AreaChart data={followersChart}>
-                    <defs>
-                      <linearGradient id="igGradEC" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor={P}  stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor={P}  stopOpacity={0}/>
-                      </linearGradient>
-                      <linearGradient id="igGradCS" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor={P2} stopOpacity={0.5}/>
-                        <stop offset="95%" stopColor={P2} stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="date" tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false}/>
-                    <YAxis tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false} tickFormatter={fmt}/>
-                    <Tooltip {...TT} formatter={(v:number) => fmt(v)}/>
-                    <Legend iconType="circle" iconSize={7} wrapperStyle={{fontSize:11,color:MUTED}}/>
-                    {visibleAccounts.map((acc,i) => (
-                      <Area key={acc} type="monotone" dataKey={acc}
-                        name={ACCOUNT_LABEL[acc]??acc}
-                        stroke={i===0?P:P2} strokeWidth={2}
-                        fill={i===0?"url(#igGradEC)":"url(#igGradCS)"} dot={false}/>
-                    ))}
-                  </AreaChart>
-                </ResponsiveContainer>
-              ) : (
+              {followersChart.length > 1 ? (() => {
+                // Domínio Y proporcional — evita linha reta no topo com poucos pontos
+                const allVals = followersChart.flatMap(d =>
+                  visibleAccounts.map(acc => (d as any)[acc] ?? null).filter(Boolean)
+                );
+                const minY = allVals.length > 0 ? Math.min(...allVals) : 0;
+                const maxY = allVals.length > 0 ? Math.max(...allVals) : 0;
+                const pad  = Math.max(Math.round((maxY - minY) * 0.5), 100);
+                return (
+                  <ResponsiveContainer width="100%" height={180}>
+                    <AreaChart data={followersChart}>
+                      <defs>
+                        <linearGradient id="igGradEC" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%"  stopColor={P}  stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor={P}  stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="igGradCS" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%"  stopColor={P2} stopOpacity={0.5}/>
+                          <stop offset="95%" stopColor={P2} stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="date" tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false}/>
+                      <YAxis domain={[minY - pad, maxY + pad]} tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false} tickFormatter={fmt}/>
+                      <Tooltip {...TT} formatter={(v:number) => fmt(v)}/>
+                      <Legend iconType="circle" iconSize={7} wrapperStyle={{fontSize:11,color:MUTED}}/>
+                      {visibleAccounts.map((acc,i) => (
+                        <Area key={acc} type="monotone" dataKey={acc}
+                          name={ACCOUNT_LABEL[acc]??acc}
+                          stroke={i===0?P:P2} strokeWidth={2}
+                          fill={i===0?"url(#igGradEC)":"url(#igGradCS)"} dot={true}/>
+                      ))}
+                    </AreaChart>
+                  </ResponsiveContainer>
+                );
+              })() : (
                 <p className="text-[11px] text-muted-foreground py-4">
                   Dados insuficientes para o gráfico — acumula a partir do segundo dia de sync.
                 </p>
@@ -880,6 +917,22 @@ export function MarketingSection({ from, to }: Props) {
             </GlassCard>
           )}
 
+          {/* Análise & Insights com Claude API */}
+          {postsFiltered.length > 0 && (
+            <InstagramInsightsAI
+              postsFiltered={postsFiltered}
+              dailyFiltered={dailyFiltered}
+              porFormato={porFormato}
+              horarioData={horarioData}
+              igTaxaEng={igTaxaEng}
+              igEngPost={igEngPost}
+              erBenchmark={erBenchmark}
+              igAccount={igAccount}
+              followersByAccount={followersByAccount}
+              followersForecast={followersForecast}
+            />
+          )}
+
           {/* Tabela de posts — ordenável, todos os posts */}
           {allPostsWithMetrics.length > 0 && (
             <GlassCard>
@@ -987,3 +1040,152 @@ export function MarketingSection({ from, to }: Props) {
 function CheckCheck(p:any){return<svg {...p} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>;}
 function Eye(p:any){return<svg {...p} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.641 0-8.573-3.007-9.964-7.178Z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>;}
 function Send(p:any){return<svg {...p} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/></svg>;}
+
+// ── Análise & Insights com Claude API ──────────────────────────────────────────
+interface InsightsAIProps {
+  postsFiltered: any[];
+  dailyFiltered: any[];
+  porFormato: any[];
+  horarioData: any[];
+  igTaxaEng: number;
+  igEngPost: number;
+  erBenchmark: any[];
+  igAccount: string | null;
+  followersByAccount: Record<string, {first:number;last:number}>;
+  followersForecast: Record<string, {per_day:number;per_30:number;next_30:number}> | null;
+}
+
+function InstagramInsightsAI({
+  postsFiltered, dailyFiltered, porFormato, horarioData,
+  igTaxaEng, igEngPost, erBenchmark, igAccount,
+  followersByAccount, followersForecast,
+}: InsightsAIProps) {
+  const [analysis, setAnalysis] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [generated, setGenerated] = useState(false);
+
+  const buildPrompt = () => {
+    const conta = igAccount === "eduardocristianoriginal" ? "@eduardocristianoriginal"
+      : igAccount === "costurandosucesso" ? "@costurandosucesso"
+      : "todas as contas combinadas";
+
+    const topPost = [...postsFiltered]
+      .map(p => ({...p, eng: p.like_count+p.comments_count+p.shares+p.saved,
+        er: p.reach>0?(p.like_count+p.comments_count+p.shares+p.saved)/p.reach*100:0}))
+      .sort((a,b) => b.er-a.er)[0];
+
+    const melhorHorario = [...horarioData].sort((a,b)=>b.engMedio-a.engMedio)[0];
+    const melhorFormato = porFormato[0];
+
+    const followersInfo = Object.entries(followersByAccount).map(([acc, f]) => {
+      const forecast = followersForecast?.[acc];
+      const delta = f.last - f.first;
+      const gained = dailyFiltered.filter(d=>d.username===acc).reduce((s,d)=>s+(d.followers_gained||0),0);
+      const lost   = dailyFiltered.filter(d=>d.username===acc).reduce((s,d)=>s+(d.followers_lost||0),0);
+      return `${acc==="eduardocristianoriginal"?"@EC":"@CS"}: ${f.last.toLocaleString("pt-BR")} seguidores, delta ${delta>=0?"+":""}${delta} no período, +${gained} novos, -${lost} saídas${forecast?`, tendência +${forecast.per_day}/dia, previsão ${forecast.next_30.toLocaleString("pt-BR")} em 30 dias`:""}`;
+    }).join("\n");
+
+    const excelente = erBenchmark.find(f=>f.faixa.includes("Excelente"))?.posts ?? 0;
+    const totalPosts = postsFiltered.length;
+
+    return `Você é um analista de dados de redes sociais. Com base EXCLUSIVAMENTE nos números abaixo, escreva uma análise em português brasileiro com 4 parágrafos curtos (máximo 2 frases cada). Não invente dados. Não mencione setor ou nicho. Use os números exatamente como fornecidos.
+
+DADOS DO PERÍODO (${conta}):
+- Total de posts: ${totalPosts}
+- Taxa de engajamento média: ${igTaxaEng.toFixed(1)}%
+- Engajamento médio por post: ${Math.round(igEngPost)}
+- Posts com ER >5% (excelente): ${excelente} de ${totalPosts} (${totalPosts>0?Math.round(excelente/totalPosts*100):0}%)
+${melhorFormato ? `- Melhor formato: ${melhorFormato.tipo} com ${Math.round(melhorFormato.engPorPost)} eng/post e ${melhorFormato.taxaEng}% ER` : ""}
+${melhorHorario ? `- Melhor horário para postar: ${melhorHorario.hora} com ${melhorHorario.engMedio} eng. médio` : ""}
+${topPost ? `- Post destaque: ${topPost.er.toFixed(1)}% ER, publicado em ${topPost.posted_at?.split("T")[0]}, tipo ${topPost.media_type==="VIDEO"?"Reel":topPost.media_type==="CAROUSEL_ALBUM"?"Carrossel":"Imagem"}` : ""}
+${followersInfo}
+
+Estruture assim:
+1. Tendência de crescimento e seguidores
+2. Desempenho de engajamento
+3. O que está funcionando (formato e horário)
+4. Um alerta ou oportunidade baseado nos dados`;
+  };
+
+  async function generate() {
+    setLoading(true);
+    setAnalysis("");
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: buildPrompt() }],
+        }),
+      });
+      const data = await res.json();
+      const text = data.content?.find((b:any) => b.type === "text")?.text ?? "Não foi possível gerar a análise.";
+      setAnalysis(text);
+      setGenerated(true);
+    } catch {
+      setAnalysis("Erro ao conectar com a API. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <GlassCard>
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/60">
+            Análise & Insights
+          </p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            Interpretação automática dos dados do período
+          </p>
+        </div>
+        <button
+          onClick={generate}
+          disabled={loading}
+          className={cn(
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border",
+            loading
+              ? "border-border text-muted-foreground cursor-not-allowed"
+              : "border-primary/40 text-primary hover:bg-primary/10"
+          )}>
+          {loading ? (
+            <>
+              <span className="inline-block h-3 w-3 rounded-full border-2 border-primary border-t-transparent animate-spin"/>
+              Analisando...
+            </>
+          ) : generated ? "Reanalisar" : "✦ Gerar análise"}
+        </button>
+      </div>
+
+      {!analysis && !loading && (
+        <div className="py-6 text-center text-[11px] text-muted-foreground/50">
+          Clique em "Gerar análise" para interpretar os dados do período com IA.
+        </div>
+      )}
+
+      {loading && (
+        <div className="space-y-2 py-2">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="h-3 rounded bg-muted/20 animate-pulse" style={{width:`${85-i*8}%`}}/>
+          ))}
+        </div>
+      )}
+
+      {analysis && !loading && (
+        <div className="space-y-3">
+          {analysis.split("\n").filter(l => l.trim()).map((para, i) => (
+            <p key={i} className="text-[11px] text-foreground/80 leading-relaxed">
+              {para.replace(/^\d+\.\s*/, "")}
+            </p>
+          ))}
+          <p className="text-[9px] text-muted-foreground/40 pt-2 border-t border-border/30">
+            Análise gerada com base nos dados exibidos acima · não substitui julgamento humano
+          </p>
+        </div>
+      )}
+    </GlassCard>
+  );
+}
