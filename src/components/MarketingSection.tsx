@@ -1074,22 +1074,55 @@ interface AlertasProps {
 
 type NivelAlerta = "vermelho" | "amarelo" | "verde";
 
-interface Alerta {
+// Post-it — estilo compatível com o dashboard (dark, bordas sutis, fonte Inter)
+function StickyCard({ nivel, label, numero, unidade, detalhe }: {
   nivel: NivelAlerta;
-  categoria: string;
-  mensagem: string;
-}
+  label: string;
+  numero: string;
+  unidade?: string;
+  detalhe: string;
+}) {
+  const estilos = {
+    vermelho: {
+      bg:     "bg-red-500/5",
+      border: "border-l-2 border-l-red-500/60 border border-border/40",
+      num:    "text-red-400",
+      badge:  "bg-red-500/15 text-red-400",
+      detalhe:"text-red-300/60",
+    },
+    amarelo: {
+      bg:     "bg-amber-500/5",
+      border: "border-l-2 border-l-amber-400/60 border border-border/40",
+      num:    "text-amber-400",
+      badge:  "bg-amber-500/15 text-amber-400",
+      detalhe:"text-amber-300/60",
+    },
+    verde: {
+      bg:     "bg-emerald-500/5",
+      border: "border-l-2 border-l-emerald-500/40 border border-border/40",
+      num:    "text-emerald-400",
+      badge:  "bg-emerald-500/10 text-emerald-500/70",
+      detalhe:"text-muted-foreground/50",
+    },
+  }[nivel];
 
-function badgeAlerta(nivel: NivelAlerta) {
-  if (nivel === "vermelho") return "bg-red-500/10 border-red-500/30 text-red-400";
-  if (nivel === "amarelo")  return "bg-amber-500/10 border-amber-500/25 text-amber-400";
-  return "bg-emerald-500/10 border-emerald-500/25 text-emerald-400";
-}
+  const labels = { vermelho: "Atenção", amarelo: "Observar", verde: "Normal" };
 
-function labelNivel(nivel: NivelAlerta) {
-  if (nivel === "vermelho") return "Atenção";
-  if (nivel === "amarelo")  return "Observar";
-  return "Normal";
+  return (
+    <div className={cn("rounded-xl px-4 py-3 flex flex-col gap-1.5 relative", estilos.bg, estilos.border)}>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/50 leading-tight">{label}</p>
+        <span className={cn("text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full shrink-0", estilos.badge)}>
+          {labels[nivel]}
+        </span>
+      </div>
+      <p className={cn("font-display font-bold leading-none", estilos.num)} style={{fontSize:"22px"}}>
+        {numero}
+        {unidade && <span className="text-[12px] font-normal ml-1 text-muted-foreground/60">{unidade}</span>}
+      </p>
+      <p className={cn("text-[10px] leading-snug", estilos.detalhe)}>{detalhe}</p>
+    </div>
+  );
 }
 
 function InstagramAlertas({
@@ -1097,179 +1130,112 @@ function InstagramAlertas({
   followersByAccount, followersForecast, igTaxaEng,
 }: AlertasProps) {
 
-  // ── Ritmo de publicação ──
   const dadosRitmo = useMemo(() => {
     if (postsFiltered.length === 0) return null;
     const sorted = [...postsFiltered].sort((a,b) => b.posted_at.localeCompare(a.posted_at));
     const ultimo = new Date(sorted[0].posted_at);
-    const inicioSemana = new Date(ultimo);
-    inicioSemana.setDate(ultimo.getDate() - 6);
-    const postsUltimaSemana = postsFiltered.filter(p => new Date(p.posted_at) >= inicioSemana).length;
-    const diasPeriodo = postsFiltered.length > 1
-      ? Math.max(1, Math.round((new Date(sorted[0].posted_at).getTime() - new Date(sorted[sorted.length-1].posted_at).getTime()) / 86400000))
-      : 7;
-    const mediaSemanal = parseFloat(((postsFiltered.length / diasPeriodo) * 7).toFixed(1));
-    let nivel: NivelAlerta = "verde";
-    let contexto = `A frequência está dentro do esperado para manter a conta ativa no algoritmo.`;
-    if (postsUltimaSemana < 2) {
-      nivel = "vermelho";
-      contexto = `Com menos de 2 posts por semana, o algoritmo tende a reduzir o alcance orgânico. Recomendado: pelo menos 4 posts por semana.`;
-    } else if (postsUltimaSemana < 4) {
-      nivel = "amarelo";
-      contexto = `O ideal para manter visibilidade constante é de 4 a 7 posts por semana. Aumentar a frequência pode ampliar o alcance.`;
-    }
-    return { postsUltimaSemana, mediaSemanal, nivel, contexto };
+    const ini = new Date(ultimo); ini.setDate(ultimo.getDate()-6);
+    const semana = postsFiltered.filter(p => new Date(p.posted_at) >= ini).length;
+    const dias = postsFiltered.length > 1
+      ? Math.max(1, Math.round((new Date(sorted[0].posted_at).getTime()-new Date(sorted[sorted.length-1].posted_at).getTime())/86400000)) : 7;
+    const media = parseFloat(((postsFiltered.length/dias)*7).toFixed(1));
+    const nivel: NivelAlerta = semana < 2 ? "vermelho" : semana < 4 ? "amarelo" : "verde";
+    return { semana, media, nivel };
   }, [postsFiltered]);
 
-  // ── Engajamento geral ──
-  const dadosEngajamento = useMemo(() => {
+  const dadosEng = useMemo(() => {
     if (postsFiltered.length === 0) return null;
-    let nivel: NivelAlerta = "verde";
-    let contexto = `Uma taxa acima de 3% indica que o conteúdo está gerando boa resposta do público.`;
-    if (igTaxaEng < 1) {
-      nivel = "vermelho";
-      contexto = `Taxa abaixo de 1% indica que o conteúdo não está gerando reação do público. É necessário revisar os formatos e temas publicados.`;
-    } else if (igTaxaEng < 2) {
-      nivel = "amarelo";
-      contexto = `A taxa está abaixo do recomendado. Conteúdos que estimulam comentários e compartilhamentos tendem a melhorar esse número.`;
-    } else if (igTaxaEng < 3) {
-      nivel = "amarelo";
-      contexto = `A taxa está razoável, mas há espaço para crescer. Reels e carrosséis costumam puxar a média para cima.`;
-    }
-    return { taxa: igTaxaEng, nivel, contexto };
+    const nivel: NivelAlerta = igTaxaEng < 1 ? "vermelho" : igTaxaEng < 3 ? "amarelo" : "verde";
+    return { taxa: igTaxaEng, nivel };
   }, [igTaxaEng, postsFiltered.length]);
 
-  // ── Crescimento de seguidores por conta ──
   const dadosCrescimento = useMemo(() => {
     return Object.entries(followersByAccount).map(([acc, f]) => {
       const forecast = followersForecast?.[acc];
-      const label = acc === "eduardocristianoriginal" ? "@eduardocristianoriginal" : "@costurandosucesso";
-      const delta = f.last - f.first;
+      const label = acc==="eduardocristianoriginal" ? "@EC" : "@CS";
+      const delta  = f.last - f.first;
       const perDay = forecast?.per_day ?? 0;
-      const projecao30 = forecast?.next_30 ?? f.last;
+      const proj30 = forecast?.next_30 ?? f.last;
       const gained = dailyFiltered.filter(d=>d.username===acc).reduce((s,d)=>s+(d.followers_gained||0),0);
       const lost   = dailyFiltered.filter(d=>d.username===acc).reduce((s,d)=>s+(d.followers_lost||0),0);
-      let nivel: NivelAlerta = "verde";
-      let contexto = `A conta está crescendo de forma consistente no período.`;
-      if (delta < 0 || perDay < 0) {
-        nivel = "vermelho";
-        contexto = `A conta perdeu seguidores no período. Vale revisar quais conteúdos foram publicados nas semanas de maior queda.`;
-      } else if (perDay < 1) {
-        nivel = "amarelo";
-        contexto = `O crescimento está estagnado. Conteúdos com maior alcance para não seguidores (como Reels virais) podem ajudar a retomar a aquisição.`;
-      }
-      return { label, delta, perDay, projecao30, gained, lost, nivel, contexto, total: f.last };
+      const nivel: NivelAlerta = (delta < 0 || perDay < 0) ? "vermelho" : perDay < 1 ? "amarelo" : "verde";
+      return { label, delta, perDay, proj30, gained, lost, nivel };
     });
   }, [followersByAccount, followersForecast, dailyFiltered]);
 
-  // ── Por formato ──
   const dadosFormato = useMemo(() => {
     if (porFormato.length === 0) return [];
-    const impacto: Record<string, {gained:number;lost:number;posts:number}> = {};
+    const imp: Record<string,{gained:number;lost:number;posts:number}> = {};
     postsFiltered.forEach(p => {
-      const tipo = p.media_type==="VIDEO"?"Reel":p.media_type==="CAROUSEL_ALBUM"?"Carrossel":"Imagem";
-      if (!impacto[tipo]) impacto[tipo] = {gained:0,lost:0,posts:0};
-      const postDate = p.posted_at.split("T")[0];
-      [1,2].forEach(offset => {
-        const d = new Date(postDate); d.setDate(d.getDate()+offset);
-        const snap = dailyFiltered.find(s=>s.date===d.toISOString().split("T")[0]&&s.username===p.username);
-        if (snap) { impacto[tipo].gained+=snap.followers_gained||0; impacto[tipo].lost+=snap.followers_lost||0; }
+      const t = p.media_type==="VIDEO"?"Reel":p.media_type==="CAROUSEL_ALBUM"?"Carrossel":"Imagem";
+      if (!imp[t]) imp[t]={gained:0,lost:0,posts:0};
+      [1,2].forEach(off => {
+        const d=new Date(p.posted_at.split("T")[0]); d.setDate(d.getDate()+off);
+        const s=dailyFiltered.find(s=>s.date===d.toISOString().split("T")[0]&&s.username===p.username);
+        if (s){imp[t].gained+=s.followers_gained||0;imp[t].lost+=s.followers_lost||0;}
       });
-      impacto[tipo].posts++;
+      imp[t].posts++;
     });
     return porFormato.map(f => {
-      const imp = impacto[f.tipo] ?? {gained:0,lost:0,posts:1};
-      const saldoMedio = (imp.gained - imp.lost) / imp.posts;
-      const gainedMedia = (imp.gained / imp.posts).toFixed(1);
-      const lostMedia   = (imp.lost   / imp.posts).toFixed(1);
-      let nivel: NivelAlerta = "verde";
-      let contexto = `Este formato está performando bem — continue investindo nele.`;
-      if (f.taxaEng < 1 || saldoMedio < -2) {
-        nivel = "vermelho";
-        contexto = `Este formato está gerando pouco engajamento e pode estar associado a perda de seguidores. Considere reduzir a frequência ou testar novas abordagens.`;
-      } else if (f.taxaEng < 2 || saldoMedio < 0) {
-        nivel = "amarelo";
-        contexto = `O desempenho está abaixo dos outros formatos. Vale testar variações de conteúdo para descobrir o que funciona melhor.`;
-      }
-      return { tipo: f.tipo, posts: f.posts, taxaEng: f.taxaEng, engPorPost: f.engPorPost, gainedMedia, lostMedia, saldoMedio, nivel, contexto };
+      const i = imp[f.tipo]??{gained:0,lost:0,posts:1};
+      const saldo = (i.gained-i.lost)/i.posts;
+      const nivel: NivelAlerta = (f.taxaEng<1||saldo<-2)?"vermelho":(f.taxaEng<2||saldo<0)?"amarelo":"verde";
+      return { tipo:f.tipo, posts:f.posts, taxaEng:f.taxaEng, engPorPost:f.engPorPost,
+        gainedMedia:(i.gained/i.posts).toFixed(1), lostMedia:(i.lost/i.posts).toFixed(1), nivel };
     });
   }, [porFormato, postsFiltered, dailyFiltered]);
 
-  function CardAlerta({ nivel, titulo, numero, detalhe, contexto }: {
-    nivel: NivelAlerta; titulo: string; numero: string; detalhe?: string; contexto: string;
-  }) {
-    const cores = {
-      vermelho: { borda: "border-red-500/25",    fundo: "bg-red-500/5",     texto: "text-red-400",     badge: "bg-red-500/15 text-red-400" },
-      amarelo:  { borda: "border-amber-500/20",  fundo: "bg-amber-500/5",   texto: "text-amber-400",   badge: "bg-amber-500/15 text-amber-400" },
-      verde:    { borda: "border-emerald-500/20",fundo: "bg-emerald-500/5", texto: "text-emerald-400", badge: "bg-emerald-500/15 text-emerald-400" },
-    }[nivel];
-    const labels = { vermelho: "Atenção", amarelo: "Observar", verde: "Normal" };
-    return (
-      <div className={cn("rounded-xl border p-4 flex flex-col gap-2", cores.borda, cores.fundo)}>
-        <div className="flex items-center justify-between">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">{titulo}</p>
-          <span className={cn("text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full", cores.badge)}>
-            {labels[nivel]}
-          </span>
-        </div>
-        <p className={cn("font-display font-bold text-2xl leading-none", cores.texto)}>{numero}</p>
-        {detalhe && <p className="text-[11px] text-muted-foreground/70">{detalhe}</p>}
-        <p className="text-[11px] text-foreground/60 leading-relaxed border-t border-border/20 pt-2 mt-1">{contexto}</p>
-      </div>
-    );
-  }
-
   return (
     <GlassCard>
-      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/60 mb-4">
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/60 mb-3">
         Saúde do período
       </p>
 
-      {/* Geral — grid 2 colunas em telas maiores */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+      {/* Grid de post-its — 2 cols base, 4 cols em telas largas */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
         {dadosRitmo && (
-          <CardAlerta
+          <StickyCard
             nivel={dadosRitmo.nivel}
-            titulo="Frequência de publicação"
-            numero={`${dadosRitmo.postsUltimaSemana} posts esta semana`}
-            detalhe={`Média do período: ${dadosRitmo.mediaSemanal} posts por semana`}
-            contexto={dadosRitmo.contexto}
+            label="Frequência"
+            numero={String(dadosRitmo.semana)}
+            unidade="posts esta semana"
+            detalhe={`média do período: ${dadosRitmo.media}/sem`}
           />
         )}
-        {dadosEngajamento && (
-          <CardAlerta
-            nivel={dadosEngajamento.nivel}
-            titulo="Taxa de engajamento"
-            numero={`${dadosEngajamento.taxa.toFixed(1)}% de média`}
-            detalhe="Curtidas + comentários + compartilhamentos + salvamentos ÷ alcance"
-            contexto={dadosEngajamento.contexto}
+        {dadosEng && (
+          <StickyCard
+            nivel={dadosEng.nivel}
+            label="Engajamento"
+            numero={dadosEng.taxa.toFixed(1)}
+            unidade="% de média"
+            detalhe={dadosEng.taxa >= 3 ? "acima de 3% — bom resultado" : dadosEng.taxa >= 1 ? "entre 1–3% — pode melhorar" : "abaixo de 1% — revisar conteúdo"}
           />
         )}
         {dadosCrescimento.map((d, i) => (
-          <CardAlerta
+          <StickyCard
             key={i}
             nivel={d.nivel}
-            titulo={`Crescimento de seguidores — ${d.label}`}
-            numero={`${d.delta >= 0 ? "+" : ""}${d.delta} no período`}
-            detalhe={`${d.gained} novos · ${d.lost} saídas · tendência: ${d.perDay >= 0 ? "+" : ""}${d.perDay}/dia · projeção 30 dias: ${d.projecao30.toLocaleString("pt-BR")}`}
-            contexto={d.contexto}
+            label={`Seguidores ${d.label}`}
+            numero={`${d.delta >= 0 ? "+" : ""}${d.delta}`}
+            unidade="no período"
+            detalhe={`${d.gained} novos · ${d.lost} saídas · ${d.perDay >= 0 ? "+" : ""}${d.perDay}/dia`}
           />
         ))}
       </div>
 
-      {/* Por formato */}
+      {/* Por formato — linha separada, 3 cols */}
       {dadosFormato.length > 0 && (
         <>
-          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-3">Por formato de conteúdo</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/30 mt-3 mb-2">Por formato</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {dadosFormato.map((f, i) => (
-              <CardAlerta
+              <StickyCard
                 key={i}
                 nivel={f.nivel}
-                titulo={f.tipo}
-                numero={`${f.taxaEng}% de engajamento`}
-                detalhe={`${f.engPorPost} interações por post · ${f.posts} publicações · média de +${f.gainedMedia} e −${f.lostMedia} seguidores nos 2 dias após cada post`}
-                contexto={f.contexto}
+                label={`${f.tipo} · ${f.posts}p`}
+                numero={String(f.taxaEng)}
+                unidade="% eng."
+                detalhe={`${fmt(f.engPorPost)} interações/post · +${f.gainedMedia} / −${f.lostMedia} seg./post`}
               />
             ))}
           </div>
