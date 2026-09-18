@@ -7,8 +7,8 @@ import { useWppCampanhasResumo } from "@/hooks/useWppCampanhasResumo";
 import { useInstagramPostInsights, useInstagramAccountDaily, useInstagramProfileDaily } from "@/hooks/useInstagramInsights";
 import {
   TrendingUp, Megaphone, MessageCircle, DollarSign,
-  Users, BarChart2, Send, CheckCheck, Eye, Instagram,
-  ExternalLink, Heart, Clock, Hash,
+  Users, BarChart2, ExternalLink, Heart, Instagram,
+  ArrowUpDown, ChevronUp, ChevronDown,
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar,
@@ -17,30 +17,25 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 
-// Tooltip padrão do CS Dash
 const TT = {
   contentStyle: {
     background: "hsl(240 20% 11%)",
     border: "1px solid hsl(240 15% 14%)",
-    borderRadius: 10,
-    fontSize: 11,
+    borderRadius: 10, fontSize: 11,
     color: "hsl(0 0% 96%)",
-    minWidth: 130,
-    padding: "8px 12px",
+    minWidth: 130, padding: "8px 12px",
   },
   labelStyle: { color: "hsl(0 0% 96%)", fontWeight: 600, marginBottom: 2 },
-  itemStyle: { color: "hsl(0 0% 80%)" },
-  cursor: { fill: "hsl(0 0% 100% / 0.03)" },
+  itemStyle:  { color: "hsl(0 0% 80%)" },
+  cursor:     { fill: "hsl(0 0% 100% / 0.03)" },
 };
 
-const fmt  = (n: number) => n >= 1e6 ? (n/1e6).toFixed(1)+"M" : n >= 1000 ? (n/1000).toFixed(1)+"k" : String(Math.round(n));
-const brl  = (n: number) => `R$ ${n.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`;
-const pct  = (n: number) => n.toFixed(1) + "%";
+const fmt = (n: number) => n >= 1e6 ? (n/1e6).toFixed(1)+"M" : n >= 1000 ? (n/1000).toFixed(1)+"k" : String(Math.round(n));
+const brl = (n: number) => `R$ ${n.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`;
+const pct = (n: number) => n.toFixed(1) + "%";
 
-// Cores do CS Dash — só primary e variações
-const P  = "hsl(355 82% 51%)";       // vermelho primary
-const P2 = "hsl(355 82% 51% / 0.5)"; // primary 50%
-const P3 = "hsl(355 82% 51% / 0.2)"; // primary 20%
+const P  = "hsl(355 82% 51%)";
+const P2 = "hsl(355 82% 51% / 0.5)";
 const MUTED = "hsl(0 0% 60%)";
 
 type Tab = "meta" | "wpp" | "instagram";
@@ -59,9 +54,15 @@ const ACCOUNT_LABEL: Record<string, string> = {
   costurandosucesso: "@costurandosucesso",
 };
 
+type SortKey = "eng" | "like_count" | "comments_count" | "shares" | "saved" | "reach" | "views" | "taxaEng" | "posted_at";
+type SortDir = "asc" | "desc";
+
 export function MarketingSection({ from, to }: Props) {
   const [tab, setTab] = useState<Tab>("meta");
   const [igAccount, setIgAccount] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>("eng");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [showAllPosts, setShowAllPosts] = useState(false);
 
   const { data: metaData = [], isLoading: loadingMeta } = useMetaAdsInsights(from, to);
   const { data: wppData,        isLoading: loadingWpp  } = useWppCampanhasResumo(from, to);
@@ -81,16 +82,16 @@ export function MarketingSection({ from, to }: Props) {
     { spend:0, leads:0, purchases:0, purchase_value:0, impressions:0, clicks:0 }
   ), [metaData]);
 
-  const metaCPL  = metaTotais.leads  > 0 ? metaTotais.spend / metaTotais.leads  : 0;
-  const metaROAS = metaTotais.spend  > 0 ? metaTotais.purchase_value / metaTotais.spend : 0;
+  const metaCPL  = metaTotais.leads > 0 ? metaTotais.spend / metaTotais.leads : 0;
+  const metaROAS = metaTotais.spend > 0 ? metaTotais.purchase_value / metaTotais.spend : 0;
 
   const porCampanha = useMemo(() => {
     const m: Record<string, { name: string; spend: number; leads: number; purchases: number; purchase_value: number }> = {};
     metaData.forEach(r => {
       if (!m[r.campaign_id]) m[r.campaign_id] = { name: r.campaign_name, spend:0, leads:0, purchases:0, purchase_value:0 };
-      m[r.campaign_id].spend         += r.spend||0;
-      m[r.campaign_id].leads         += r.leads||0;
-      m[r.campaign_id].purchases     += r.purchases||0;
+      m[r.campaign_id].spend          += r.spend||0;
+      m[r.campaign_id].leads          += r.leads||0;
+      m[r.campaign_id].purchases      += r.purchases||0;
       m[r.campaign_id].purchase_value += r.purchase_value||0;
     });
     return Object.values(m).sort((a,b) => b.spend - a.spend);
@@ -107,45 +108,76 @@ export function MarketingSection({ from, to }: Props) {
   const wppCampanhas = wppData?.campanhas ?? [];
 
   // ── INSTAGRAM ────────────────────────────────────────────
+  // Filtro de conta aplicado em TODOS os dados
   const igAccounts = useMemo(() => [...new Set(dailyData.map(d => d.username))], [dailyData]);
+
   const postsFiltered = useMemo(() =>
     igAccount ? postsData.filter(p => p.username === igAccount) : postsData
   , [postsData, igAccount]);
 
-  const lastFollowers:  Record<string,number> = {};
-  const firstFollowers: Record<string,number> = {};
-  dailyData.forEach(d => {
-    lastFollowers[d.username]  = d.followers_count;
-    if (!firstFollowers[d.username]) firstFollowers[d.username] = d.followers_count;
-  });
+  const dailyFiltered = useMemo(() =>
+    igAccount ? dailyData.filter(d => d.username === igAccount) : dailyData
+  , [dailyData, igAccount]);
 
-  // Seguidores por dia (área)
+  const profileFiltered = useMemo(() =>
+    igAccount ? profileData.filter(d => d.username === igAccount) : profileData
+  , [profileData, igAccount]);
+
+  // Seguidores — delta correto: último snapshot - primeiro snapshot por conta
+  const followersByAccount = useMemo(() => {
+    const map: Record<string, { first: number; last: number; dates: string[] }> = {};
+    dailyFiltered.forEach(d => {
+      if (!map[d.username]) map[d.username] = { first: d.followers_count, last: d.followers_count, dates: [] };
+      map[d.username].dates.push(d.date);
+      if (d.date < map[d.username].dates[0]) map[d.username].first = d.followers_count;
+      if (d.date > map[d.username].dates[map[d.username].dates.length - 1]) map[d.username].last = d.followers_count;
+    });
+    // Reprocessar em ordem
+    const result: Record<string, { first: number; last: number }> = {};
+    const sorted: Record<string, { date: string; count: number }[]> = {};
+    dailyFiltered.forEach(d => {
+      if (!sorted[d.username]) sorted[d.username] = [];
+      sorted[d.username].push({ date: d.date, count: d.followers_count });
+    });
+    Object.entries(sorted).forEach(([acc, rows]) => {
+      const s = rows.sort((a,b) => a.date.localeCompare(b.date));
+      result[acc] = { first: s[0].count, last: s[s.length-1].count };
+    });
+    return result;
+  }, [dailyFiltered]);
+
+  // Seguidores ao longo do tempo — respeita filtro de conta
   const followersChart = useMemo(() => {
     const byDate: Record<string, Record<string,number>> = {};
-    dailyData.forEach(d => {
+    dailyFiltered.forEach(d => {
       if (!byDate[d.date]) byDate[d.date] = {};
       byDate[d.date][d.username] = d.followers_count;
     });
     return Object.entries(byDate).sort(([a],[b]) => a.localeCompare(b))
       .map(([date, v]) => ({ date, ...v }));
-  }, [dailyData]);
+  }, [dailyFiltered]);
 
-  // Profile views chart — por conta por dia
+  // Profile views — respeita filtro
   const profileChart = useMemo(() => {
     const byDate: Record<string, Record<string,number>> = {};
-    profileData.forEach(d => {
+    profileFiltered.forEach(d => {
       if (!byDate[d.date]) byDate[d.date] = {};
       byDate[d.date][d.username + '_views']  = d.profile_views;
       byDate[d.date][d.username + '_clicks'] = d.website_clicks;
     });
     return Object.entries(byDate).sort(([a],[b]) => a.localeCompare(b))
       .map(([date, v]) => ({ date, ...v }));
-  }, [profileData]);
+  }, [profileFiltered]);
 
-  const totalProfileViews  = profileData.reduce((s,d) => s + d.profile_views, 0);
-  const totalWebsiteClicks = profileData.reduce((s,d) => s + d.website_clicks, 0);
+  const totalProfileViews  = profileFiltered.reduce((s,d) => s + d.profile_views,   0);
+  const totalWebsiteClicks = profileFiltered.reduce((s,d) => s + d.website_clicks,  0);
 
-  // Alcance vs Seguidores por semana
+  // Contas visíveis no gráfico (respeita filtro)
+  const visibleAccounts = useMemo(() =>
+    igAccount ? [igAccount] : igAccounts
+  , [igAccount, igAccounts]);
+
+  // Alcance vs Seguidores
   const alcanceVsSeguidores = useMemo(() => {
     const weekMap: Record<string, { reach: number; posts: number; followers: number }> = {};
     postsFiltered.forEach(p => {
@@ -156,23 +188,20 @@ export function MarketingSection({ from, to }: Props) {
       weekMap[wk].reach += p.reach;
       weekMap[wk].posts++;
     });
-    // pega seguidores da semana do daily
-    dailyData.forEach(d => {
+    dailyFiltered.forEach(d => {
       const dt = new Date(d.date);
       const ws = new Date(dt); ws.setDate(dt.getDate() - dt.getDay());
       const wk = ws.toISOString().split("T")[0];
-      if (weekMap[wk] && (!igAccount || d.username === igAccount)) {
-        weekMap[wk].followers = Math.max(weekMap[wk].followers, d.followers_count);
-      }
+      if (weekMap[wk]) weekMap[wk].followers = Math.max(weekMap[wk].followers, d.followers_count);
     });
-    return Object.entries(weekMap).sort(([a],[b]) => a.localeCompare(b)).map(([wk, v], i) => ({
+    return Object.entries(weekMap).sort(([a],[b]) => a.localeCompare(b)).map(([, v], i) => ({
       semana: `Sem ${i+1}`,
       alcancePorPost: v.posts > 0 ? Math.round(v.reach / v.posts) : 0,
       pctSeguidores: v.followers > 0 ? parseFloat(((v.reach / v.posts / v.followers) * 100).toFixed(1)) : 0,
     }));
-  }, [postsFiltered, dailyData, igAccount]);
+  }, [postsFiltered, dailyFiltered]);
 
-  // Benchmark ER por post
+  // Benchmark ER
   const erBenchmark = useMemo(() => {
     const faixas = { excelente: 0, bom: 0, medio: 0, baixo: 0 };
     postsFiltered.forEach(p => {
@@ -191,11 +220,11 @@ export function MarketingSection({ from, to }: Props) {
   }, [postsFiltered]);
 
   // KPIs Instagram
-  const igEngTotal  = postsFiltered.reduce((s,p) => s + p.like_count + p.comments_count + p.shares + p.saved, 0);
-  const igAlcance   = postsFiltered.reduce((s,p) => s + p.reach, 0);
-  const igViews     = postsFiltered.reduce((s,p) => s + (p.views||0), 0);
-  const igTaxaEng   = igAlcance > 0 ? (igEngTotal / igAlcance) * 100 : 0;
-  const igEngPost   = postsFiltered.length > 0 ? igEngTotal / postsFiltered.length : 0;
+  const igEngTotal = postsFiltered.reduce((s,p) => s + p.like_count + p.comments_count + p.shares + p.saved, 0);
+  const igAlcance  = postsFiltered.reduce((s,p) => s + p.reach, 0);
+  const igViews    = postsFiltered.reduce((s,p) => s + (p.views||0), 0);
+  const igTaxaEng  = igAlcance > 0 ? (igEngTotal / igAlcance) * 100 : 0;
+  const igEngPost  = postsFiltered.length > 0 ? igEngTotal / postsFiltered.length : 0;
 
   // Por formato
   const porFormato = useMemo(() => {
@@ -207,14 +236,13 @@ export function MarketingSection({ from, to }: Props) {
     });
     const total = Object.values(m).reduce((s,v) => s + v.eng, 0);
     return Object.entries(m).map(([tipo,v]) => ({
-      tipo,
-      posts: v.posts,
+      tipo, posts: v.posts,
       engPorPost: v.posts > 0 ? Math.round(v.eng/v.posts) : 0,
       alcancePorPost: v.posts > 0 ? Math.round(v.reach/v.posts) : 0,
       taxaEng: v.reach > 0 ? parseFloat(((v.eng/v.reach)*100).toFixed(1)) : 0,
       share: total > 0 ? Math.round((v.eng/total)*100) : 0,
     })).sort((a,b) => b.engPorPost - a.engPorPost);
-  }, [postsData]);
+  }, [postsFiltered]);
 
   // Melhor horário
   const horarioData = useMemo(() => {
@@ -230,13 +258,13 @@ export function MarketingSection({ from, to }: Props) {
       engMedio: m[h] ? Math.round(m[h].eng/m[h].posts) : 0,
       posts: m[h]?.posts ?? 0,
     })).filter(d => d.posts > 0);
-  }, [postsData]);
+  }, [postsFiltered]);
 
   const maxHorario = Math.max(...horarioData.map(d => d.engMedio), 1);
 
   // Frequência semanal
   const weeklyData = useMemo(() => {
-    const m: Record<string,{posts:number;eng:number;engPorPost?:number}> = {};
+    const m: Record<string,{posts:number;eng:number}> = {};
     postsFiltered.forEach(p => {
       const d = new Date(p.posted_at);
       const ws = new Date(d); ws.setDate(d.getDate()-d.getDay());
@@ -245,12 +273,12 @@ export function MarketingSection({ from, to }: Props) {
       m[wk].posts++;
       m[wk].eng += p.like_count+p.comments_count+p.shares+p.saved;
     });
-    return Object.entries(m).sort(([a],[b]) => a.localeCompare(b)).map(([wk,v],i) => ({
+    return Object.entries(m).sort(([a],[b]) => a.localeCompare(b)).map(([,v],i) => ({
       semana: `Sem ${i+1}`,
       posts: v.posts,
       engPorPost: v.posts > 0 ? Math.round(v.eng/v.posts) : 0,
     }));
-  }, [postsData]);
+  }, [postsFiltered]);
 
   // Hashtags
   const hashtagData = useMemo(() => {
@@ -261,13 +289,64 @@ export function MarketingSection({ from, to }: Props) {
       });
     });
     return Object.entries(m).sort(([,a],[,b]) => b-a).slice(0,15).map(([tag,count]) => ({tag,count}));
-  }, [postsData]);
+  }, [postsFiltered]);
 
-  // Top posts
-  const topPosts = useMemo(() => [...postsFiltered]
-    .map(p => ({...p, eng: p.like_count+p.comments_count+p.shares+p.saved,
-      taxaEng: p.reach>0 ? (p.like_count+p.comments_count+p.shares+p.saved)/p.reach*100 : 0}))
-    .sort((a,b) => b.eng-a.eng).slice(0,10), [postsData]);
+  // Tabela de posts — ordenável, todos os posts
+  const allPostsWithMetrics = useMemo(() => [...postsFiltered]
+    .map(p => ({
+      ...p,
+      eng: p.like_count + p.comments_count + p.shares + p.saved,
+      taxaEng: p.reach > 0 ? (p.like_count + p.comments_count + p.shares + p.saved) / p.reach * 100 : 0,
+    })), [postsFiltered]);
+
+  const sortedPosts = useMemo(() => {
+    const sorted = [...allPostsWithMetrics].sort((a, b) => {
+      const va = sortKey === "posted_at" ? new Date(a.posted_at).getTime() : (a as any)[sortKey] ?? 0;
+      const vb = sortKey === "posted_at" ? new Date(b.posted_at).getTime() : (b as any)[sortKey] ?? 0;
+      return sortDir === "desc" ? vb - va : va - vb;
+    });
+    return showAllPosts ? sorted : sorted.slice(0, 10);
+  }, [allPostsWithMetrics, sortKey, sortDir, showAllPosts]);
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) setSortDir(d => d === "desc" ? "asc" : "desc");
+    else { setSortKey(key); setSortDir("desc"); }
+  }
+
+  function SortIcon({ k }: { k: SortKey }) {
+    if (sortKey !== k) return <ArrowUpDown className="inline h-2.5 w-2.5 ml-0.5 opacity-30"/>;
+    return sortDir === "desc"
+      ? <ChevronDown className="inline h-2.5 w-2.5 ml-0.5 text-primary"/>
+      : <ChevronUp   className="inline h-2.5 w-2.5 ml-0.5 text-primary"/>;
+  }
+
+  // Previsibilidade de seguidores (regressão linear simples)
+  const followersForecast = useMemo(() => {
+    const rows = [...dailyFiltered].sort((a,b) => a.date.localeCompare(b.date));
+    if (rows.length < 3) return null;
+    // agrupa por conta — usa todos os dados do período
+    const byAcc: Record<string, {x:number;y:number}[]> = {};
+    rows.forEach((d, i) => {
+      if (!byAcc[d.username]) byAcc[d.username] = [];
+      byAcc[d.username].push({ x: i, y: d.followers_count });
+    });
+    const results: Record<string, { per_day: number; per_30: number; next_30: number }> = {};
+    Object.entries(byAcc).forEach(([acc, pts]) => {
+      const n = pts.length;
+      const sumX = pts.reduce((s,p)=>s+p.x,0);
+      const sumY = pts.reduce((s,p)=>s+p.y,0);
+      const sumXY = pts.reduce((s,p)=>s+p.x*p.y,0);
+      const sumX2 = pts.reduce((s,p)=>s+p.x*p.x,0);
+      const slope = (n*sumXY - sumX*sumY) / (n*sumX2 - sumX*sumX);
+      const lastY = pts[pts.length-1].y;
+      results[acc] = {
+        per_day: Math.round(slope),
+        per_30:  Math.round(slope * 30),
+        next_30: Math.round(lastY + slope * 30),
+      };
+    });
+    return results;
+  }, [dailyFiltered]);
 
   return (
     <div className="space-y-4">
@@ -282,9 +361,9 @@ export function MarketingSection({ from, to }: Props) {
       {/* Tabs */}
       <div className="flex gap-1 p-1 rounded-xl border border-border bg-card/40 w-fit">
         {([
-          { key:"meta",      label:"Meta Ads",      Icon:Megaphone    },
-          { key:"wpp",       label:"WPP Campanhas", Icon:MessageCircle},
-          { key:"instagram", label:"Instagram",     Icon:Instagram    },
+          { key:"meta",      label:"Meta Ads",      Icon:Megaphone     },
+          { key:"wpp",       label:"WPP Campanhas", Icon:MessageCircle },
+          { key:"instagram", label:"Instagram",     Icon:Instagram     },
         ] as {key:Tab;label:string;Icon:any}[]).map(({key,label,Icon}) => (
           <button key={key} onClick={() => setTab(key)}
             className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
@@ -376,7 +455,7 @@ export function MarketingSection({ from, to }: Props) {
 
           {!loadingMeta && metaData.length===0 && (
             <div className="text-center text-muted-foreground text-sm py-8">
-              Sem dados do Meta Ads no período — aguarde a próxima sincronização do N8N.
+              Sem dados do Meta Ads no período.
             </div>
           )}
         </div>
@@ -387,10 +466,10 @@ export function MarketingSection({ from, to }: Props) {
         <div className="space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {loadingWpp ? Array.from({length:4}).map((_,i) => <Skeleton key={i} className="h-[90px] rounded-xl"/>) : (<>
-              <KPICard title="Campanhas"  value={wppTotais?.campanhas??0}    subtitle="Disparadas no período" icon={MessageCircle}/>
-              <KPICard title="Enviadas"   value={fmt(wppTotais?.enviadas??0)} subtitle={`${(wppTotais?.taxaEntrega??0).toFixed(1)}% entrega`} icon={DollarSign}/>
+              <KPICard title="Campanhas"  value={wppTotais?.campanhas??0}     subtitle="Disparadas no período" icon={MessageCircle}/>
+              <KPICard title="Enviadas"   value={fmt(wppTotais?.enviadas??0)}  subtitle={`${(wppTotais?.taxaEntrega??0).toFixed(1)}% entrega`} icon={DollarSign}/>
               <KPICard title="Entregues"  value={fmt(wppTotais?.entregues??0)} icon={CheckCheck}/>
-              <KPICard title="Lidas"      value={fmt(wppTotais?.lidas??0)} subtitle={`${(wppTotais?.taxaLeitura??0).toFixed(1)}% leitura`} icon={Eye} accent={(wppTotais?.taxaLeitura??0)>=50?"gold":"red"}/>
+              <KPICard title="Lidas"      value={fmt(wppTotais?.lidas??0)}     subtitle={`${(wppTotais?.taxaLeitura??0).toFixed(1)}% leitura`} icon={Eye} accent={(wppTotais?.taxaLeitura??0)>=50?"gold":"red"}/>
             </>)}
           </div>
           {!loadingWpp && wppCampanhas.length>0 && (
@@ -461,62 +540,108 @@ export function MarketingSection({ from, to }: Props) {
             </div>
           </div>
 
-          {/* KPIs — 2 linhas: seguidores + métricas */}
+          {/* KPIs seguidores — por conta, respeita filtro */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {igAccounts.map(acc => {
-              const f = lastFollowers[acc]??0;
-              const g = f - (firstFollowers[acc]??f);
+            {visibleAccounts.map(acc => {
+              const f = followersByAccount[acc];
+              const delta = f ? f.last - f.first : 0;
               return <KPICard key={acc}
                 title={acc==="eduardocristianoriginal"?"Seguidores @EC":"Seguidores @CS"}
-                value={fmt(f)} subtitle={`${g>=0?"+":""}${fmt(g)} no período`} icon={Users}/>;
+                value={fmt(f?.last ?? 0)}
+                subtitle={`${delta>=0?"+":""}${delta.toLocaleString("pt-BR")} no período`}
+                icon={Users}/>;
             })}
             <KPICard title="Posts no período" value={postsFiltered.length}
               subtitle={`Eng. médio: ${fmt(igEngPost)}/post`} icon={TrendingUp}/>
             <KPICard title="Engajamento total" value={fmt(igEngTotal)}
               subtitle={`${fmt(igAlcance)} alcance`} icon={Heart}/>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <KPICard title="Taxa de engajamento" value={pct(igTaxaEng)}
               subtitle="eng ÷ alcance × 100" icon={TrendingUp} accent="gold"/>
             <KPICard title="Views totais" value={fmt(igViews)}
-              subtitle={`Reels e vídeos`} icon={Eye}/>
+              subtitle="Reels e vídeos" icon={Eye}/>
           </div>
 
-          {/* Seguidores ao longo do tempo */}
-          {followersChart.length > 1 && (
+          {/* Crescimento de seguidores com previsibilidade */}
+          {followersChart.length > 0 && (
             <GlassCard>
               <SubTitle>Crescimento de seguidores</SubTitle>
-              <ResponsiveContainer width="100%" height={180}>
-                <AreaChart data={followersChart}>
-                  <defs>
-                    <linearGradient id="igGradEC" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor={P}  stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor={P}  stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="igGradCS" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor={P2} stopOpacity={0.5}/>
-                      <stop offset="95%" stopColor={P2} stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="date" tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false}/>
-                  <YAxis tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false} tickFormatter={fmt}/>
-                  <Tooltip {...TT} formatter={(v:number) => fmt(v)}/>
-                  <Legend iconType="circle" iconSize={7} wrapperStyle={{fontSize:11,color:MUTED}}/>
-                  {igAccounts.map((acc,i) => (
-                    <Area key={acc} type="monotone" dataKey={acc}
-                      name={ACCOUNT_LABEL[acc]??acc}
-                      stroke={i===0?P:P2} strokeWidth={2}
-                      fill={i===0?"url(#igGradEC)":"url(#igGradCS)"} dot={false}/>
-                  ))}
-                </AreaChart>
-              </ResponsiveContainer>
+              {followersChart.length > 1 ? (
+                <ResponsiveContainer width="100%" height={180}>
+                  <AreaChart data={followersChart}>
+                    <defs>
+                      <linearGradient id="igGradEC" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor={P}  stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={P}  stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="igGradCS" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor={P2} stopOpacity={0.5}/>
+                        <stop offset="95%" stopColor={P2} stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="date" tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false}/>
+                    <YAxis tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false} tickFormatter={fmt}/>
+                    <Tooltip {...TT} formatter={(v:number) => fmt(v)}/>
+                    <Legend iconType="circle" iconSize={7} wrapperStyle={{fontSize:11,color:MUTED}}/>
+                    {visibleAccounts.map((acc,i) => (
+                      <Area key={acc} type="monotone" dataKey={acc}
+                        name={ACCOUNT_LABEL[acc]??acc}
+                        stroke={i===0?P:P2} strokeWidth={2}
+                        fill={i===0?"url(#igGradEC)":"url(#igGradCS)"} dot={false}/>
+                    ))}
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <p className="text-[11px] text-muted-foreground py-4">
+                  Dados insuficientes para o gráfico — acumula a partir do segundo dia de sync.
+                </p>
+              )}
+
+              {/* Previsibilidade */}
+              {followersForecast && (
+                <div className="mt-4 pt-3 border-t border-border/40">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-2">
+                    Previsão (regressão linear no período)
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {visibleAccounts.map(acc => {
+                      const f = followersForecast[acc];
+                      if (!f) return null;
+                      return (
+                        <div key={acc} className="rounded-lg p-3 bg-muted/10 border border-border/30">
+                          <p className="text-[10px] font-semibold text-primary mb-1">
+                            {acc==="eduardocristianoriginal"?"@EC":"@CS"}
+                          </p>
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-[10px]">
+                              <span className="text-muted-foreground">Média diária</span>
+                              <span className={cn("font-semibold", f.per_day>=0?"text-emerald-400":"text-destructive")}>
+                                {f.per_day>=0?"+":""}{f.per_day}/dia
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-[10px]">
+                              <span className="text-muted-foreground">Próximos 30 dias</span>
+                              <span className={cn("font-semibold", f.per_30>=0?"text-emerald-400":"text-destructive")}>
+                                {f.per_30>=0?"+":""}{f.per_30.toLocaleString("pt-BR")}
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-[10px]">
+                              <span className="text-muted-foreground">Previsão em 30d</span>
+                              <span className="font-bold text-foreground">{fmt(f.next_30)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </GlassCard>
           )}
 
-          {/* Linha 2: Frequência semanal + Melhor horário */}
+          {/* Frequência semanal + Melhor horário */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-            {/* Frequência semanal vs engajamento */}
             {weeklyData.length > 0 && (
               <GlassCard>
                 <SubTitle>Frequência semanal vs engajamento médio</SubTitle>
@@ -534,7 +659,6 @@ export function MarketingSection({ from, to }: Props) {
               </GlassCard>
             )}
 
-            {/* Melhor horário */}
             {horarioData.length > 0 && (
               <GlassCard>
                 <SubTitle>Melhor horário para postar</SubTitle>
@@ -544,26 +668,22 @@ export function MarketingSection({ from, to }: Props) {
                     <YAxis tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false} tickFormatter={fmt}/>
                     <Tooltip {...TT} formatter={(v:number) => [`${v}`, "Eng. médio"]}/>
                     <Bar dataKey="engMedio" name="Eng. médio" radius={[4,4,0,0]}>
-                      {horarioData.map(d => {
-                        const ratio = maxHorario > 0 ? d.engMedio/maxHorario : 0;
-                        const op = Math.round(30 + ratio*220).toString(16).padStart(2,"0");
-                        return <Cell key={d.hora} fill={`hsl(355 82% 51% / ${(0.3 + ratio*0.7).toFixed(2)})`}/>;
-                      })}
+                      {horarioData.map(d => (
+                        <Cell key={d.hora} fill={`hsl(355 82% 51% / ${(0.3 + (d.engMedio/maxHorario)*0.7).toFixed(2)})`}/>
+                      ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
-                {horarioData.length > 0 && (
-                  <p className="text-[10px] text-muted-foreground mt-2">
-                    Melhor horário: <span className="text-foreground font-semibold">
-                      {horarioData.sort((a,b)=>b.engMedio-a.engMedio)[0].hora}
-                    </span> — {fmt(Math.max(...horarioData.map(d=>d.engMedio)))} eng. médio
-                  </p>
-                )}
+                <p className="text-[10px] text-muted-foreground mt-2">
+                  Melhor horário: <span className="text-foreground font-semibold">
+                    {[...horarioData].sort((a,b)=>b.engMedio-a.engMedio)[0]?.hora}
+                  </span> — {fmt(Math.max(...horarioData.map(d=>d.engMedio)))} eng. médio
+                </p>
               </GlassCard>
             )}
           </div>
 
-          {/* Linha 3: Performance por formato */}
+          {/* Performance por formato */}
           {porFormato.length > 0 && (
             <GlassCard>
               <SubTitle>Performance por formato de conteúdo</SubTitle>
@@ -574,12 +694,10 @@ export function MarketingSection({ from, to }: Props) {
               )}>
                 {porFormato.map(f => (
                   <div key={f.tipo} className="space-y-3">
-                    {/* Header do formato */}
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold text-foreground">{f.tipo}</span>
                       <span className="text-[10px] text-muted-foreground">{f.posts} post{f.posts!==1?"s":""}</span>
                     </div>
-                    {/* Métricas */}
                     <div className="space-y-2">
                       <div>
                         <div className="flex justify-between text-[10px] mb-1">
@@ -587,8 +705,7 @@ export function MarketingSection({ from, to }: Props) {
                           <span className="text-foreground font-semibold">{fmt(f.engPorPost)}</span>
                         </div>
                         <div className="h-1.5 rounded-full bg-muted/30">
-                          <div className="h-1.5 rounded-full bg-primary transition-all"
-                            style={{width:`${f.share}%`}}/>
+                          <div className="h-1.5 rounded-full bg-primary transition-all" style={{width:`${f.share}%`}}/>
                         </div>
                       </div>
                       <div>
@@ -614,10 +731,8 @@ export function MarketingSection({ from, to }: Props) {
             </GlassCard>
           )}
 
-          {/* Linha 3: Profile views + Alcance vs Seguidores */}
+          {/* Profile views + Alcance vs Seguidores */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-            {/* Profile views + cliques no link */}
             {profileChart.length > 0 && (
               <GlassCard>
                 <div className="flex items-center justify-between mb-3">
@@ -643,7 +758,7 @@ export function MarketingSection({ from, to }: Props) {
                     <YAxis tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false} tickFormatter={fmt}/>
                     <Tooltip {...TT} formatter={(v:number) => fmt(v)}/>
                     <Legend iconType="circle" iconSize={7} wrapperStyle={{fontSize:11,color:MUTED}}/>
-                    {igAccounts.map((acc, i) => (
+                    {visibleAccounts.map((acc,i) => (
                       <Area key={`${acc}_views`} type="monotone"
                         dataKey={`${acc}_views`}
                         name={`${acc==="eduardocristianoriginal"?"EC":"CS"} — visitas`}
@@ -655,7 +770,6 @@ export function MarketingSection({ from, to }: Props) {
               </GlassCard>
             )}
 
-            {/* Alcance vs Seguidores */}
             {alcanceVsSeguidores.length > 0 && (
               <GlassCard>
                 <SubTitle>Alcance vs seguidores — % de novos públicos</SubTitle>
@@ -699,25 +813,25 @@ export function MarketingSection({ from, to }: Props) {
               </p>
             </GlassCard>
           )}
+
+          {/* Hashtags */}
           {hashtagData.length > 0 && (
             <GlassCard>
               <SubTitle>Hashtags mais usadas</SubTitle>
               <div className="flex flex-wrap gap-2">
                 {hashtagData.map(h => {
-                  const max  = hashtagData[0].count;
+                  const max   = hashtagData[0].count;
                   const ratio = h.count/max;
                   return (
                     <span key={h.tag}
-                      className={cn("px-2.5 py-1 rounded-full border transition-colors",
-                        ratio>0.7?"text-xs":"text-[10px]")}
+                      className={cn("px-2.5 py-1 rounded-full border transition-colors", ratio>0.7?"text-xs":"text-[10px]")}
                       style={{
-                        background: `hsl(355 82% 51% / ${(0.05+ratio*0.15).toFixed(2)})`,
+                        background:  `hsl(355 82% 51% / ${(0.05+ratio*0.15).toFixed(2)})`,
                         borderColor: `hsl(355 82% 51% / ${(0.15+ratio*0.25).toFixed(2)})`,
                         color: `hsl(0 0% ${55+ratio*41}%)`,
                         fontWeight: ratio>0.5?600:400,
                       }}>
-                      {h.tag}
-                      <span className="ml-1 opacity-50 text-[9px]">×{h.count}</span>
+                      {h.tag}<span className="ml-1 opacity-50 text-[9px]">×{h.count}</span>
                     </span>
                   );
                 })}
@@ -725,22 +839,44 @@ export function MarketingSection({ from, to }: Props) {
             </GlassCard>
           )}
 
-          {/* Linha 5: Top posts */}
-          {topPosts.length > 0 && (
+          {/* Tabela de posts — ordenável, todos os posts */}
+          {allPostsWithMetrics.length > 0 && (
             <GlassCard>
-              <SubTitle>Top posts por engajamento</SubTitle>
+              <div className="flex items-center justify-between mb-3">
+                <SubTitle>Posts do período</SubTitle>
+                <span className="text-[10px] text-muted-foreground">{allPostsWithMetrics.length} posts</span>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-border">
-                      {["Conta","Data","Tipo","Caption","❤️","💬","🔁","Taxa eng.","Eng. total"].map(h=>(
-                        <th key={h} className={cn("py-2 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60",
-                          ["Conta","Data","Tipo","Caption"].includes(h)?"text-left pr-3":"text-right pr-3")}>{h}</th>
+                      {[
+                        { label: "Conta",   key: null },
+                        { label: "Data",    key: "posted_at" as SortKey },
+                        { label: "Tipo",    key: null },
+                        { label: "Caption", key: null },
+                        { label: "❤️",      key: "like_count" as SortKey },
+                        { label: "💬",      key: "comments_count" as SortKey },
+                        { label: "🔁",      key: "shares" as SortKey },
+                        { label: "🔖",      key: "saved" as SortKey },
+                        { label: "Alcance", key: "reach" as SortKey },
+                        { label: "Taxa Eng.", key: "taxaEng" as SortKey },
+                        { label: "Eng. total", key: "eng" as SortKey },
+                      ].map(({ label, key }) => (
+                        <th key={label}
+                          onClick={() => key && toggleSort(key)}
+                          className={cn(
+                            "py-2 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60",
+                            ["Conta","Data","Tipo","Caption"].includes(label) ? "text-left pr-3" : "text-right pr-3",
+                            key ? "cursor-pointer hover:text-muted-foreground select-none" : ""
+                          )}>
+                          {label}{key && <SortIcon k={key}/>}
+                        </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {topPosts.map(p => (
+                    {sortedPosts.map(p => (
                       <tr key={p.post_id} className="border-b border-border/40 hover:bg-muted/10 transition-colors">
                         <td className="py-2 pr-3">
                           <span className="text-[10px] font-semibold text-primary">
@@ -755,17 +891,19 @@ export function MarketingSection({ from, to }: Props) {
                             {p.media_type==="VIDEO"?"Reel":p.media_type==="CAROUSEL_ALBUM"?"Carrossel":"Imagem"}
                           </span>
                         </td>
-                        <td className="py-2 pr-3 max-w-[160px]">
+                        <td className="py-2 pr-3 max-w-[140px]">
                           <span className="block truncate text-[10px] text-foreground/70" title={p.caption}>
-                            {p.caption.slice(0,45)}{p.caption.length>45?"…":""}
+                            {p.caption?.slice(0,40)}{(p.caption?.length??0)>40?"…":""}
                           </span>
                         </td>
                         <td className="py-2 pr-3 text-right text-[10px] font-mono text-muted-foreground">{fmt(p.like_count)}</td>
                         <td className="py-2 pr-3 text-right text-[10px] font-mono text-muted-foreground">{fmt(p.comments_count)}</td>
                         <td className="py-2 pr-3 text-right text-[10px] font-mono text-muted-foreground">{fmt(p.shares)}</td>
+                        <td className="py-2 pr-3 text-right text-[10px] font-mono text-muted-foreground">{fmt(p.saved)}</td>
+                        <td className="py-2 pr-3 text-right text-[10px] font-mono text-muted-foreground">{fmt(p.reach)}</td>
                         <td className="py-2 pr-3 text-right">
                           <span className={cn("text-[10px] font-semibold",
-                            p.taxaEng>3?"text-emerald-400":"text-muted-foreground")}>
+                            p.taxaEng>=5?"text-emerald-400":p.taxaEng>=3?"text-primary":"text-muted-foreground")}>
                             {pct(p.taxaEng)}
                           </span>
                         </td>
@@ -783,6 +921,14 @@ export function MarketingSection({ from, to }: Props) {
                   </tbody>
                 </table>
               </div>
+              {allPostsWithMetrics.length > 10 && (
+                <button onClick={() => setShowAllPosts(v => !v)}
+                  className="mt-3 w-full text-[10px] text-muted-foreground hover:text-foreground transition-colors py-2 border border-border/40 rounded-lg">
+                  {showAllPosts
+                    ? "Mostrar menos"
+                    : `Ver todos os ${allPostsWithMetrics.length} posts`}
+                </button>
+              )}
             </GlassCard>
           )}
 
@@ -797,7 +943,6 @@ export function MarketingSection({ from, to }: Props) {
   );
 }
 
-// Inline icon stubs para imports circulares
 function CheckCheck(p:any){return<svg {...p} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>;}
 function Eye(p:any){return<svg {...p} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.641 0-8.573-3.007-9.964-7.178Z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>;}
 function Send(p:any){return<svg {...p} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/></svg>;}
