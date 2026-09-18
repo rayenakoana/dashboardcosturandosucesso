@@ -929,6 +929,15 @@ export function MarketingSection({ from, to }: Props) {
             />
           )}
 
+          {/* Impacto de conteúdo em seguidores */}
+          {postsData.length > 0 && (
+            <ImpactoConteudo
+              postsData={postsData}
+              dailyData={dailyData}
+              igAccount={igAccount}
+            />
+          )}
+
           {/* Análise & Insights com Claude API */}
           {postsFiltered.length > 0 && (
             <InstagramInsightsAI
@@ -1088,151 +1097,405 @@ function InstagramAlertas({
   followersByAccount, followersForecast, igTaxaEng,
 }: AlertasProps) {
 
-  // ── Ritmo de publicação (posts/semana na última semana com dados) ──
-  const ritmoAlerta = useMemo((): Alerta | null => {
+  // ── Ritmo de publicação ──
+  const dadosRitmo = useMemo(() => {
     if (postsFiltered.length === 0) return null;
     const sorted = [...postsFiltered].sort((a,b) => b.posted_at.localeCompare(a.posted_at));
     const ultimo = new Date(sorted[0].posted_at);
     const inicioSemana = new Date(ultimo);
     inicioSemana.setDate(ultimo.getDate() - 6);
     const postsUltimaSemana = postsFiltered.filter(p => new Date(p.posted_at) >= inicioSemana).length;
-    if (postsUltimaSemana < 2)
-      return { nivel: "vermelho", categoria: "Ritmo de publicação", mensagem: `${postsUltimaSemana} post(s) na última semana — ritmo muito baixo` };
-    if (postsUltimaSemana < 4)
-      return { nivel: "amarelo", categoria: "Ritmo de publicação", mensagem: `${postsUltimaSemana} posts na última semana — abaixo do ideal` };
-    return { nivel: "verde", categoria: "Ritmo de publicação", mensagem: `${postsUltimaSemana} posts na última semana` };
+    const diasPeriodo = postsFiltered.length > 1
+      ? Math.max(1, Math.round((new Date(sorted[0].posted_at).getTime() - new Date(sorted[sorted.length-1].posted_at).getTime()) / 86400000))
+      : 7;
+    const mediaSemanal = parseFloat(((postsFiltered.length / diasPeriodo) * 7).toFixed(1));
+    let nivel: NivelAlerta = "verde";
+    let contexto = `A frequência está dentro do esperado para manter a conta ativa no algoritmo.`;
+    if (postsUltimaSemana < 2) {
+      nivel = "vermelho";
+      contexto = `Com menos de 2 posts por semana, o algoritmo tende a reduzir o alcance orgânico. Recomendado: pelo menos 4 posts por semana.`;
+    } else if (postsUltimaSemana < 4) {
+      nivel = "amarelo";
+      contexto = `O ideal para manter visibilidade constante é de 4 a 7 posts por semana. Aumentar a frequência pode ampliar o alcance.`;
+    }
+    return { postsUltimaSemana, mediaSemanal, nivel, contexto };
   }, [postsFiltered]);
 
   // ── Engajamento geral ──
-  const erAlerta = useMemo((): Alerta | null => {
+  const dadosEngajamento = useMemo(() => {
     if (postsFiltered.length === 0) return null;
-    if (igTaxaEng < 1)
-      return { nivel: "vermelho", categoria: "Taxa de engajamento", mensagem: `${igTaxaEng.toFixed(1)}% de ER médio — abaixo do mínimo aceitável` };
-    if (igTaxaEng < 2)
-      return { nivel: "amarelo", categoria: "Taxa de engajamento", mensagem: `${igTaxaEng.toFixed(1)}% de ER médio — abaixo do recomendado` };
-    return { nivel: "verde", categoria: "Taxa de engajamento", mensagem: `${igTaxaEng.toFixed(1)}% de ER médio` };
+    let nivel: NivelAlerta = "verde";
+    let contexto = `Uma taxa acima de 3% indica que o conteúdo está gerando boa resposta do público.`;
+    if (igTaxaEng < 1) {
+      nivel = "vermelho";
+      contexto = `Taxa abaixo de 1% indica que o conteúdo não está gerando reação do público. É necessário revisar os formatos e temas publicados.`;
+    } else if (igTaxaEng < 2) {
+      nivel = "amarelo";
+      contexto = `A taxa está abaixo do recomendado. Conteúdos que estimulam comentários e compartilhamentos tendem a melhorar esse número.`;
+    } else if (igTaxaEng < 3) {
+      nivel = "amarelo";
+      contexto = `A taxa está razoável, mas há espaço para crescer. Reels e carrosséis costumam puxar a média para cima.`;
+    }
+    return { taxa: igTaxaEng, nivel, contexto };
   }, [igTaxaEng, postsFiltered.length]);
 
-  // ── Crescimento de seguidores ──
-  const crescimentoAlertas = useMemo((): Alerta[] => {
+  // ── Crescimento de seguidores por conta ──
+  const dadosCrescimento = useMemo(() => {
     return Object.entries(followersByAccount).map(([acc, f]) => {
       const forecast = followersForecast?.[acc];
-      const label = acc === "eduardocristianoriginal" ? "@EC" : "@CS";
+      const label = acc === "eduardocristianoriginal" ? "@eduardocristianoriginal" : "@costurandosucesso";
       const delta = f.last - f.first;
       const perDay = forecast?.per_day ?? 0;
-      if (delta < 0 || perDay < 0)
-        return { nivel: "vermelho" as NivelAlerta, categoria: `Seguidores ${label}`, mensagem: `Perda líquida de ${Math.abs(delta)} seguidores no período` };
-      if (perDay < 1)
-        return { nivel: "amarelo" as NivelAlerta, categoria: `Seguidores ${label}`, mensagem: `Crescimento abaixo de +1/dia (tendência: ${perDay > 0 ? "+" : ""}${perDay}/dia)` };
-      return { nivel: "verde" as NivelAlerta, categoria: `Seguidores ${label}`, mensagem: `+${delta} no período · tendência +${perDay}/dia` };
+      const projecao30 = forecast?.next_30 ?? f.last;
+      const gained = dailyFiltered.filter(d=>d.username===acc).reduce((s,d)=>s+(d.followers_gained||0),0);
+      const lost   = dailyFiltered.filter(d=>d.username===acc).reduce((s,d)=>s+(d.followers_lost||0),0);
+      let nivel: NivelAlerta = "verde";
+      let contexto = `A conta está crescendo de forma consistente no período.`;
+      if (delta < 0 || perDay < 0) {
+        nivel = "vermelho";
+        contexto = `A conta perdeu seguidores no período. Vale revisar quais conteúdos foram publicados nas semanas de maior queda.`;
+      } else if (perDay < 1) {
+        nivel = "amarelo";
+        contexto = `O crescimento está estagnado. Conteúdos com maior alcance para não seguidores (como Reels virais) podem ajudar a retomar a aquisição.`;
+      }
+      return { label, delta, perDay, projecao30, gained, lost, nivel, contexto, total: f.last };
     });
-  }, [followersByAccount, followersForecast]);
+  }, [followersByAccount, followersForecast, dailyFiltered]);
 
-  // ── Por formato: ER e impacto em seguidores ──
-  const formatoAlertas = useMemo((): Alerta[] => {
+  // ── Por formato ──
+  const dadosFormato = useMemo(() => {
     if (porFormato.length === 0) return [];
-
-    // Cruzamento formato × seguidores (D+1 e D+2 após publicação)
-    const impactoFormato: Record<string, {gained: number; lost: number; posts: number}> = {};
+    const impacto: Record<string, {gained:number;lost:number;posts:number}> = {};
     postsFiltered.forEach(p => {
-      const tipo = p.media_type === "VIDEO" ? "Reel" : p.media_type === "CAROUSEL_ALBUM" ? "Carrossel" : "Imagem";
-      if (!impactoFormato[tipo]) impactoFormato[tipo] = { gained: 0, lost: 0, posts: 0 };
+      const tipo = p.media_type==="VIDEO"?"Reel":p.media_type==="CAROUSEL_ALBUM"?"Carrossel":"Imagem";
+      if (!impacto[tipo]) impacto[tipo] = {gained:0,lost:0,posts:0};
       const postDate = p.posted_at.split("T")[0];
-      // D+1 e D+2
-      [1, 2].forEach(offset => {
-        const d = new Date(postDate);
-        d.setDate(d.getDate() + offset);
-        const targetDate = d.toISOString().split("T")[0];
-        const snap = dailyFiltered.find(s => s.date === targetDate && s.username === p.username);
-        if (snap) {
-          impactoFormato[tipo].gained += snap.followers_gained || 0;
-          impactoFormato[tipo].lost   += snap.followers_lost  || 0;
-        }
+      [1,2].forEach(offset => {
+        const d = new Date(postDate); d.setDate(d.getDate()+offset);
+        const snap = dailyFiltered.find(s=>s.date===d.toISOString().split("T")[0]&&s.username===p.username);
+        if (snap) { impacto[tipo].gained+=snap.followers_gained||0; impacto[tipo].lost+=snap.followers_lost||0; }
       });
-      impactoFormato[tipo].posts++;
+      impacto[tipo].posts++;
     });
-
     return porFormato.map(f => {
-      const imp = impactoFormato[f.tipo];
-      const mediaGained = imp && imp.posts > 0 ? (imp.gained / imp.posts).toFixed(1) : null;
-      const mediaLost   = imp && imp.posts > 0 ? (imp.lost   / imp.posts).toFixed(1) : null;
-      const saldoMedio  = imp && imp.posts > 0 ? (imp.gained - imp.lost) / imp.posts : null;
-
-      const erInfo = `ER ${f.taxaEng}%`;
-      const segInfo = mediaGained !== null
-        ? ` · +${mediaGained}/${mediaLost} seg. (D+1/D+2 por post)`
-        : "";
-
-      if (f.taxaEng < 1 || (saldoMedio !== null && saldoMedio < -2))
-        return { nivel: "vermelho" as NivelAlerta, categoria: `Formato — ${f.tipo}`, mensagem: `${erInfo}${segInfo}` };
-      if (f.taxaEng < 2 || (saldoMedio !== null && saldoMedio < 0))
-        return { nivel: "amarelo" as NivelAlerta, categoria: `Formato — ${f.tipo}`, mensagem: `${erInfo}${segInfo}` };
-      return { nivel: "verde" as NivelAlerta, categoria: `Formato — ${f.tipo}`, mensagem: `${erInfo}${segInfo}` };
+      const imp = impacto[f.tipo] ?? {gained:0,lost:0,posts:1};
+      const saldoMedio = (imp.gained - imp.lost) / imp.posts;
+      const gainedMedia = (imp.gained / imp.posts).toFixed(1);
+      const lostMedia   = (imp.lost   / imp.posts).toFixed(1);
+      let nivel: NivelAlerta = "verde";
+      let contexto = `Este formato está performando bem — continue investindo nele.`;
+      if (f.taxaEng < 1 || saldoMedio < -2) {
+        nivel = "vermelho";
+        contexto = `Este formato está gerando pouco engajamento e pode estar associado a perda de seguidores. Considere reduzir a frequência ou testar novas abordagens.`;
+      } else if (f.taxaEng < 2 || saldoMedio < 0) {
+        nivel = "amarelo";
+        contexto = `O desempenho está abaixo dos outros formatos. Vale testar variações de conteúdo para descobrir o que funciona melhor.`;
+      }
+      return { tipo: f.tipo, posts: f.posts, taxaEng: f.taxaEng, engPorPost: f.engPorPost, gainedMedia, lostMedia, saldoMedio, nivel, contexto };
     });
   }, [porFormato, postsFiltered, dailyFiltered]);
 
-  const todosAlertas: Alerta[] = [
-    ...(ritmoAlerta ? [ritmoAlerta] : []),
-    ...(erAlerta    ? [erAlerta]    : []),
-    ...crescimentoAlertas,
-    ...formatoAlertas,
-  ].sort((a,b) => {
-    const order = { vermelho: 0, amarelo: 1, verde: 2 };
-    return order[a.nivel] - order[b.nivel];
-  });
-
-  const temProblema = todosAlertas.some(a => a.nivel !== "verde");
+  function CardAlerta({ nivel, titulo, numero, detalhe, contexto }: {
+    nivel: NivelAlerta; titulo: string; numero: string; detalhe?: string; contexto: string;
+  }) {
+    const cores = {
+      vermelho: { borda: "border-red-500/25",    fundo: "bg-red-500/5",     texto: "text-red-400",     badge: "bg-red-500/15 text-red-400" },
+      amarelo:  { borda: "border-amber-500/20",  fundo: "bg-amber-500/5",   texto: "text-amber-400",   badge: "bg-amber-500/15 text-amber-400" },
+      verde:    { borda: "border-emerald-500/20",fundo: "bg-emerald-500/5", texto: "text-emerald-400", badge: "bg-emerald-500/15 text-emerald-400" },
+    }[nivel];
+    const labels = { vermelho: "Atenção", amarelo: "Observar", verde: "Normal" };
+    return (
+      <div className={cn("rounded-xl border p-4 flex flex-col gap-2", cores.borda, cores.fundo)}>
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">{titulo}</p>
+          <span className={cn("text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full", cores.badge)}>
+            {labels[nivel]}
+          </span>
+        </div>
+        <p className={cn("font-display font-bold text-2xl leading-none", cores.texto)}>{numero}</p>
+        {detalhe && <p className="text-[11px] text-muted-foreground/70">{detalhe}</p>}
+        <p className="text-[11px] text-foreground/60 leading-relaxed border-t border-border/20 pt-2 mt-1">{contexto}</p>
+      </div>
+    );
+  }
 
   return (
     <GlassCard>
-      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/60 mb-3">
-        Alertas do período
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/60 mb-4">
+        Saúde do período
       </p>
 
-      {todosAlertas.length === 0 ? (
-        <p className="text-[11px] text-muted-foreground/50">Sem dados suficientes para gerar alertas.</p>
-      ) : (
-        <div className="space-y-2">
-          {/* Separador Geral */}
-          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 pt-1">Geral</p>
-          {[ritmoAlerta, erAlerta, ...crescimentoAlertas].filter(Boolean).map((a, i) => (
-            <div key={i} className={cn("flex items-start gap-2.5 px-3 py-2 rounded-lg border text-[11px]", badgeAlerta(a!.nivel))}>
-              <span className="font-bold shrink-0 text-[9px] uppercase tracking-widest mt-0.5 opacity-70">
-                {labelNivel(a!.nivel)}
-              </span>
-              <div className="min-w-0">
-                <span className="font-semibold">{a!.categoria}</span>
-                <span className="text-muted-foreground mx-1">—</span>
-                <span className="opacity-80">{a!.mensagem}</span>
-              </div>
-            </div>
-          ))}
+      {/* Geral — grid 2 colunas em telas maiores */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        {dadosRitmo && (
+          <CardAlerta
+            nivel={dadosRitmo.nivel}
+            titulo="Frequência de publicação"
+            numero={`${dadosRitmo.postsUltimaSemana} posts esta semana`}
+            detalhe={`Média do período: ${dadosRitmo.mediaSemanal} posts por semana`}
+            contexto={dadosRitmo.contexto}
+          />
+        )}
+        {dadosEngajamento && (
+          <CardAlerta
+            nivel={dadosEngajamento.nivel}
+            titulo="Taxa de engajamento"
+            numero={`${dadosEngajamento.taxa.toFixed(1)}% de média`}
+            detalhe="Curtidas + comentários + compartilhamentos + salvamentos ÷ alcance"
+            contexto={dadosEngajamento.contexto}
+          />
+        )}
+        {dadosCrescimento.map((d, i) => (
+          <CardAlerta
+            key={i}
+            nivel={d.nivel}
+            titulo={`Crescimento de seguidores — ${d.label}`}
+            numero={`${d.delta >= 0 ? "+" : ""}${d.delta} no período`}
+            detalhe={`${d.gained} novos · ${d.lost} saídas · tendência: ${d.perDay >= 0 ? "+" : ""}${d.perDay}/dia · projeção 30 dias: ${d.projecao30.toLocaleString("pt-BR")}`}
+            contexto={d.contexto}
+          />
+        ))}
+      </div>
 
-          {/* Separador Por formato */}
-          {formatoAlertas.length > 0 && (
-            <>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 pt-2">Por formato</p>
-              {formatoAlertas.map((a, i) => (
-                <div key={i} className={cn("flex items-start gap-2.5 px-3 py-2 rounded-lg border text-[11px]", badgeAlerta(a.nivel))}>
-                  <span className="font-bold shrink-0 text-[9px] uppercase tracking-widest mt-0.5 opacity-70">
-                    {labelNivel(a.nivel)}
-                  </span>
-                  <div className="min-w-0">
-                    <span className="font-semibold">{a.categoria}</span>
-                    <span className="text-muted-foreground mx-1">—</span>
-                    <span className="opacity-80">{a.mensagem}</span>
+      {/* Por formato */}
+      {dadosFormato.length > 0 && (
+        <>
+          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-3">Por formato de conteúdo</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {dadosFormato.map((f, i) => (
+              <CardAlerta
+                key={i}
+                nivel={f.nivel}
+                titulo={f.tipo}
+                numero={`${f.taxaEng}% de engajamento`}
+                detalhe={`${f.engPorPost} interações por post · ${f.posts} publicações · média de +${f.gainedMedia} e −${f.lostMedia} seguidores nos 2 dias após cada post`}
+                contexto={f.contexto}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </GlassCard>
+  );
+}
+
+// ── Impacto de conteúdo em seguidores ──────────────────────────────────────────
+interface ImpactoConteudoProps {
+  postsData: any[];       // todos os posts (sem filtro de conta)
+  dailyData: any[];       // todos os snapshots (sem filtro de conta)
+  igAccount: string | null;
+}
+
+function ImpactoConteudo({ postsData, dailyData, igAccount }: ImpactoConteudoProps) {
+  const hoje = new Date();
+  const d30  = new Date(hoje); d30.setDate(hoje.getDate()-29);
+  const fmt8  = (d: Date) => d.toISOString().split("T")[0];
+
+  const [filtroFormato, setFiltroFormato] = useState<string>("Todos");
+  const [de, setDe]   = useState(fmt8(d30));
+  const [ate, setAte] = useState(fmt8(hoje));
+  const [detalhePost, setDetalhePost] = useState<any | null>(null);
+
+  const tipoLabel = (mt: string) => mt==="VIDEO"?"Reel":mt==="CAROUSEL_ALBUM"?"Carrossel":"Imagem";
+
+  // Posts filtrados por conta + período + formato
+  const postsFiltrados = useMemo(() => {
+    return postsData.filter(p => {
+      const d = p.posted_at.split("T")[0];
+      const contaOk = igAccount ? p.username === igAccount : true;
+      const periodoOk = d >= de && d <= ate;
+      const formatoOk = filtroFormato === "Todos" || tipoLabel(p.media_type) === filtroFormato;
+      return contaOk && periodoOk && formatoOk;
+    }).sort((a,b) => a.posted_at.localeCompare(b.posted_at));
+  }, [postsData, igAccount, de, ate, filtroFormato]);
+
+  // Cruzamento post × seguidores (2 dias após publicação)
+  const dadosPorPost = useMemo(() => {
+    return postsFiltrados.map(p => {
+      const postDate = p.posted_at.split("T")[0];
+      let gained = 0; let lost = 0;
+      [1,2].forEach(offset => {
+        const d = new Date(postDate); d.setDate(d.getDate()+offset);
+        const snap = dailyData.find(s=>s.date===d.toISOString().split("T")[0]&&s.username===p.username);
+        if (snap) { gained+=snap.followers_gained||0; lost+=snap.followers_lost||0; }
+      });
+      const saldo = gained - lost;
+      const tipo  = tipoLabel(p.media_type);
+      const conta = p.username==="eduardocristianoriginal"?"@EC":"@CS";
+      const caption = (p.caption||"").slice(0,40)+(p.caption?.length>40?"…":"");
+      return { ...p, gained, lost, saldo, tipo, conta, caption, dataLabel: postDate };
+    });
+  }, [postsFiltrados, dailyData]);
+
+  // Resumo por formato
+  const resumoPorFormato = useMemo(() => {
+    const m: Record<string,{gained:number;lost:number;posts:number;eng:number;reach:number}> = {};
+    dadosPorPost.forEach(p => {
+      if (!m[p.tipo]) m[p.tipo]={gained:0,lost:0,posts:0,eng:0,reach:0};
+      m[p.tipo].gained+=p.gained; m[p.tipo].lost+=p.lost; m[p.tipo].posts++;
+      m[p.tipo].eng+=p.like_count+p.comments_count+p.shares+p.saved;
+      m[p.tipo].reach+=p.reach;
+    });
+    return Object.entries(m).map(([tipo,v])=>({
+      tipo, posts:v.posts,
+      saldoMedio: v.posts>0?parseFloat(((v.gained-v.lost)/v.posts).toFixed(1)):0,
+      gainedMedia: v.posts>0?parseFloat((v.gained/v.posts).toFixed(1)):0,
+      lostMedia:   v.posts>0?parseFloat((v.lost/v.posts).toFixed(1)):0,
+      taxaEng: v.reach>0?parseFloat(((v.eng/v.reach)*100).toFixed(1)):0,
+    })).sort((a,b)=>b.saldoMedio-a.saldoMedio);
+  }, [dadosPorPost]);
+
+  const maxAbs = Math.max(...dadosPorPost.map(p=>Math.max(p.gained,p.lost)),1);
+  const corSaldo = (s:number) => s>0?"#4CAF87":s<0?"hsl(355 82% 51%)":"hsl(0 0% 50%)";
+
+  const CustomTooltip = ({active,payload}: any) => {
+    if (!active||!payload?.length) return null;
+    const p = payload[0].payload;
+    return (
+      <div style={TT.contentStyle} className="max-w-[220px]">
+        <p className="font-semibold mb-1">{p.dataLabel} · {p.tipo} · {p.conta}</p>
+        <p className="text-[10px] text-muted-foreground mb-1 truncate">{p.caption}</p>
+        <p style={{color:"#4CAF87"}} className="text-[11px]">+{p.gained} seguidores ganhos</p>
+        <p style={{color:"hsl(355 82% 51%)"}} className="text-[11px]">−{p.lost} seguidores perdidos</p>
+        <p className="font-bold text-[12px] mt-1" style={{color:corSaldo(p.saldo)}}>
+          Saldo: {p.saldo>=0?"+":""}{p.saldo}
+        </p>
+      </div>
+    );
+  };
+
+  return (
+    <GlassCard>
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/60">
+            Impacto do conteúdo em seguidores
+          </p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            Ganho e perda de seguidores nos 2 dias após cada publicação
+          </p>
+        </div>
+        {/* Filtros */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Período */}
+          <div className="flex items-center gap-1.5 bg-card/60 border border-border rounded-lg px-2 py-1">
+            <span className="text-[9px] text-muted-foreground/60 uppercase tracking-widest">De</span>
+            <input type="date" value={de} onChange={e=>setDe(e.target.value)}
+              className="bg-transparent text-[11px] text-foreground outline-none w-[100px]"/>
+            <span className="text-[9px] text-muted-foreground/60 uppercase tracking-widest">até</span>
+            <input type="date" value={ate} onChange={e=>setAte(e.target.value)}
+              className="bg-transparent text-[11px] text-foreground outline-none w-[100px]"/>
+          </div>
+          {/* Formato */}
+          <div className="flex gap-1">
+            {["Todos","Reel","Imagem","Carrossel"].map(f=>(
+              <button key={f} onClick={()=>setFiltroFormato(f)}
+                className={cn("px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all border",
+                  filtroFormato===f?"bg-primary text-primary-foreground border-primary":"border-border text-muted-foreground hover:text-foreground"
+                )}>{f}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {dadosPorPost.length === 0 ? (
+        <p className="text-[11px] text-muted-foreground/50 py-6 text-center">
+          Nenhum post encontrado para os filtros selecionados.
+        </p>
+      ) : (
+        <>
+          {/* Resumo por formato — cards compactos */}
+          {filtroFormato === "Todos" && resumoPorFormato.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+              {resumoPorFormato.map(f=>(
+                <div key={f.tipo} className="rounded-lg border border-border/50 bg-card/30 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">{f.tipo}</p>
+                    <span className="text-[9px] text-muted-foreground/50">{f.posts} posts</span>
+                  </div>
+                  <p className={cn("font-display font-bold text-xl leading-none",
+                    f.saldoMedio>0?"text-emerald-400":f.saldoMedio<0?"text-red-400":"text-muted-foreground")}>
+                    {f.saldoMedio>=0?"+":""}{f.saldoMedio}
+                    <span className="text-[10px] font-normal ml-1 text-muted-foreground">seg./post em média</span>
+                  </p>
+                  <div className="flex gap-3 mt-2">
+                    <span className="text-[10px] text-emerald-400/80">+{f.gainedMedia} ganhos</span>
+                    <span className="text-[10px] text-red-400/80">−{f.lostMedia} perdidos</span>
+                    <span className="text-[10px] text-muted-foreground/60">{f.taxaEng}% eng.</span>
                   </div>
                 </div>
               ))}
-            </>
+            </div>
           )}
 
-          {!temProblema && (
-            <p className="text-[10px] text-emerald-400/60 pt-1">
-              Nenhum alerta crítico identificado no período.
-            </p>
+          {/* Gráfico por post */}
+          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-2">
+            Saldo por publicação — clique para detalhes
+          </p>
+          <ResponsiveContainer width="100%" height={Math.max(180, Math.min(dadosPorPost.length*18, 340))}>
+            <BarChart data={dadosPorPost} layout="vertical" margin={{left:0,right:40,top:0,bottom:0}}
+              onClick={e=>e?.activePayload && setDetalhePost(e.activePayload[0]?.payload)}>
+              <XAxis type="number" domain={[-maxAbs, maxAbs]} tickLine={false} axisLine={false}
+                tick={{fill:MUTED,fontSize:9}} tickFormatter={v=>v===0?"0":`${v>0?"+":""}${v}`}/>
+              <YAxis type="category" dataKey="dataLabel" width={72} tick={{fill:MUTED,fontSize:9}} tickLine={false} axisLine={false}
+                tickFormatter={(_,i)=>{
+                  const p=dadosPorPost[i];
+                  return p?`${p.dataLabel.slice(5)} ${p.tipo.slice(0,3)}`:""
+                }}/>
+              <Tooltip content={<CustomTooltip/>}/>
+              <Bar dataKey="saldo" radius={[0,4,4,0]} cursor="pointer" maxBarSize={16}>
+                {dadosPorPost.map((p,i)=>(
+                  <Cell key={i} fill={corSaldo(p.saldo)} opacity={detalhePost?.post_id===p.post_id?1:0.75}/>
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+
+          {/* Detalhe do post clicado */}
+          {detalhePost && (
+            <div className="mt-3 rounded-lg border border-border/40 bg-card/30 p-3 flex flex-wrap gap-4 items-start">
+              <div className="flex-1 min-w-[160px]">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 mb-1">Post selecionado</p>
+                <p className="text-[11px] font-semibold">{detalhePost.dataLabel} · {detalhePost.tipo} · {detalhePost.conta}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{(detalhePost.caption||"").slice(0,80)}{(detalhePost.caption?.length||0)>80?"…":""}</p>
+              </div>
+              <div className="flex gap-4 flex-wrap">
+                <div className="text-center">
+                  <p className="text-[9px] text-muted-foreground/50 uppercase tracking-widest">Ganhou</p>
+                  <p className="font-bold text-emerald-400 text-lg">+{detalhePost.gained}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[9px] text-muted-foreground/50 uppercase tracking-widest">Perdeu</p>
+                  <p className="font-bold text-red-400 text-lg">−{detalhePost.lost}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[9px] text-muted-foreground/50 uppercase tracking-widest">Saldo</p>
+                  <p className={cn("font-bold text-lg", detalhePost.saldo>=0?"text-emerald-400":"text-red-400")}>
+                    {detalhePost.saldo>=0?"+":""}{detalhePost.saldo}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[9px] text-muted-foreground/50 uppercase tracking-widest">Engaj.</p>
+                  <p className="font-bold text-foreground text-lg">
+                    {detalhePost.reach>0?((detalhePost.like_count+detalhePost.comments_count+detalhePost.shares+detalhePost.saved)/detalhePost.reach*100).toFixed(1):0}%
+                  </p>
+                </div>
+              </div>
+              {detalhePost.permalink && (
+                <a href={detalhePost.permalink} target="_blank" rel="noopener noreferrer"
+                  className="text-[10px] text-primary hover:underline flex items-center gap-1 self-center">
+                  Ver post <ExternalLink className="h-3 w-3"/>
+                </a>
+              )}
+              <button onClick={()=>setDetalhePost(null)} className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground self-start ml-auto">✕</button>
+            </div>
           )}
-        </div>
+
+          <p className="text-[9px] text-muted-foreground/30 mt-3">
+            Seguidores ganhos e perdidos nos 2 dias após cada publicação · dados diários do Instagram
+          </p>
+        </>
       )}
     </GlassCard>
   );
