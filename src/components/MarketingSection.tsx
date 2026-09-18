@@ -922,10 +922,14 @@ export function MarketingSection({ from, to }: Props) {
             <InstagramAlertas
               postsFiltered={postsFiltered}
               dailyFiltered={dailyFiltered}
+              dailyData={dailyData}
+              postsData={postsData}
               porFormato={porFormato}
               followersByAccount={followersByAccount}
               followersForecast={followersForecast}
+              followersForecastAll={followersForecast}
               igTaxaEng={igTaxaEng}
+              igAccount={igAccount}
             />
           )}
 
@@ -1066,10 +1070,14 @@ function Send(p:any){return<svg {...p} xmlns="http://www.w3.org/2000/svg" fill="
 interface AlertasProps {
   postsFiltered: any[];
   dailyFiltered: any[];
+  dailyData: any[];
+  postsData: any[];
   porFormato: any[];
   followersByAccount: Record<string, {first:number;last:number}>;
   followersForecast: Record<string, {per_day:number;per_30:number;next_30:number}> | null;
+  followersForecastAll: Record<string, {per_day:number;per_30:number;next_30:number}> | null;
   igTaxaEng: number;
+  igAccount: string | null;
 }
 
 type NivelAlerta = "vermelho" | "amarelo" | "verde";
@@ -1126,9 +1134,47 @@ function StickyCard({ nivel, label, numero, unidade, detalhe }: {
 }
 
 function InstagramAlertas({
-  postsFiltered, dailyFiltered, porFormato,
-  followersByAccount, followersForecast, igTaxaEng,
+  postsFiltered, dailyFiltered, dailyData, postsData, porFormato,
+  followersByAccount, followersForecast, followersForecastAll,
+  igTaxaEng, igAccount,
 }: AlertasProps) {
+
+  // Garante sempre as duas contas nos cards de seguidores
+  // quando "Todas" está selecionado — usa dailyData completo
+  const followersByAccountFull = useMemo(() => {
+    const base = igAccount ? followersByAccount : (() => {
+      const sorted: Record<string, {date:string;count:number}[]> = {};
+      dailyData.forEach(d => {
+        if (!sorted[d.username]) sorted[d.username] = [];
+        sorted[d.username].push({date:d.date, count:d.followers_count});
+      });
+      const result: Record<string,{first:number;last:number}> = {};
+      Object.entries(sorted).forEach(([acc, rows]) => {
+        const s = rows.sort((a,b)=>a.date.localeCompare(b.date));
+        result[acc] = {first:s[0].count, last:s[s.length-1].count};
+      });
+      return result;
+    })();
+    return base;
+  }, [igAccount, followersByAccount, dailyData]);
+
+  const forecast = igAccount ? followersForecast : followersForecastAll;
+
+  // Formato — inclui todos os formatos presentes nos posts do período, mesmo com 1 post
+  const porFormatoFull = useMemo(() => {
+    if (porFormato.length > 0) return porFormato;
+    const m: Record<string,{posts:number;eng:number;reach:number}> = {};
+    postsFiltered.forEach(p => {
+      const t = p.media_type==="VIDEO"?"Reel":p.media_type==="CAROUSEL_ALBUM"?"Carrossel":"Imagem";
+      if (!m[t]) m[t]={posts:0,eng:0,reach:0};
+      m[t].posts++; m[t].eng+=p.like_count+p.comments_count+p.shares+p.saved; m[t].reach+=p.reach;
+    });
+    return Object.entries(m).map(([tipo,v])=>({
+      tipo, posts:v.posts,
+      engPorPost:v.posts>0?Math.round(v.eng/v.posts):0,
+      taxaEng:v.reach>0?parseFloat(((v.eng/v.reach)*100).toFixed(1)):0,
+    })).sort((a,b)=>b.engPorPost-a.engPorPost);
+  }, [porFormato, postsFiltered]);
 
   const dadosRitmo = useMemo(() => {
     if (postsFiltered.length === 0) return null;
@@ -1150,21 +1196,22 @@ function InstagramAlertas({
   }, [igTaxaEng, postsFiltered.length]);
 
   const dadosCrescimento = useMemo(() => {
-    return Object.entries(followersByAccount).map(([acc, f]) => {
-      const forecast = followersForecast?.[acc];
-      const label = acc==="eduardocristianoriginal" ? "@EC" : "@CS";
+    return Object.entries(followersByAccountFull).map(([acc, f]) => {
+      const fc     = forecast?.[acc];
+      const label  = acc==="eduardocristianoriginal" ? "@EC" : "@CS";
       const delta  = f.last - f.first;
-      const perDay = forecast?.per_day ?? 0;
-      const proj30 = forecast?.next_30 ?? f.last;
-      const gained = dailyFiltered.filter(d=>d.username===acc).reduce((s,d)=>s+(d.followers_gained||0),0);
-      const lost   = dailyFiltered.filter(d=>d.username===acc).reduce((s,d)=>s+(d.followers_lost||0),0);
+      const perDay = fc?.per_day ?? 0;
+      const proj30 = fc?.next_30 ?? f.last;
+      const src    = igAccount ? dailyFiltered : dailyData;
+      const gained = src.filter(d=>d.username===acc).reduce((s,d)=>s+(d.followers_gained||0),0);
+      const lost   = src.filter(d=>d.username===acc).reduce((s,d)=>s+(d.followers_lost||0),0);
       const nivel: NivelAlerta = (delta < 0 || perDay < 0) ? "vermelho" : perDay < 1 ? "amarelo" : "verde";
       return { label, delta, perDay, proj30, gained, lost, nivel };
     });
-  }, [followersByAccount, followersForecast, dailyFiltered]);
+  }, [followersByAccountFull, forecast, dailyFiltered, dailyData, igAccount]);
 
   const dadosFormato = useMemo(() => {
-    if (porFormato.length === 0) return [];
+    if (porFormatoFull.length === 0) return [];
     const imp: Record<string,{gained:number;lost:number;posts:number}> = {};
     postsFiltered.forEach(p => {
       const t = p.media_type==="VIDEO"?"Reel":p.media_type==="CAROUSEL_ALBUM"?"Carrossel":"Imagem";
@@ -1176,14 +1223,14 @@ function InstagramAlertas({
       });
       imp[t].posts++;
     });
-    return porFormato.map(f => {
+    return porFormatoFull.map(f => {
       const i = imp[f.tipo]??{gained:0,lost:0,posts:1};
       const saldo = (i.gained-i.lost)/i.posts;
       const nivel: NivelAlerta = (f.taxaEng<1||saldo<-2)?"vermelho":(f.taxaEng<2||saldo<0)?"amarelo":"verde";
       return { tipo:f.tipo, posts:f.posts, taxaEng:f.taxaEng, engPorPost:f.engPorPost,
         gainedMedia:(i.gained/i.posts).toFixed(1), lostMedia:(i.lost/i.posts).toFixed(1), nivel };
     });
-  }, [porFormato, postsFiltered, dailyFiltered]);
+  }, [porFormatoFull, postsFiltered, dailyFiltered]);
 
   return (
     <GlassCard>
