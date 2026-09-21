@@ -163,6 +163,7 @@ function CampaignAI({ campaign }: { campaign: EmailCampaign }) {
   const generate = useCallback(async () => {
     setLoading(true);
     setError("");
+    setResult(null);
     try {
       // Análise do assunto: detectar padrões
       const subject = campaign.subject ?? "";
@@ -221,10 +222,14 @@ Responda APENAS com JSON válido neste formato, sem texto antes ou depois:
       let data: any;
       try { data = await resp.json(); } catch { throw new Error("Resposta inválida da API"); }
       const text = data.content?.find((b: any) => b.type === "text")?.text ?? "";
-      const clean = text.replace(/```json[\s\S]*?```|```/g, "").trim();
+      // Extrair primeiro bloco JSON da resposta (robusto a texto antes/depois)
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("Nenhum JSON na resposta da API");
       let parsed: any;
-      try { parsed = JSON.parse(clean); } catch { throw new Error("JSON inválido: " + clean.slice(0, 80)); }
-      if (!parsed.pontos || !parsed.recomendacoes) throw new Error("Estrutura inesperada");
+      try { parsed = JSON.parse(jsonMatch[0]); } catch (pe) {
+        throw new Error("JSON inválido: " + String(pe).slice(0, 60));
+      }
+      if (!parsed.pontos || !parsed.recomendacoes) throw new Error("Estrutura inesperada na resposta");
       setResult(parsed);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -235,16 +240,15 @@ Responda APENAS com JSON válido neste formato, sem texto antes ou depois:
     }
   }, [campaign]);
 
-  // Dispara automaticamente ao montar
-  useEffect(() => {
-    let cancelled = false;
-    const run = async () => {
-      if (cancelled) return;
-      await generate();
-    };
-    run();
-    return () => { cancelled = true; };
-  }, [campaign.id]);
+  if (!result && !loading && !error) {
+    return (
+      <button onClick={generate}
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-primary/30 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors">
+        <Sparkles className="h-3.5 w-3.5" />
+        Gerar análise com IA
+      </button>
+    );
+  }
 
   if (loading) {
     return (
@@ -264,9 +268,10 @@ Responda APENAS com JSON válido neste formato, sem texto antes ou depois:
 
   if (error) {
     return (
-      <div className="flex items-center justify-between">
+      <div className="space-y-2">
         <p className="text-xs text-primary">{error}</p>
-        <button onClick={generate} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1">
+        <button onClick={generate}
+          className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
           <Sparkles className="h-3 w-3" /> Tentar novamente
         </button>
       </div>
