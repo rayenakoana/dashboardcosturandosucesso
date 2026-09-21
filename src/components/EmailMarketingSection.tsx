@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { GlassCard } from "@/components/GlassCard";
 import { KPICard } from "@/components/KPICard";
 import { Skeleton } from "@/components/ui/skeleton";
