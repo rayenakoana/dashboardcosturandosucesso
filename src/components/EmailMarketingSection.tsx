@@ -144,33 +144,61 @@ function DelivScore({ campaign }: { campaign: EmailCampaign }) {
 // ── Análise IA por campanha ───────────────────────────────────────────────────
 
 function CampaignAI({ campaign }: { campaign: EmailCampaign }) {
+  const [result, setResult] = useState<{
+    insight_assunto: string;
+    pontos: string[];
+    riscos: string[];
+    recomendacoes: string[];
+  } | null>(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult]   = useState<{ pontos: string[]; riscos: string[]; recomendacoes: string[] } | null>(null);
   const [error, setError]     = useState("");
 
   const generate = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const prompt = `Você é especialista em email marketing para o setor de educação empresarial para confecções e indústria têxtil no Brasil.
+      // Análise do assunto: detectar padrões
+      const subject = campaign.subject ?? "";
+      const temNumero   = /\d/.test(subject);
+      const temEmoji    = /[\u{1F300}-\u{1FAFF}]/u.test(subject);
+      const temPergunta = subject.includes("?");
+      const temUrgencia = /agora|hoje|últim|última|encerr|limit|vagas|expira/i.test(subject);
+      const tamanho     = subject.length;
+      const tipoPalavra = temPergunta ? "pergunta" : temUrgencia ? "urgência" : temNumero ? "número/dado" : "declarativo";
 
-Analise esta campanha de email:
+      const prompt = `Você é especialista sênior em copywriting e email marketing para educação empresarial voltada a confecções e indústria têxtil brasileira. A empresa é a Costurando Sucesso (CS), que vende cursos, mentorias e consultorias para donos e gestores de confecções.
+
+CAMPANHA ANALISADA:
 - Nome: ${campaign.name}
-- Tipo: ${campaign.type === "news" ? "Newsletter" : "Comercial"}
-- Enviado em: ${campaign.sent_at ? new Date(campaign.sent_at).toLocaleDateString("pt-BR") : "N/A"}
+- Tipo: ${campaign.type === "news" ? "Newsletter (CS News)" : "Comercial (lançamento/oferta)"}
+- Assunto: "${subject || "não disponível"}"
+- Enviado em: ${campaign.sent_at ? new Date(campaign.sent_at).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }) : "N/A"}
 - Destinatários: ${campaign.recipients.toLocaleString("pt-BR")}
-- Taxa de entrega: ${pct(campaign.delivery_rate)}
-- Taxa de abertura: ${pct(campaign.open_rate)} (benchmark setor: 25-35%)
-- Taxa de clique: ${pct(campaign.click_rate)} (benchmark setor: 2-4%)
-- Bounce: ${pct(campaign.bounce_rate)} (máx recomendado: 2%)
-- Spam: ${pct(campaign.spam_rate)} (máx recomendado: 0.1%)
-- Descadastros: ${pct(campaign.unsubscribe_rate)} (máx recomendado: 0.5%)
 
-Responda APENAS com JSON válido neste formato exato, sem texto antes ou depois:
+MÉTRICAS REAIS:
+- Abertura: ${pct(campaign.open_rate)} (benchmark do setor: 25–35%)
+- Clique: ${pct(campaign.click_rate)} (benchmark: 2–4%)
+- Bounce: ${pct(campaign.bounce_rate)} (máx: 2%)
+- Spam: ${pct(campaign.spam_rate)} (máx: 0.1%)
+- Descadastros: ${pct(campaign.unsubscribe_rate)} (máx: 0.5%)
+- Score entregabilidade: ${Math.round(campaign.delivery_rate)}%
+
+ANÁLISE AUTOMÁTICA DO ASSUNTO:
+- Gatilho detectado: ${tipoPalavra}
+- Tem número/dado: ${temNumero ? "sim" : "não"}
+- Tem emoji: ${temEmoji ? "sim" : "não"}
+- Tem urgência: ${temUrgencia ? "sim" : "não"}
+- Comprimento: ${tamanho} caracteres (ideal: 40–60)
+
+CONTEXTO DO PÚBLICO:
+Empresários e gestores de confecções brasileiras. Leem email cedo (6h–8h) ou no almoço. São práticos e diretos — respondem bem a assuntos que prometem resolver um problema do chão de fábrica. Desconfiam de promessas genéricas. Abertura acima de 30% é excelente para esse público; abaixo de 15% é sinal de assunto fraco ou horário errado.
+
+Responda APENAS com JSON válido neste formato, sem texto antes ou depois:
 {
-  "pontos": ["ponto positivo 1", "ponto positivo 2", "ponto positivo 3"],
-  "riscos": ["risco 1", "risco 2"],
-  "recomendacoes": ["recomendação concreta 1", "recomendação concreta 2", "recomendação concreta 3"]
+  "insight_assunto": "2 frases diretas analisando o assunto '${subject}': o que o gatilho usado (${tipoPalavra}) provavelmente causou nesse público, e como isso se reflete na abertura de ${pct(campaign.open_rate)}. Seja específico ao assunto real, não genérico.",
+  "pontos": ["ponto positivo concreto 1 baseado nas métricas e no assunto", "ponto positivo 2", "ponto positivo 3"],
+  "riscos": ["risco concreto 1 com número real da campanha", "risco 2"],
+  "recomendacoes": ["recomendação acionável 1 específica para o próximo email similar", "recomendação 2", "recomendação 3"]
 }`;
 
       const resp = await fetch("/api/claude", {
@@ -178,7 +206,7 @@ Responda APENAS com JSON válido neste formato exato, sem texto antes ou depois:
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
-          max_tokens: 1000,
+          max_tokens: 1200,
           messages: [{ role: "user", content: prompt }],
         }),
       });
@@ -193,47 +221,70 @@ Responda APENAS com JSON válido neste formato exato, sem texto antes ou depois:
     }
   }, [campaign]);
 
-  if (!result && !loading) {
-    return (
-      <button onClick={generate}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-primary/30 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors">
-        <Sparkles className="h-3.5 w-3.5" />
-        Gerar análise com IA
-      </button>
-    );
-  }
+  // Dispara automaticamente ao montar
+  useEffect(() => { generate(); }, [campaign.id]);
 
   if (loading) {
     return (
-      <div className="space-y-2">
-        {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-4 rounded" />)}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
+          Analisando campanha...
+        </div>
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-3.5 rounded" style={{ width: `${88 - i * 10}%` }} />
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (error) return <p className="text-xs text-primary">{error}</p>;
+  if (error) {
+    return (
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-primary">{error}</p>
+        <button onClick={generate} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1">
+          <Sparkles className="h-3 w-3" /> Tentar novamente
+        </button>
+      </div>
+    );
+  }
 
   if (!result) return null;
 
   return (
-    <div className="space-y-4">
-      {/* Pontos positivos */}
-      <div>
-        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-2 flex items-center gap-1">
-          <Trophy className="h-3 w-3" /> Pontos positivos
-        </p>
-        <ul className="space-y-1.5">
-          {result.pontos.map((p, i) => (
-            <li key={i} className="flex gap-2 text-[11px] text-foreground/80">
-              <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0 mt-0.5" />
-              {p}
-            </li>
-          ))}
-        </ul>
-      </div>
+    <div className="space-y-5">
+      {/* Insight do assunto — destaque visual */}
+      {result.insight_assunto && (
+        <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 flex gap-3">
+          <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1.5">
+              Insight do assunto
+            </p>
+            <p className="text-[11px] text-foreground/90 leading-relaxed">{result.insight_assunto}</p>
+          </div>
+        </div>
+      )}
 
-      {/* Riscos */}
-      {result.riscos.length > 0 && (
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Pontos positivos */}
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-2 flex items-center gap-1">
+            <Trophy className="h-3 w-3" /> Pontos positivos
+          </p>
+          <ul className="space-y-1.5">
+            {result.pontos.map((p, i) => (
+              <li key={i} className="flex gap-2 text-[11px] text-foreground/80">
+                <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0 mt-0.5" />
+                {p}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Riscos */}
         <div>
           <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-2 flex items-center gap-1">
             <TriangleAlert className="h-3 w-3" /> Pontos de atenção
@@ -247,25 +298,25 @@ Responda APENAS com JSON válido neste formato exato, sem texto antes ou depois:
             ))}
           </ul>
         </div>
-      )}
 
-      {/* Recomendações */}
-      <div>
-        <p className="text-[10px] font-bold uppercase tracking-wider text-gold mb-2 flex items-center gap-1">
-          <Sparkles className="h-3 w-3" /> Recomendações para próxima
-        </p>
-        <ul className="space-y-1.5">
-          {result.recomendacoes.map((rec, i) => (
-            <li key={i} className="flex gap-2 text-[11px] text-foreground/80">
-              <span className="text-gold font-bold shrink-0">{i + 1}.</span>
-              {rec}
-            </li>
-          ))}
-        </ul>
+        {/* Recomendações */}
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-gold mb-2 flex items-center gap-1">
+            <Sparkles className="h-3 w-3" /> Para o próximo
+          </p>
+          <ul className="space-y-1.5">
+            {result.recomendacoes.map((rec, i) => (
+              <li key={i} className="flex gap-2 text-[11px] text-foreground/80">
+                <span className="text-gold font-bold shrink-0">{i + 1}.</span>
+                {rec}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
       <button onClick={generate}
-        className="text-[10px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+        className="text-[10px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 mt-1">
         <Sparkles className="h-3 w-3" /> Regerar análise
       </button>
     </div>
