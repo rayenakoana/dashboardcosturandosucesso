@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { GlassCard } from "@/components/GlassCard";
 import { KPICard } from "@/components/KPICard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,14 +7,17 @@ import {
   Mail, Zap, TrendingUp, Users, MousePointerClick,
   BarChart2, ChevronDown, ChevronUp, X, ArrowUpDown,
   CheckCircle2, AlertCircle, Newspaper, ShoppingBag,
+  Sparkles, Shield, GitCompare, Clock, ArrowLeft,
+  TriangleAlert, Trophy, Layers,
 } from "lucide-react";
 import {
-  BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+  BarChart, Bar, RadarChart, Radar, PolarGrid, PolarAngleAxis,
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  Cell, Legend,
 } from "recharts";
 import { cn } from "@/lib/utils";
 
-// ── Constantes visuais ────────────────────────────────────────────────────────
+// ── Visuais ───────────────────────────────────────────────────────────────────
 
 const TT = {
   contentStyle: {
@@ -22,19 +25,30 @@ const TT = {
     border: "1px solid hsl(240 15% 14%)",
     borderRadius: 10, fontSize: 11,
     color: "hsl(0 0% 96%)",
-    minWidth: 130, padding: "8px 12px",
+    minWidth: 140, padding: "8px 12px",
   },
   labelStyle: { color: "hsl(0 0% 96%)", fontWeight: 600, marginBottom: 2 },
   itemStyle:  { color: "hsl(0 0% 80%)" },
   cursor:     { fill: "hsl(0 0% 100% / 0.03)" },
 };
 
-const P    = "hsl(355 82% 51%)";
-const GOLD = "hsl(43 96% 56%)";
-const MUTED = "hsl(0 0% 60%)";
+const P     = "hsl(355 82% 51%)";
+const GOLD  = "hsl(43 96% 56%)";
+const GREEN = "hsl(142 71% 45%)";
+const MUTED = "hsl(0 0% 50%)";
 
-const pct = (n: number) => n.toFixed(1) + "%";
-const fmt = (n: number) => n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(Math.round(n));
+const pct  = (n: number) => n.toFixed(1) + "%";
+const fmt  = (n: number) => n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(Math.round(n));
+
+// Benchmark do setor — educação/confecção B2B Brasil
+const BENCHMARK = {
+  open_rate:        { good: 30, warn: 20,  label: "Abertura",     ref: "Setor B2B Educação" },
+  click_rate:       { good: 3,  warn: 1.5, label: "Clique",       ref: "Setor B2B Educação" },
+  bounce_rate:      { good: 1,  warn: 2,   label: "Bounce",       ref: "Máx recomendado",   invert: true },
+  spam_rate:        { good: 0.05, warn: 0.1, label: "Spam",       ref: "Máx recomendado",   invert: true },
+  unsubscribe_rate: { good: 0.3, warn: 0.5, label: "Descadastro", ref: "Máx recomendado",   invert: true },
+  delivery_rate:    { good: 98, warn: 95,  label: "Entrega",      ref: "Mínimo esperado" },
+};
 
 type EmailTab = "visao-geral" | "campanhas" | "automacoes";
 
@@ -54,86 +68,627 @@ function TypeBadge({ type }: { type: "news" | "commercial" }) {
         ? "bg-blue-500/15 text-blue-400"
         : "bg-primary/15 text-primary"
     )}>
-      {type === "news" ? <Newspaper className="h-2.5 w-2.5" /> : <ShoppingBag className="h-2.5 w-2.5" />}
+      {type === "news"
+        ? <Newspaper className="h-2.5 w-2.5" />
+        : <ShoppingBag className="h-2.5 w-2.5" />}
       {type === "news" ? "News" : "Comercial"}
     </span>
   );
 }
 
-// ── Drawer de detalhe de campanha ─────────────────────────────────────────────
+// ── Score de entregabilidade ──────────────────────────────────────────────────
 
-function CampaignDrawer({ campaign, onClose }: { campaign: EmailCampaign; onClose: () => void }) {
-  const metrics = [
-    { label: "Destinatários",    value: fmt(campaign.recipients),          icon: Users },
-    { label: "Entregues",        value: fmt(campaign.delivered),           icon: CheckCircle2 },
-    { label: "Taxa de entrega",  value: pct(campaign.delivery_rate),       icon: CheckCircle2 },
-    { label: "Taxa de abertura", value: pct(campaign.open_rate),           icon: Mail },
-    { label: "Taxa de clique",   value: pct(campaign.click_rate),          icon: MousePointerClick },
-    { label: "Bounce",           value: pct(campaign.bounce_rate),         icon: AlertCircle },
-    { label: "Spam",             value: pct(campaign.spam_rate),           icon: AlertCircle },
-    { label: "Descadastros",     value: pct(campaign.unsubscribe_rate),    icon: AlertCircle },
-  ];
+function calcDelivScore(c: EmailCampaign): { score: number; level: "green" | "yellow" | "red"; label: string } {
+  let score = 100;
+  // Penalidades
+  if (c.bounce_rate > 2)      score -= 30;
+  else if (c.bounce_rate > 1) score -= 15;
+  if (c.spam_rate > 0.1)      score -= 25;
+  else if (c.spam_rate > 0.05) score -= 10;
+  if (c.unsubscribe_rate > 0.5) score -= 15;
+  else if (c.unsubscribe_rate > 0.3) score -= 7;
+  if (c.delivery_rate < 95)   score -= 20;
+  else if (c.delivery_rate < 98) score -= 8;
+  score = Math.max(0, Math.min(100, score));
+  const level = score >= 75 ? "green" : score >= 50 ? "yellow" : "red";
+  const label = score >= 75 ? "Boa entregabilidade" : score >= 50 ? "Atenção necessária" : "Risco de reputação";
+  return { score, level, label };
+}
 
-  const barData = [
-    { name: "Abertura",   value: campaign.open_rate },
-    { name: "Clique",     value: campaign.click_rate },
-    { name: "Bounce",     value: campaign.bounce_rate },
-    { name: "Spam",       value: campaign.spam_rate },
-    { name: "Unsub",      value: campaign.unsubscribe_rate },
-  ];
+function DelivScore({ campaign }: { campaign: EmailCampaign }) {
+  const { score, level, label } = calcDelivScore(campaign);
+  const color = level === "green" ? GREEN : level === "yellow" ? GOLD : P;
+  const pctW  = `${score}%`;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-background border-l border-border h-full overflow-y-auto p-5 space-y-5 shadow-2xl">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3">
-          <div>
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-semibold">{label}</span>
+        <span className="text-lg font-bold" style={{ color }}>{score}/100</span>
+      </div>
+      <div className="h-2 rounded-full bg-muted/30 overflow-hidden">
+        <div className="h-full rounded-full transition-all" style={{ width: pctW, background: color }} />
+      </div>
+      <div className="grid grid-cols-3 gap-2 mt-3">
+        {[
+          { key: "bounce_rate",      val: campaign.bounce_rate,      good: 1,    warn: 2,    inv: true  },
+          { key: "spam_rate",        val: campaign.spam_rate,        good: 0.05, warn: 0.1,  inv: true  },
+          { key: "unsubscribe_rate", val: campaign.unsubscribe_rate, good: 0.3,  warn: 0.5,  inv: true  },
+        ].map(({ key, val, good, warn, inv }) => {
+          const ok  = inv ? val <= good : val >= good;
+          const med = inv ? val <= warn : val >= warn;
+          const col = ok ? GREEN : med ? GOLD : P;
+          const lbl = BENCHMARK[key as keyof typeof BENCHMARK]?.label ?? key;
+          return (
+            <div key={key} className="text-center">
+              <p className="text-[9px] text-muted-foreground">{lbl}</p>
+              <p className="text-sm font-bold" style={{ color: col }}>{pct(val)}</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Análise IA por campanha ───────────────────────────────────────────────────
+
+function CampaignAI({ campaign }: { campaign: EmailCampaign }) {
+  const [loading, setLoading] = useState(false);
+  const [result, setResult]   = useState<{ pontos: string[]; riscos: string[]; recomendacoes: string[] } | null>(null);
+  const [error, setError]     = useState("");
+
+  const generate = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const prompt = `Você é especialista em email marketing para o setor de educação empresarial para confecções e indústria têxtil no Brasil.
+
+Analise esta campanha de email:
+- Nome: ${campaign.name}
+- Tipo: ${campaign.type === "news" ? "Newsletter" : "Comercial"}
+- Enviado em: ${campaign.sent_at ? new Date(campaign.sent_at).toLocaleDateString("pt-BR") : "N/A"}
+- Destinatários: ${campaign.recipients.toLocaleString("pt-BR")}
+- Taxa de entrega: ${pct(campaign.delivery_rate)}
+- Taxa de abertura: ${pct(campaign.open_rate)} (benchmark setor: 25-35%)
+- Taxa de clique: ${pct(campaign.click_rate)} (benchmark setor: 2-4%)
+- Bounce: ${pct(campaign.bounce_rate)} (máx recomendado: 2%)
+- Spam: ${pct(campaign.spam_rate)} (máx recomendado: 0.1%)
+- Descadastros: ${pct(campaign.unsubscribe_rate)} (máx recomendado: 0.5%)
+
+Responda APENAS com JSON válido neste formato exato, sem texto antes ou depois:
+{
+  "pontos": ["ponto positivo 1", "ponto positivo 2", "ponto positivo 3"],
+  "riscos": ["risco 1", "risco 2"],
+  "recomendacoes": ["recomendação concreta 1", "recomendação concreta 2", "recomendação concreta 3"]
+}`;
+
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      const data = await resp.json();
+      const text = data.content?.find((b: any) => b.type === "text")?.text ?? "";
+      const clean = text.replace(/```json|```/g, "").trim();
+      setResult(JSON.parse(clean));
+    } catch (e) {
+      setError("Erro ao gerar análise. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  }, [campaign]);
+
+  if (!result && !loading) {
+    return (
+      <button onClick={generate}
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-primary/30 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors">
+        <Sparkles className="h-3.5 w-3.5" />
+        Gerar análise com IA
+      </button>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-4 rounded" />)}
+      </div>
+    );
+  }
+
+  if (error) return <p className="text-xs text-primary">{error}</p>;
+
+  if (!result) return null;
+
+  return (
+    <div className="space-y-4">
+      {/* Pontos positivos */}
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-2 flex items-center gap-1">
+          <Trophy className="h-3 w-3" /> Pontos positivos
+        </p>
+        <ul className="space-y-1.5">
+          {result.pontos.map((p, i) => (
+            <li key={i} className="flex gap-2 text-[11px] text-foreground/80">
+              <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0 mt-0.5" />
+              {p}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Riscos */}
+      {result.riscos.length > 0 && (
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-2 flex items-center gap-1">
+            <TriangleAlert className="h-3 w-3" /> Pontos de atenção
+          </p>
+          <ul className="space-y-1.5">
+            {result.riscos.map((r, i) => (
+              <li key={i} className="flex gap-2 text-[11px] text-foreground/80">
+                <AlertCircle className="h-3 w-3 text-primary shrink-0 mt-0.5" />
+                {r}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Recomendações */}
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-gold mb-2 flex items-center gap-1">
+          <Sparkles className="h-3 w-3" /> Recomendações para próxima
+        </p>
+        <ul className="space-y-1.5">
+          {result.recomendacoes.map((rec, i) => (
+            <li key={i} className="flex gap-2 text-[11px] text-foreground/80">
+              <span className="text-gold font-bold shrink-0">{i + 1}.</span>
+              {rec}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <button onClick={generate}
+        className="text-[10px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+        <Sparkles className="h-3 w-3" /> Regerar análise
+      </button>
+    </div>
+  );
+}
+
+// ── Página completa de campanha ───────────────────────────────────────────────
+
+function CampaignPage({
+  campaign,
+  allCampaigns,
+  onBack,
+}: {
+  campaign: EmailCampaign;
+  allCampaigns: EmailCampaign[];
+  onBack: () => void;
+}) {
+  // Detectar par A/B
+  const abPair = useMemo(() => {
+    if (!campaign.ab_group_id) return null;
+    return allCampaigns.filter(c => c.ab_group_id === campaign.ab_group_id && c.id !== campaign.id);
+  }, [campaign, allCampaigns]);
+
+  // Dados históricos de campanhas do mesmo tipo para linha de tendência
+  const historico = useMemo(() => {
+    return allCampaigns
+      .filter(c => c.type === campaign.type && c.sent_at)
+      .sort((a, b) => (a.sent_at ?? "") < (b.sent_at ?? "") ? -1 : 1)
+      .slice(-12)
+      .map(c => ({
+        data: c.sent_at ? new Date(c.sent_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "",
+        abertura: parseFloat(c.open_rate.toFixed(1)),
+        clique:   parseFloat(c.click_rate.toFixed(1)),
+        atual:    c.id === campaign.id,
+      }));
+  }, [campaign, allCampaigns]);
+
+  // Previsão simples — média dos últimos 3
+  const previsao = useMemo(() => {
+    const recentes = allCampaigns
+      .filter(c => c.type === campaign.type && c.sent_at && c.id !== campaign.id)
+      .sort((a, b) => (a.sent_at ?? "") > (b.sent_at ?? "") ? -1 : 1)
+      .slice(0, 5);
+    if (recentes.length < 2) return null;
+    const avgOpen  = recentes.reduce((s, c) => s + c.open_rate, 0) / recentes.length;
+    const avgClick = recentes.reduce((s, c) => s + c.click_rate, 0) / recentes.length;
+    const trend    = recentes[0].open_rate - recentes[recentes.length - 1].open_rate > 2 ? "queda" :
+                     recentes[0].open_rate - recentes[recentes.length - 1].open_rate < -2 ? "alta" : "estável";
+    return { avgOpen, avgClick, trend, n: recentes.length };
+  }, [campaign, allCampaigns]);
+
+  // Radar vs benchmark
+  const radarData = [
+    { metric: "Abertura",  valor: Math.min(campaign.open_rate / 35 * 100, 100),  bench: 100 },
+    { metric: "Clique",    valor: Math.min(campaign.click_rate / 3 * 100, 100),   bench: 100 },
+    { metric: "Entrega",   valor: Math.min(campaign.delivery_rate / 99 * 100, 100), bench: 100 },
+    { metric: "Anti-bounce", valor: Math.max(0, 100 - campaign.bounce_rate / 2 * 100), bench: 100 },
+    { metric: "Anti-spam", valor: Math.max(0, 100 - campaign.spam_rate / 0.1 * 100),   bench: 100 },
+  ];
+
+  const { score: delivScore, level: delivLevel } = calcDelivScore(campaign);
+
+  return (
+    <div className="space-y-5">
+      {/* Voltar */}
+      <button onClick={onBack}
+        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-3.5 w-3.5" /> Voltar às campanhas
+      </button>
+
+      {/* Header da campanha */}
+      <GlassCard>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="space-y-1.5">
             <TypeBadge type={campaign.type} />
-            <h2 className="text-sm font-bold mt-1.5 leading-snug">{campaign.name}</h2>
+            <h2 className="text-base font-bold leading-snug">{campaign.name}</h2>
             {campaign.subject && (
-              <p className="text-[11px] text-muted-foreground mt-0.5">"{campaign.subject}"</p>
+              <p className="text-[11px] text-muted-foreground">Assunto: "{campaign.subject}"</p>
             )}
-            <p className="text-[10px] text-muted-foreground mt-1">
-              {campaign.sent_at ? new Date(campaign.sent_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
+            <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-1">
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {campaign.sent_at
+                  ? new Date(campaign.sent_at).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "long", year: "numeric" })
+                  : "Data não disponível"}
+              </span>
+              <span className="flex items-center gap-1">
+                <Users className="h-3 w-3" />
+                {fmt(campaign.recipients)} destinatários
+              </span>
               {campaign.version !== "general" && (
-                <span className="ml-2 px-1.5 py-0.5 rounded bg-gold/15 text-gold font-bold text-[9px]">
+                <span className="px-1.5 py-0.5 rounded bg-gold/15 text-gold font-bold text-[9px]">
                   Versão {campaign.version}
                 </span>
               )}
+            </div>
+          </div>
+
+          {/* Score de entregabilidade resumido */}
+          <div className="text-right">
+            <p className="text-[10px] text-muted-foreground mb-0.5">Score entregabilidade</p>
+            <p className="text-3xl font-bold" style={{
+              color: delivLevel === "green" ? GREEN : delivLevel === "yellow" ? GOLD : P
+            }}>
+              {delivScore}
             </p>
+            <p className="text-[9px] text-muted-foreground">/100</p>
+          </div>
+        </div>
+      </GlassCard>
+
+      {/* KPIs principais */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { title: "Abertura",     value: pct(campaign.open_rate),      bench: 30,   inv: false, icon: Mail            },
+          { title: "Clique",       value: pct(campaign.click_rate),      bench: 3,    inv: false, icon: MousePointerClick },
+          { title: "Bounce",       value: pct(campaign.bounce_rate),     bench: 2,    inv: true,  icon: AlertCircle     },
+          { title: "Descadastros", value: pct(campaign.unsubscribe_rate),bench: 0.5,  inv: true,  icon: Users           },
+        ].map(({ title, value, bench, inv, icon: Icon }) => {
+          const num = parseFloat(value);
+          const ok  = inv ? num <= bench : num >= bench;
+          return (
+            <KPICard key={title} title={title} value={value} icon={Icon}
+              subtitle={ok
+                ? `✓ ${inv ? "dentro" : "acima"} do benchmark (${bench}%)`
+                : `⚠ benchmark: ${bench}%`}
+              trend={ok ? "up" : "down"} />
+          );
+        })}
+      </div>
+
+      {/* Radar + Entregabilidade */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <GlassCard>
+          <SubTitle>Performance vs benchmark do setor</SubTitle>
+          <ResponsiveContainer width="100%" height={200}>
+            <RadarChart data={radarData}>
+              <PolarGrid stroke="hsl(0 0% 20%)" />
+              <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: MUTED }} />
+              <Radar name="Benchmark" dataKey="bench" stroke={MUTED} fill={MUTED} fillOpacity={0.1} strokeDasharray="4 2" />
+              <Radar name="Campanha"  dataKey="valor" stroke={P}     fill={P}     fillOpacity={0.25} />
+              <Tooltip {...TT} formatter={(v: number) => v.toFixed(0) + " pts"} />
+              <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+            </RadarChart>
+          </ResponsiveContainer>
+        </GlassCard>
+
+        <GlassCard>
+          <SubTitle>Score de entregabilidade</SubTitle>
+          <DelivScore campaign={campaign} />
+        </GlassCard>
+      </div>
+
+      {/* Tendência histórica */}
+      {historico.length > 2 && (
+        <GlassCard>
+          <SubTitle>
+            Tendência — últimas {historico.length} campanhas {campaign.type === "news" ? "news" : "comerciais"}
+          </SubTitle>
+          <ResponsiveContainer width="100%" height={160}>
+            <LineChart data={historico}>
+              <XAxis dataKey="data" tick={{ fontSize: 9, fill: MUTED }} axisLine={false} tickLine={false} />
+              <YAxis hide domain={[0, "auto"]} />
+              <Tooltip {...TT} formatter={(v: number) => pct(v)} />
+              <Line type="monotone" dataKey="abertura" stroke={P}    strokeWidth={2} dot={(props: any) => {
+                const { cx, cy, payload } = props;
+                return payload.atual
+                  ? <circle key={`dot-${cx}-${cy}`} cx={cx} cy={cy} r={5} fill={P} stroke="hsl(240 20% 11%)" strokeWidth={2} />
+                  : <circle key={`dot-${cx}-${cy}`} cx={cx} cy={cy} r={2} fill={P} />;
+              }} />
+              <Line type="monotone" dataKey="clique"   stroke={GOLD} strokeWidth={1.5} dot={false} />
+              <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+            </LineChart>
+          </ResponsiveContainer>
+          {previsao && (
+            <div className="mt-3 p-3 rounded-lg bg-muted/20 border border-border/50">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                Previsão próxima campanha similar
+              </p>
+              <div className="flex gap-6">
+                <div>
+                  <p className="text-[9px] text-muted-foreground">Abertura esperada</p>
+                  <p className="text-sm font-bold text-primary">{pct(previsao.avgOpen)}</p>
+                </div>
+                <div>
+                  <p className="text-[9px] text-muted-foreground">Clique esperado</p>
+                  <p className="text-sm font-bold" style={{ color: GOLD }}>{pct(previsao.avgClick)}</p>
+                </div>
+                <div>
+                  <p className="text-[9px] text-muted-foreground">Tendência</p>
+                  <p className={cn("text-sm font-bold",
+                    previsao.trend === "alta" ? "text-emerald-400" :
+                    previsao.trend === "queda" ? "text-primary" : "text-muted-foreground")}>
+                    {previsao.trend === "alta" ? "↗ Alta" : previsao.trend === "queda" ? "↘ Queda" : "→ Estável"}
+                  </p>
+                </div>
+              </div>
+              <p className="text-[9px] text-muted-foreground mt-1.5">
+                Baseado nas últimas {previsao.n} campanhas do mesmo tipo
+              </p>
+            </div>
+          )}
+        </GlassCard>
+      )}
+
+      {/* Comparação A/B automática */}
+      {abPair && abPair.length > 0 && (
+        <GlassCard>
+          <SubTitle>Teste A/B — comparação automática</SubTitle>
+          <div className="grid grid-cols-2 gap-4">
+            {[campaign, ...abPair].slice(0, 2).map((c, idx) => {
+              const isWinner = idx === 0
+                ? campaign.open_rate >= (abPair[0]?.open_rate ?? 0)
+                : (abPair[0]?.open_rate ?? 0) > campaign.open_rate;
+              return (
+                <div key={c.id} className={cn(
+                  "rounded-xl p-4 border",
+                  isWinner ? "border-emerald-500/40 bg-emerald-500/5" : "border-border bg-muted/10"
+                )}>
+                  {isWinner && (
+                    <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-400 mb-2">
+                      <Trophy className="h-3 w-3" /> Versão vencedora
+                    </div>
+                  )}
+                  <p className="text-[10px] font-bold mb-3">
+                    Versão {c.version} — {c.name}
+                  </p>
+                  {[
+                    { l: "Abertura",  v: pct(c.open_rate) },
+                    { l: "Clique",    v: pct(c.click_rate) },
+                    { l: "Bounce",    v: pct(c.bounce_rate) },
+                    { l: "Enviados",  v: fmt(c.recipients) },
+                  ].map(({ l, v }) => (
+                    <div key={l} className="flex justify-between text-[11px] py-1 border-b border-border/30 last:border-0">
+                      <span className="text-muted-foreground">{l}</span>
+                      <span className="font-semibold">{v}</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        </GlassCard>
+      )}
+
+      {/* Análise IA */}
+      <GlassCard>
+        <SubTitle>Análise com inteligência artificial</SubTitle>
+        <CampaignAI campaign={campaign} />
+      </GlassCard>
+    </div>
+  );
+}
+
+// ── Comparador livre ──────────────────────────────────────────────────────────
+
+function Comparador({
+  items,
+  onClose,
+  type,
+}: {
+  items: (EmailCampaign | EmailAutomation)[];
+  onClose: () => void;
+  type: "campaign" | "automation";
+}) {
+  const COLORS = [P, GOLD, GREEN, "hsl(220 80% 60%)", "hsl(280 70% 60%)"];
+
+  const isCampaign = type === "campaign";
+
+  const radarData = useMemo(() => {
+    if (!isCampaign) return [];
+    const campaigns = items as EmailCampaign[];
+    const metrics = ["open_rate", "click_rate", "delivery_rate"] as const;
+    const maxes = metrics.reduce((m, k) => ({
+      ...m,
+      [k]: Math.max(...campaigns.map(c => c[k] || 0), 0.01),
+    }), {} as Record<string, number>);
+
+    return [
+      { metric: "Abertura"  },
+      { metric: "Clique"    },
+      { metric: "Entrega"   },
+      { metric: "Anti-bounce" },
+      { metric: "Anti-spam" },
+    ].map((row, i) => {
+      const obj: any = { metric: row.metric };
+      campaigns.forEach((c, ci) => {
+        const vals = [
+          c.open_rate / 35 * 100,
+          c.click_rate / 3 * 100,
+          c.delivery_rate / 99 * 100,
+          Math.max(0, 100 - c.bounce_rate / 2 * 100),
+          Math.max(0, 100 - c.spam_rate / 0.1 * 100),
+        ];
+        obj[`item_${ci}`] = Math.min(100, vals[i]);
+      });
+      return obj;
+    });
+  }, [items, isCampaign]);
+
+  const barData = useMemo(() => {
+    if (!isCampaign) return [];
+    const campaigns = items as EmailCampaign[];
+    return [
+      { metric: "Abertura (%)",     ...Object.fromEntries(campaigns.map((c, i) => [`item_${i}`, parseFloat(c.open_rate.toFixed(1))])) },
+      { metric: "Clique (%)",       ...Object.fromEntries(campaigns.map((c, i) => [`item_${i}`, parseFloat(c.click_rate.toFixed(1))])) },
+      { metric: "Bounce (%)",       ...Object.fromEntries(campaigns.map((c, i) => [`item_${i}`, parseFloat(c.bounce_rate.toFixed(2))])) },
+      { metric: "Descadastro (%)",  ...Object.fromEntries(campaigns.map((c, i) => [`item_${i}`, parseFloat(c.unsubscribe_rate.toFixed(2))])) },
+    ];
+  }, [items, isCampaign]);
+
+  const getName = (item: EmailCampaign | EmailAutomation) =>
+    item.name.length > 25 ? item.name.slice(0, 23) + "…" : item.name;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 pt-8 pb-16 px-4">
+      <div className="w-full max-w-4xl bg-background border border-border rounded-2xl shadow-2xl p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <GitCompare className="h-4 w-4 text-primary" />
+            <h2 className="text-sm font-bold uppercase tracking-widest">
+              Comparador — {items.length} {isCampaign ? "campanhas" : "automações"}
+            </h2>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted/40 transition-colors">
             <X className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
 
-        {/* Métricas */}
-        <div className="grid grid-cols-2 gap-2">
-          {metrics.map(({ label, value, icon: Icon }) => (
-            <div key={label} className="glass-card !p-3">
-              <p className="text-[10px] text-muted-foreground">{label}</p>
-              <p className="text-base font-bold mt-0.5">{value}</p>
+        {/* Legenda de cores */}
+        <div className="flex gap-4 flex-wrap">
+          {items.map((item, i) => (
+            <div key={item.id} className="flex items-center gap-1.5">
+              <div className="h-2.5 w-2.5 rounded-full" style={{ background: COLORS[i] }} />
+              <span className="text-[11px] font-medium">{getName(item)}</span>
             </div>
           ))}
         </div>
 
-        {/* Gráfico de taxas */}
-        <div>
-          <SubTitle>Taxas (%)</SubTitle>
-          <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={barData} barSize={28}>
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: MUTED }} axisLine={false} tickLine={false} />
-              <YAxis hide />
-              <Tooltip {...TT} formatter={(v: number) => pct(v)} />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                {barData.map((_, i) => (
-                  <Cell key={i} fill={i === 0 ? P : i === 1 ? GOLD : MUTED} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        {isCampaign && (
+          <>
+            {/* Radar */}
+            <GlassCard>
+              <SubTitle>Performance relativa (radar)</SubTitle>
+              <ResponsiveContainer width="100%" height={260}>
+                <RadarChart data={radarData}>
+                  <PolarGrid stroke="hsl(0 0% 20%)" />
+                  <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: MUTED }} />
+                  {items.map((_, i) => (
+                    <Radar key={i} name={getName(items[i])}
+                      dataKey={`item_${i}`}
+                      stroke={COLORS[i]} fill={COLORS[i]} fillOpacity={0.15} />
+                  ))}
+                  <Tooltip {...TT} formatter={(v: number) => v.toFixed(0) + " pts"} />
+                  <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </GlassCard>
+
+            {/* Barras agrupadas */}
+            <GlassCard>
+              <SubTitle>Métricas lado a lado</SubTitle>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={barData} barGap={4}>
+                  <XAxis dataKey="metric" tick={{ fontSize: 10, fill: MUTED }} axisLine={false} tickLine={false} />
+                  <YAxis hide />
+                  <Tooltip {...TT} />
+                  {items.map((_, i) => (
+                    <Bar key={i} dataKey={`item_${i}`} name={getName(items[i])}
+                      fill={COLORS[i]} radius={[3, 3, 0, 0]} />
+                  ))}
+                  <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+                </BarChart>
+              </ResponsiveContainer>
+            </GlassCard>
+
+            {/* Tabela detalhada */}
+            <GlassCard className="!p-0 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Métrica</th>
+                      {items.map((item, i) => (
+                        <th key={i} className="text-right px-4 py-2.5 font-medium" style={{ color: COLORS[i] }}>
+                          {getName(item)}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { label: "Enviados",      key: "recipients",      fmt: (v: number) => fmt(v) },
+                      { label: "Entregues",     key: "delivered",       fmt: (v: number) => fmt(v) },
+                      { label: "Entrega",       key: "delivery_rate",   fmt: (v: number) => pct(v) },
+                      { label: "Abertura",      key: "open_rate",       fmt: (v: number) => pct(v), highlight: true },
+                      { label: "Clique",        key: "click_rate",      fmt: (v: number) => pct(v), highlight: true },
+                      { label: "Bounce",        key: "bounce_rate",     fmt: (v: number) => pct(v) },
+                      { label: "Spam",          key: "spam_rate",       fmt: (v: number) => pct(v) },
+                      { label: "Descadastros",  key: "unsubscribe_rate",fmt: (v: number) => pct(v) },
+                    ].map(({ label, key, fmt: fmtFn, highlight }) => {
+                      const campaigns = items as EmailCampaign[];
+                      const values = campaigns.map(c => (c as any)[key] as number);
+                      const maxVal = Math.max(...values);
+                      const minVal = Math.min(...values);
+                      const inverted = ["bounce_rate","spam_rate","unsubscribe_rate"].includes(key);
+                      return (
+                        <tr key={key} className="border-b border-border/40 hover:bg-muted/10">
+                          <td className="px-4 py-2.5 text-muted-foreground">{label}</td>
+                          {values.map((v, i) => {
+                            const isBest = inverted ? v === minVal : v === maxVal;
+                            return (
+                              <td key={i} className={cn(
+                                "text-right px-4 py-2.5 font-semibold",
+                                highlight && isBest && "text-emerald-400"
+                              )}>
+                                {fmtFn(v)}
+                                {highlight && isBest && values.filter(x => x === v).length < values.length && (
+                                  <span className="ml-1 text-[9px]">✓</span>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </GlassCard>
+          </>
+        )}
       </div>
     </div>
   );
@@ -147,23 +702,22 @@ function VisaoGeral({ campaigns, loading }: { campaigns: EmailCampaign[]; loadin
     const news      = campaigns.filter(c => c.type === "news");
     const avg = (arr: EmailCampaign[], key: keyof EmailCampaign) =>
       arr.length > 0 ? arr.reduce((s, c) => s + (Number(c[key]) || 0), 0) / arr.length : 0;
-
     return {
-      total:          campaigns.length,
+      total: campaigns.length,
       totalComercial: comercial.length,
-      totalNews:      news.length,
-      avgOpen:        avg(campaigns, "open_rate"),
-      avgClick:       avg(campaigns, "click_rate"),
-      avgBounce:      avg(campaigns, "bounce_rate"),
-      avgOpenC:       avg(comercial, "open_rate"),
-      avgOpenN:       avg(news,      "open_rate"),
-      avgClickC:      avg(comercial, "click_rate"),
-      avgClickN:      avg(news,      "click_rate"),
-      totalRecip:     campaigns.reduce((s, c) => s + (c.recipients || 0), 0),
+      totalNews: news.length,
+      avgOpen:   avg(campaigns, "open_rate"),
+      avgClick:  avg(campaigns, "click_rate"),
+      avgBounce: avg(campaigns, "bounce_rate"),
+      avgOpenC:  avg(comercial, "open_rate"),
+      avgOpenN:  avg(news,      "open_rate"),
+      avgClickC: avg(comercial, "click_rate"),
+      avgClickN: avg(news,      "click_rate"),
+      totalRecip: campaigns.reduce((s, c) => s + (c.recipients || 0), 0),
+      abTests:   campaigns.filter(c => c.version !== "general").length,
     };
   }, [campaigns]);
 
-  // Evolução mensal de abertura
   const monthlyData = useMemo(() => {
     const m: Record<string, { month: string; comercial: number[]; news: number[] }> = {};
     campaigns.forEach(c => {
@@ -177,8 +731,12 @@ function VisaoGeral({ campaigns, loading }: { campaigns: EmailCampaign[]; loadin
       .sort((a, b) => a.month.localeCompare(b.month))
       .map(({ month, comercial, news }) => ({
         month: month.slice(5) + "/" + month.slice(2, 4),
-        "Comercial": comercial.length > 0 ? parseFloat((comercial.reduce((a, b) => a + b, 0) / comercial.length).toFixed(1)) : null,
-        "News": news.length > 0 ? parseFloat((news.reduce((a, b) => a + b, 0) / news.length).toFixed(1)) : null,
+        "Comercial": comercial.length > 0
+          ? parseFloat((comercial.reduce((a, b) => a + b, 0) / comercial.length).toFixed(1))
+          : null,
+        "News": news.length > 0
+          ? parseFloat((news.reduce((a, b) => a + b, 0) / news.length).toFixed(1))
+          : null,
       }));
   }, [campaigns]);
 
@@ -192,52 +750,64 @@ function VisaoGeral({ campaigns, loading }: { campaigns: EmailCampaign[]; loadin
 
   return (
     <div className="space-y-5">
-      {/* KPIs principais */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KPICard title="Campanhas no período" value={totals.total} subtitle={`${totals.totalComercial} comerciais · ${totals.totalNews} news`} icon={Mail} />
-        <KPICard title="Média de abertura" value={pct(totals.avgOpen)} subtitle="Todas as campanhas" icon={TrendingUp} />
-        <KPICard title="Média de clique" value={pct(totals.avgClick)} subtitle="Todas as campanhas" icon={MousePointerClick} />
-        <KPICard title="Total de destinatários" value={fmt(totals.totalRecip)} subtitle="Soma do período" icon={Users} />
+        <KPICard title="Campanhas no período" value={totals.total}
+          subtitle={`${totals.totalComercial} comerciais · ${totals.totalNews} news`} icon={Mail} />
+        <KPICard title="Abertura média" value={pct(totals.avgOpen)}
+          subtitle={totals.avgOpen >= 30 ? "✓ acima do benchmark" : "⚠ benchmark: 30%"}
+          trend={totals.avgOpen >= 30 ? "up" : "down"} icon={TrendingUp} />
+        <KPICard title="Clique médio" value={pct(totals.avgClick)}
+          subtitle={totals.avgClick >= 3 ? "✓ acima do benchmark" : "⚠ benchmark: 3%"}
+          trend={totals.avgClick >= 3 ? "up" : "down"} icon={MousePointerClick} />
+        <KPICard title="Total de destinatários" value={fmt(totals.totalRecip)}
+          subtitle="Soma do período" icon={Users} />
       </div>
 
-      {/* Split comercial vs news */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <GlassCard>
-          <SubTitle>Comercial vs News — Abertura</SubTitle>
-          <div className="flex items-end gap-6 mt-2">
-            <div>
-              <p className="text-[10px] text-muted-foreground">Comercial</p>
-              <p className="text-2xl font-bold text-primary">{pct(totals.avgOpenC)}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">clique: {pct(totals.avgClickC)}</p>
-            </div>
-            <div className="w-px h-10 bg-border" />
-            <div>
-              <p className="text-[10px] text-muted-foreground">News</p>
-              <p className="text-2xl font-bold" style={{ color: GOLD }}>{pct(totals.avgOpenN)}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">clique: {pct(totals.avgClickN)}</p>
-            </div>
+          <SubTitle>Comercial vs News — abertura e clique</SubTitle>
+          <div className="grid grid-cols-2 gap-6 mt-2">
+            {[
+              { label: "Comercial", open: totals.avgOpenC, click: totals.avgClickC, color: P },
+              { label: "News",      open: totals.avgOpenN, click: totals.avgClickN, color: GOLD },
+            ].map(({ label, open, click, color }) => (
+              <div key={label}>
+                <p className="text-[10px] text-muted-foreground mb-1">{label}</p>
+                <p className="text-2xl font-bold" style={{ color }}>{pct(open)}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">abertura</p>
+                <p className="text-sm font-semibold mt-1">{pct(click)}</p>
+                <p className="text-[10px] text-muted-foreground">clique</p>
+              </div>
+            ))}
           </div>
         </GlassCard>
 
         <GlassCard>
-          <SubTitle>Média de abertura por mês</SubTitle>
-          <ResponsiveContainer width="100%" height={100}>
+          <SubTitle>Abertura média por mês</SubTitle>
+          <ResponsiveContainer width="100%" height={110}>
             <LineChart data={monthlyData}>
               <XAxis dataKey="month" tick={{ fontSize: 9, fill: MUTED }} axisLine={false} tickLine={false} />
               <YAxis hide domain={[0, "auto"]} />
               <Tooltip {...TT} formatter={(v: number) => pct(v)} />
               <Line type="monotone" dataKey="Comercial" stroke={P}    strokeWidth={2} dot={false} connectNulls />
               <Line type="monotone" dataKey="News"      stroke={GOLD} strokeWidth={2} dot={false} connectNulls />
+              <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
             </LineChart>
           </ResponsiveContainer>
         </GlassCard>
       </div>
 
-      {/* Bounce + spam */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <KPICard title="Bounce médio"       value={pct(totals.avgBounce)}  subtitle="Ideal < 2%" icon={AlertCircle} />
-        <KPICard title="Campanhas c/ A/B"   value={campaigns.filter(c => c.version !== "general").length} subtitle="Testes detectados" icon={BarChart2} />
-        <KPICard title="Campanhas News"     value={totals.totalNews}       subtitle={`${pct(totals.totalNews / (totals.total || 1) * 100)} do total`} icon={Newspaper} />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <KPICard title="Bounce médio"       value={pct(totals.avgBounce)}
+          subtitle={totals.avgBounce <= 2 ? "✓ dentro do limite" : "⚠ acima de 2%"}
+          trend={totals.avgBounce <= 2 ? "up" : "down"} icon={AlertCircle} />
+        <KPICard title="Testes A/B"         value={totals.abTests}
+          subtitle="Campanhas com variantes" icon={Layers} />
+        <KPICard title="Melhor abertura"    value={pct(Math.max(...campaigns.map(c => c.open_rate), 0))}
+          subtitle={campaigns.find(c => c.open_rate === Math.max(...campaigns.map(x => x.open_rate)))?.name?.slice(0,20) ?? ""} icon={Trophy} />
+        <KPICard title="Score médio entrega" value={
+          Math.round(campaigns.reduce((s, c) => s + calcDelivScore(c).score, 0) / (campaigns.length || 1))
+        } subtitle="Entregabilidade geral /100" icon={Shield} />
       </div>
     </div>
   );
@@ -247,21 +817,27 @@ function VisaoGeral({ campaigns, loading }: { campaigns: EmailCampaign[]; loadin
 
 type SortKey = "sent_at" | "open_rate" | "click_rate" | "recipients" | "bounce_rate";
 
-function Campanhas({ campaigns, loading }: { campaigns: EmailCampaign[]; loading: boolean }) {
-  const [selected, setSelected] = useState<EmailCampaign | null>(null);
-  const [filterType, setFilterType] = useState<"all" | "news" | "commercial">("all");
-  const [sortKey, setSortKey] = useState<SortKey>("sent_at");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-  const [compare, setCompare] = useState<EmailCampaign[]>([]);
+function Campanhas({
+  campaigns,
+  loading,
+  onOpenCampaign,
+}: {
+  campaigns: EmailCampaign[];
+  loading: boolean;
+  onOpenCampaign: (c: EmailCampaign) => void;
+}) {
+  const [filterType, setFilterType]   = useState<"all" | "news" | "commercial">("all");
+  const [sortKey, setSortKey]         = useState<SortKey>("sent_at");
+  const [sortDir, setSortDir]         = useState<"asc" | "desc">("desc");
+  const [selected, setSelected]       = useState<Set<string>>(new Set());
+  const [comparador, setComparador]   = useState(false);
 
   const sorted = useMemo(() => {
     const filtered = filterType === "all" ? campaigns : campaigns.filter(c => c.type === filterType);
     return [...filtered].sort((a, b) => {
       const av = a[sortKey] ?? "";
       const bv = b[sortKey] ?? "";
-      return sortDir === "desc"
-        ? (av < bv ? 1 : -1)
-        : (av > bv ? 1 : -1);
+      return sortDir === "desc" ? (av < bv ? 1 : -1) : (av > bv ? 1 : -1);
     });
   }, [campaigns, filterType, sortKey, sortDir]);
 
@@ -269,6 +845,16 @@ function Campanhas({ campaigns, loading }: { campaigns: EmailCampaign[]; loading
     if (sortKey === key) setSortDir(d => d === "desc" ? "asc" : "desc");
     else { setSortKey(key); setSortDir("desc"); }
   };
+
+  const toggleSelect = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const selectedCampaigns = campaigns.filter(c => selected.has(c.id));
 
   const SortBtn = ({ k, label }: { k: SortKey; label: string }) => (
     <button onClick={() => toggleSort(k)} className="flex items-center gap-0.5 hover:text-foreground transition-colors">
@@ -279,19 +865,11 @@ function Campanhas({ campaigns, loading }: { campaigns: EmailCampaign[]; loading
     </button>
   );
 
-  const toggleCompare = (c: EmailCampaign) => {
-    setCompare(prev =>
-      prev.find(x => x.id === c.id)
-        ? prev.filter(x => x.id !== c.id)
-        : prev.length < 2 ? [...prev, c] : prev
-    );
-  };
-
   if (loading) return <Skeleton className="h-64 rounded-xl" />;
 
   return (
     <div className="space-y-4">
-      {/* Filtros */}
+      {/* Filtros + comparador */}
       <div className="flex items-center gap-2 flex-wrap">
         {(["all", "commercial", "news"] as const).map(t => (
           <button key={t} onClick={() => setFilterType(t)}
@@ -304,38 +882,26 @@ function Campanhas({ campaigns, loading }: { campaigns: EmailCampaign[]; loading
             {t === "all" ? "Todas" : t === "commercial" ? "Comercial" : "News"}
           </button>
         ))}
-        <span className="text-[10px] text-muted-foreground ml-auto">{sorted.length} campanhas</span>
-      </div>
 
-      {/* Comparador */}
-      {compare.length > 0 && (
-        <GlassCard className="!p-4">
-          <div className="flex items-center justify-between mb-3">
-            <SubTitle>Comparador A/B</SubTitle>
-            <button onClick={() => setCompare([])} className="text-[10px] text-muted-foreground hover:text-foreground">Limpar</button>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {compare.map(c => (
-              <div key={c.id}>
-                <p className="text-[11px] font-semibold truncate mb-2">{c.name}</p>
-                <div className="space-y-1">
-                  {[
-                    { label: "Abertura",  value: pct(c.open_rate) },
-                    { label: "Clique",    value: pct(c.click_rate) },
-                    { label: "Bounce",    value: pct(c.bounce_rate) },
-                    { label: "Enviados",  value: fmt(c.recipients) },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="flex justify-between text-[10px]">
-                      <span className="text-muted-foreground">{label}</span>
-                      <span className="font-semibold">{value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </GlassCard>
-      )}
+        <div className="ml-auto flex items-center gap-2">
+          {selected.size > 0 && (
+            <>
+              <span className="text-[10px] text-muted-foreground">{selected.size} selecionadas</span>
+              {selected.size >= 2 && (
+                <button onClick={() => setComparador(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground transition-all">
+                  <GitCompare className="h-3 w-3" /> Comparar
+                </button>
+              )}
+              <button onClick={() => setSelected(new Set())}
+                className="text-[10px] text-muted-foreground hover:text-foreground">
+                Limpar
+              </button>
+            </>
+          )}
+          <span className="text-[10px] text-muted-foreground">{sorted.length} campanhas</span>
+        </div>
+      </div>
 
       {/* Tabela */}
       <GlassCard className="!p-0 overflow-hidden">
@@ -343,62 +909,77 @@ function Campanhas({ campaigns, loading }: { campaigns: EmailCampaign[]; loading
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-border text-muted-foreground">
-                <th className="text-left px-4 py-2.5 font-medium">Campanha</th>
+                <th className="px-4 py-2.5 w-8">
+                  <input type="checkbox" className="accent-primary"
+                    checked={selected.size === sorted.length && sorted.length > 0}
+                    onChange={e => setSelected(e.target.checked ? new Set(sorted.map(c => c.id)) : new Set())} />
+                </th>
+                <th className="text-left px-3 py-2.5 font-medium">Campanha</th>
                 <th className="text-right px-3 py-2.5 font-medium"><SortBtn k="sent_at" label="Data" /></th>
                 <th className="text-right px-3 py-2.5 font-medium"><SortBtn k="recipients" label="Envios" /></th>
                 <th className="text-right px-3 py-2.5 font-medium"><SortBtn k="open_rate" label="Abertura" /></th>
                 <th className="text-right px-3 py-2.5 font-medium"><SortBtn k="click_rate" label="Clique" /></th>
                 <th className="text-right px-3 py-2.5 font-medium"><SortBtn k="bounce_rate" label="Bounce" /></th>
-                <th className="px-3 py-2.5" />
+                <th className="text-right px-3 py-2.5 font-medium">Score</th>
               </tr>
             </thead>
             <tbody>
-              {sorted.map(c => (
-                <tr key={c.id}
-                  className="border-b border-border/50 hover:bg-muted/20 transition-colors cursor-pointer"
-                  onClick={() => setSelected(c)}>
-                  <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <TypeBadge type={c.type} />
-                      <span className="font-medium truncate max-w-[200px]">{c.name}</span>
-                      {c.version !== "general" && (
-                        <span className="px-1 py-0.5 rounded text-[9px] font-bold bg-gold/15 text-gold">
-                          {c.version}
+              {sorted.map(c => {
+                const { score, level } = calcDelivScore(c);
+                const scoreColor = level === "green" ? GREEN : level === "yellow" ? GOLD : P;
+                return (
+                  <tr key={c.id}
+                    className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                    <td className="px-4 py-2.5" onClick={e => e.stopPropagation()}>
+                      <input type="checkbox" className="accent-primary"
+                        checked={selected.has(c.id)}
+                        onChange={() => toggleSelect(c.id)} />
+                    </td>
+                    <td className="px-3 py-2.5 cursor-pointer" onClick={() => onOpenCampaign(c)}>
+                      <div className="flex items-center gap-2">
+                        <TypeBadge type={c.type} />
+                        <span className="font-medium truncate max-w-[220px] hover:text-primary transition-colors">
+                          {c.name}
                         </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="text-right px-3 py-2.5 text-muted-foreground">
-                    {c.sent_at ? new Date(c.sent_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "—"}
-                  </td>
-                  <td className="text-right px-3 py-2.5">{fmt(c.recipients)}</td>
-                  <td className={cn("text-right px-3 py-2.5 font-semibold",
-                    c.open_rate >= 30 ? "text-emerald-400" : c.open_rate >= 20 ? "text-gold" : "text-primary")}>
-                    {pct(c.open_rate)}
-                  </td>
-                  <td className="text-right px-3 py-2.5">{pct(c.click_rate)}</td>
-                  <td className={cn("text-right px-3 py-2.5",
-                    c.bounce_rate > 2 ? "text-primary" : "text-muted-foreground")}>
-                    {pct(c.bounce_rate)}
-                  </td>
-                  <td className="px-3 py-2.5" onClick={e => { e.stopPropagation(); toggleCompare(c); }}>
-                    <button className={cn(
-                      "px-2 py-0.5 rounded text-[9px] font-bold border transition-colors",
-                      compare.find(x => x.id === c.id)
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border text-muted-foreground hover:border-primary/50"
-                    )}>
-                      {compare.find(x => x.id === c.id) ? "✓" : "+"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                        {c.version !== "general" && (
+                          <span className="px-1 py-0.5 rounded text-[9px] font-bold bg-gold/15 text-gold">
+                            {c.version}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="text-right px-3 py-2.5 text-muted-foreground">
+                      {c.sent_at ? new Date(c.sent_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "—"}
+                    </td>
+                    <td className="text-right px-3 py-2.5">{fmt(c.recipients)}</td>
+                    <td className={cn("text-right px-3 py-2.5 font-semibold",
+                      c.open_rate >= 30 ? "text-emerald-400" :
+                      c.open_rate >= 20 ? "text-gold" : "text-primary")}>
+                      {pct(c.open_rate)}
+                    </td>
+                    <td className="text-right px-3 py-2.5">{pct(c.click_rate)}</td>
+                    <td className={cn("text-right px-3 py-2.5",
+                      c.bounce_rate > 2 ? "text-primary" : "text-muted-foreground")}>
+                      {pct(c.bounce_rate)}
+                    </td>
+                    <td className="text-right px-3 py-2.5 font-bold" style={{ color: scoreColor }}>
+                      {score}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </GlassCard>
 
-      {selected && <CampaignDrawer campaign={selected} onClose={() => setSelected(null)} />}
+      {comparador && selectedCampaigns.length >= 2 && (
+        <Comparador
+          items={selectedCampaigns}
+          type="campaign"
+          onClose={() => setComparador(false)}
+        />
+      )}
     </div>
   );
 }
@@ -406,8 +987,22 @@ function Campanhas({ campaigns, loading }: { campaigns: EmailCampaign[]; loading
 // ── Aba Automações ────────────────────────────────────────────────────────────
 
 function Automacoes({ automations, loading }: { automations: EmailAutomation[]; loading: boolean }) {
-  const [search, setSearch] = useState("");
-  const [showAll, setShowAll] = useState(false);
+  const [search, setSearch]       = useState("");
+  const [showAll, setShowAll]     = useState(false);
+  const [selected, setSelected]   = useState<Set<string>>(new Set());
+  const [comparador, setComparador] = useState(false);
+
+  const ACTION_LABELS: Record<string, string> = {
+    SDEMA: "Enviar e-mail",
+    WTDEL: "Aguardar",
+    SMSMS: "Enviar SMS",
+    ADDTG: "Adicionar tag",
+    REMTG: "Remover tag",
+    ADDSEG: "Adicionar segmento",
+    REMSEG: "Remover segmento",
+    CONDIT: "Condição",
+    SCORE:  "Pontuar lead",
+  };
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -416,103 +1011,145 @@ function Automacoes({ automations, loading }: { automations: EmailAutomation[]; 
 
   const visible = showAll ? filtered : filtered.slice(0, 12);
 
+  const toggleSelect = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const selectedAutos = automations.filter(a => selected.has(a.id));
+
   if (loading) return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-40 rounded-xl" />)}
     </div>
   );
 
+  // Estatísticas reais disponíveis
+  const statusCount = automations.reduce((m, a) => {
+    const s = a.status || "unknown";
+    m[s] = (m[s] || 0) + 1;
+    return m;
+  }, {} as Record<string, number>);
+
   return (
     <div className="space-y-4">
-      {/* KPIs rápidos */}
+      {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KPICard title="Automações ativas" value={automations.filter(a => a.status === "active").length} icon={Zap} />
-        <KPICard title="Total de leads"    value={fmt(automations.reduce((s, a) => s + a.leads_entered, 0))} icon={Users} />
-        <KPICard title="Vendas geradas"    value={automations.reduce((s, a) => s + a.sales, 0)} icon={TrendingUp} />
-        <KPICard title="Total de fluxos"   value={automations.length} icon={BarChart2} />
+        <KPICard title="Total de fluxos"   value={automations.length} icon={Zap} />
+        <KPICard title="Ativos"            value={statusCount["active"] || 0}
+          subtitle={`${statusCount["disabled"] || 0} desativados`} icon={CheckCircle2} />
+        <KPICard title="Com envio de e-mail" value={
+          automations.filter(a => (a as any).actions?.some((ac: any) => ac.type === "SDEMA")).length || "—"
+        } icon={Mail} />
+        <KPICard title="Criados em 2024+" value={
+          automations.filter(a => a.rd_created_at && a.rd_created_at >= "2024-01-01").length
+        } icon={TrendingUp} />
       </div>
 
-      {/* Busca */}
-      <input
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        placeholder="Buscar automação..."
-        className="w-full sm:w-72 text-xs px-3 py-2 rounded-lg border border-border bg-card/60 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-      />
+      {/* Busca + comparador */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Buscar automação..."
+          className="w-full sm:w-72 text-xs px-3 py-2 rounded-lg border border-border bg-card/60 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+        />
+        {selected.size >= 2 && (
+          <button onClick={() => setComparador(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground">
+            <GitCompare className="h-3 w-3" /> Comparar {selected.size}
+          </button>
+        )}
+        {selected.size > 0 && (
+          <button onClick={() => setSelected(new Set())}
+            className="text-[10px] text-muted-foreground hover:text-foreground">
+            Limpar seleção
+          </button>
+        )}
+      </div>
+
+      {/* Aviso sobre métricas */}
+      <div className="flex items-start gap-2 p-3 rounded-xl bg-muted/20 border border-border/50">
+        <AlertCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+        <p className="text-[10px] text-muted-foreground">
+          A API do RD Station Marketing não expõe métricas de performance por automação (leads, conversões, e-mails enviados).
+          Os dados exibidos refletem a estrutura e configuração de cada fluxo.
+        </p>
+      </div>
 
       {/* Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {visible.map(a => {
-          const convRate = a.leads_entered > 0
-            ? (a.sales / a.leads_entered * 100).toFixed(1)
-            : "0.0";
-          const funnelData = [
-            { name: "Entradas", value: a.leads_entered },
-            { name: "Ativos",   value: a.leads_active },
-            { name: "Qualif.",  value: a.qualifications },
-            { name: "Opport.",  value: a.opportunities },
-            { name: "Vendas",   value: a.sales },
-          ].filter(d => d.value > 0);
+          const isSelected = selected.has(a.id);
+          const actions = (a as any).actions as Array<{ type: string }> | undefined;
+          const emailSteps = actions?.filter(ac => ac.type === "SDEMA").length ?? 0;
+          const totalSteps = actions?.length ?? 0;
 
           return (
-            <GlassCard key={a.id} className="!p-4 space-y-3">
-              {/* Header */}
+            <GlassCard key={a.id}
+              className={cn("!p-4 space-y-3 cursor-pointer transition-all",
+                isSelected && "ring-1 ring-primary/50")}
+              hover>
               <div className="flex items-start justify-between gap-2">
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-semibold leading-snug line-clamp-2">{a.name}</p>
-                  <span className={cn(
-                    "inline-block mt-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase",
-                    a.status === "active" ? "bg-emerald-500/15 text-emerald-400" : "bg-muted/40 text-muted-foreground"
-                  )}>
-                    {a.status === "active" ? "Ativa" : a.status}
-                  </span>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className={cn(
+                      "px-1.5 py-0.5 rounded text-[9px] font-bold uppercase",
+                      a.status === "active" ? "bg-emerald-500/15 text-emerald-400" : "bg-muted/40 text-muted-foreground"
+                    )}>
+                      {a.status === "active" ? "Ativa" : a.status === "disabled" ? "Inativa" : a.status}
+                    </span>
+                    {emailSteps > 0 && (
+                      <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
+                        <Mail className="h-2.5 w-2.5" /> {emailSteps} e-mail{emailSteps > 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="text-[10px] text-muted-foreground">Conversão</p>
-                  <p className="text-base font-bold text-primary">{convRate}%</p>
-                </div>
+                <input type="checkbox" className="accent-primary shrink-0 mt-0.5"
+                  checked={isSelected}
+                  onChange={() => toggleSelect(a.id)}
+                  onClick={e => e.stopPropagation()} />
               </div>
 
-              {/* Mini funil em barras */}
-              {funnelData.length > 1 && (
+              {/* Steps do fluxo */}
+              {actions && actions.length > 0 && (
                 <div className="space-y-1">
-                  {funnelData.map((d, i) => {
-                    const pctVal = funnelData[0].value > 0 ? d.value / funnelData[0].value : 0;
-                    return (
-                      <div key={d.name} className="flex items-center gap-2">
-                        <span className="text-[9px] text-muted-foreground w-14 shrink-0">{d.name}</span>
-                        <div className="flex-1 h-1.5 rounded-full bg-muted/30 overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all"
-                            style={{
-                              width: `${pctVal * 100}%`,
-                              background: i === 0 ? MUTED : i === funnelData.length - 1 ? P : GOLD,
-                            }}
-                          />
-                        </div>
-                        <span className="text-[9px] font-semibold w-8 text-right shrink-0">
-                          {fmt(d.value)}
-                        </span>
-                      </div>
-                    );
-                  })}
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-wider">
+                    Estrutura do fluxo ({totalSteps} etapas)
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {actions.slice(0, 6).map((ac, i) => (
+                      <span key={i} className={cn(
+                        "px-1.5 py-0.5 rounded text-[9px] font-medium",
+                        ac.type === "SDEMA" ? "bg-primary/10 text-primary" :
+                        ac.type === "WTDEL" ? "bg-muted/30 text-muted-foreground" :
+                        "bg-muted/20 text-muted-foreground"
+                      )}>
+                        {ACTION_LABELS[ac.type] ?? ac.type}
+                      </span>
+                    ))}
+                    {actions.length > 6 && (
+                      <span className="px-1.5 py-0.5 rounded text-[9px] text-muted-foreground bg-muted/20">
+                        +{actions.length - 6}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
 
-              {/* Métricas rápidas */}
-              <div className="flex gap-3 text-[10px] border-t border-border/50 pt-2">
-                <div>
-                  <p className="text-muted-foreground">Entradas</p>
-                  <p className="font-semibold">{fmt(a.leads_entered)}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Ativos</p>
-                  <p className="font-semibold">{fmt(a.leads_active)}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Vendas</p>
-                  <p className="font-semibold text-primary">{a.sales}</p>
-                </div>
+              {/* Datas */}
+              <div className="flex gap-3 text-[9px] text-muted-foreground border-t border-border/40 pt-2">
+                {a.rd_created_at && (
+                  <span>Criado {new Date(a.rd_created_at).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })}</span>
+                )}
+                {a.rd_updated_at && (
+                  <span>· Atualizado {new Date(a.rd_updated_at).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })}</span>
+                )}
               </div>
             </GlassCard>
           );
@@ -520,12 +1157,16 @@ function Automacoes({ automations, loading }: { automations: EmailAutomation[]; 
       </div>
 
       {filtered.length > 12 && (
-        <button
-          onClick={() => setShowAll(v => !v)}
-          className="w-full py-2 text-xs font-semibold text-muted-foreground hover:text-foreground border border-border rounded-xl transition-colors flex items-center justify-center gap-1"
-        >
-          {showAll ? <><ChevronUp className="h-3 w-3" /> Ver menos</> : <><ChevronDown className="h-3 w-3" /> Ver todas ({filtered.length})</>}
+        <button onClick={() => setShowAll(v => !v)}
+          className="w-full py-2 text-xs font-semibold text-muted-foreground hover:text-foreground border border-border rounded-xl transition-colors flex items-center justify-center gap-1">
+          {showAll
+            ? <><ChevronUp className="h-3 w-3" /> Ver menos</>
+            : <><ChevronDown className="h-3 w-3" /> Ver todas ({filtered.length})</>}
         </button>
+      )}
+
+      {comparador && selectedAutos.length >= 2 && (
+        <Comparador items={selectedAutos} type="automation" onClose={() => setComparador(false)} />
       )}
     </div>
   );
@@ -536,35 +1177,53 @@ function Automacoes({ automations, loading }: { automations: EmailAutomation[]; 
 interface Props { from: string; to: string; }
 
 export function EmailMarketingSection({ from, to }: Props) {
-  const [tab, setTab] = useState<EmailTab>("visao-geral");
+  const [tab, setTab]                       = useState<EmailTab>("visao-geral");
+  const [campaignPage, setCampaignPage]     = useState<EmailCampaign | null>(null);
 
-  const { data: campaigns = [], isLoading: loadingCampaigns } = useEmailCampaigns(from, to);
-  const { data: automations = [], isLoading: loadingAutos }   = useEmailAutomations();
+  const { data: campaigns  = [], isLoading: loadingCampaigns } = useEmailCampaigns(from, to);
+  const { data: automations = [], isLoading: loadingAutos    } = useEmailAutomations();
 
   const TABS = [
-    { key: "visao-geral" as EmailTab,  label: "Visão geral",  Icon: TrendingUp },
-    { key: "campanhas"   as EmailTab,  label: "Campanhas",    Icon: Mail       },
-    { key: "automacoes"  as EmailTab,  label: "Automações",   Icon: Zap        },
+    { key: "visao-geral" as EmailTab, label: "Visão geral", Icon: TrendingUp },
+    { key: "campanhas"   as EmailTab, label: "Campanhas",   Icon: Mail       },
+    { key: "automacoes"  as EmailTab, label: "Automações",  Icon: Zap        },
   ];
+
+  // Página de detalhe da campanha
+  if (campaignPage) {
+    return (
+      <CampaignPage
+        campaign={campaignPage}
+        allCampaigns={campaigns}
+        onBack={() => setCampaignPage(null)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">
-      {/* Tabs */}
       <div className="flex gap-1 p-1 rounded-xl border border-border bg-card/40 w-fit">
         {TABS.map(({ key, label, Icon }) => (
           <button key={key} onClick={() => setTab(key)}
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
-              tab === key ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              tab === key
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             )}>
             <Icon className="h-3 w-3" />{label}
           </button>
         ))}
       </div>
 
-      {/* Conteúdo */}
       {tab === "visao-geral" && <VisaoGeral campaigns={campaigns} loading={loadingCampaigns} />}
-      {tab === "campanhas"   && <Campanhas  campaigns={campaigns} loading={loadingCampaigns} />}
+      {tab === "campanhas"   && (
+        <Campanhas
+          campaigns={campaigns}
+          loading={loadingCampaigns}
+          onOpenCampaign={setCampaignPage}
+        />
+      )}
       {tab === "automacoes"  && <Automacoes automations={automations} loading={loadingAutos} />}
     </div>
   );

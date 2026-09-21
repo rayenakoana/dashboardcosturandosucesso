@@ -39,6 +39,8 @@ export interface EmailAutomation {
   rd_created_at: string | null;
   rd_updated_at: string | null;
   synced_at: string;
+  // enriquecido via API direta (não está no Supabase)
+  actions?: Array<{ id: string; type: string }>;
 }
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
@@ -68,7 +70,7 @@ export function useEmailAutomations() {
       const { data, error } = await supabaseWpp
         .from("email_automations")
         .select("*")
-        .order("leads_entered", { ascending: false })
+        .order("rd_updated_at", { ascending: false })
         .limit(200);
       if (error) throw error;
       return (data ?? []) as EmailAutomation[];
