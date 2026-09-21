@@ -210,19 +210,32 @@ Responda APENAS com JSON válido neste formato, sem texto antes ou depois:
           messages: [{ role: "user", content: prompt }],
         }),
       });
-      const data = await resp.json();
+      let data: any;
+      try { data = await resp.json(); } catch { throw new Error("Resposta inválida da API"); }
       const text = data.content?.find((b: any) => b.type === "text")?.text ?? "";
-      const clean = text.replace(/```json|```/g, "").trim();
-      setResult(JSON.parse(clean));
-    } catch (e) {
-      setError("Erro ao gerar análise. Tente novamente.");
+      const clean = text.replace(/```json[\s\S]*?```|```/g, "").trim();
+      let parsed: any;
+      try { parsed = JSON.parse(clean); } catch { throw new Error("JSON inválido: " + clean.slice(0, 80)); }
+      if (!parsed.pontos || !parsed.recomendacoes) throw new Error("Estrutura inesperada");
+      setResult(parsed);
+    } catch (e: unknown) {
+      console.error("[CampaignAI] erro:", e);
+      setError("Não foi possível gerar análise agora.");
     } finally {
       setLoading(false);
     }
   }, [campaign]);
 
   // Dispara automaticamente ao montar
-  useEffect(() => { generate(); }, [campaign.id]);
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (cancelled) return;
+      await generate();
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [campaign.id]);
 
   if (loading) {
     return (
