@@ -7,7 +7,7 @@ import {
   Mail, TrendingUp, Users, MousePointerClick,
   BarChart2, ChevronDown, ChevronUp, X, ArrowUpDown,
   CheckCircle2, AlertCircle, Newspaper, ShoppingBag,
-  Sparkles, Shield, GitCompare, Clock, ArrowLeft,
+  Sparkles, Shield, GitCompare, Clock, ArrowLeft, ExternalLink,
   TriangleAlert, Trophy, Layers,
 } from "lucide-react";
 import {
@@ -381,11 +381,22 @@ function CampaignPage({
 
   return (
     <div className="space-y-5">
-      {/* Voltar */}
-      <button onClick={onBack}
-        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-        <ArrowLeft className="h-3.5 w-3.5" /> Voltar às campanhas
-      </button>
+      {/* Voltar + link RD */}
+      <div className="flex items-center justify-between">
+        <button onClick={onBack}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-3.5 w-3.5" /> Voltar às campanhas
+        </button>
+        <a
+          href={`https://app.rdstation.com.br/marketing/email-marketing/${campaign.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/50 rounded-lg px-3 py-1.5 hover:border-border"
+        >
+          <ExternalLink className="h-3 w-3" />
+          Ver no RD Station
+        </a>
+      </div>
 
       {/* Header da campanha */}
       <GlassCard>
