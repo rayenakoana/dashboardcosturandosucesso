@@ -163,7 +163,7 @@ Responda APENAS com JSON válido neste formato exato, sem texto antes ou depois:
   "recomendacoes": ["recomendação concreta 1", "recomendação concreta 2", "recomendação concreta 3"]
 }`;
 
-      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      const resp = await fetch("/api/claude", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -596,6 +596,78 @@ function Comparador({
           ))}
         </div>
 
+        {!isCampaign && (() => {
+          const autos = items as EmailAutomation[];
+          const ACTION_LABELS: Record<string, string> = {
+            SDEMA: "E-mail", WTDEL: "Aguardar", SMSMS: "SMS",
+            ADDTG: "Tag+", REMTG: "Tag-", CONDIT: "Condição", SCORE: "Score",
+          };
+          const getActions = (a: EmailAutomation) => (a as any).actions as Array<{type:string}> | undefined ?? [];
+          const countType  = (a: EmailAutomation, t: string) => getActions(a).filter(ac => ac.type === t).length;
+
+          const structData = [
+            { metric: "E-mails",    ...Object.fromEntries(autos.map((a,i) => [`item_${i}`, countType(a,"SDEMA")])) },
+            { metric: "Aguardar",   ...Object.fromEntries(autos.map((a,i) => [`item_${i}`, countType(a,"WTDEL")])) },
+            { metric: "Condições",  ...Object.fromEntries(autos.map((a,i) => [`item_${i}`, countType(a,"CONDIT")])) },
+            { metric: "Total steps",...Object.fromEntries(autos.map((a,i) => [`item_${i}`, getActions(a).length])) },
+          ];
+
+          return (
+            <div className="space-y-4">
+              <GlassCard>
+                <SubTitle>Estrutura dos fluxos — comparação</SubTitle>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={structData} barGap={4}>
+                    <XAxis dataKey="metric" tick={{ fontSize: 10, fill: MUTED }} axisLine={false} tickLine={false} />
+                    <YAxis hide />
+                    <Tooltip {...TT} />
+                    {autos.map((_, i) => (
+                      <Bar key={i} dataKey={`item_${i}`} name={getName(autos[i])}
+                        fill={COLORS[i]} radius={[3,3,0,0]} />
+                    ))}
+                    <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </GlassCard>
+
+              <GlassCard className="!p-0 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Informação</th>
+                        {autos.map((a, i) => (
+                          <th key={i} className="text-right px-4 py-2.5 font-medium" style={{ color: COLORS[i] }}>
+                            {getName(a)}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { label: "Status",        fn: (a: EmailAutomation) => a.status === "active" ? "✓ Ativa" : "Inativa" },
+                        { label: "Total de steps", fn: (a: EmailAutomation) => String(getActions(a).length || "—") },
+                        { label: "E-mails",        fn: (a: EmailAutomation) => String(countType(a,"SDEMA") || "—") },
+                        { label: "Aguardar",       fn: (a: EmailAutomation) => String(countType(a,"WTDEL") || "—") },
+                        { label: "Condições",      fn: (a: EmailAutomation) => String(countType(a,"CONDIT") || "—") },
+                        { label: "Criado",         fn: (a: EmailAutomation) => a.rd_created_at ? new Date(a.rd_created_at).toLocaleDateString("pt-BR", {month:"short",year:"numeric"}) : "—" },
+                        { label: "Atualizado",     fn: (a: EmailAutomation) => a.rd_updated_at ? new Date(a.rd_updated_at).toLocaleDateString("pt-BR", {month:"short",year:"numeric"}) : "—" },
+                      ].map(({ label, fn }) => (
+                        <tr key={label} className="border-b border-border/40 hover:bg-muted/10">
+                          <td className="px-4 py-2.5 text-muted-foreground">{label}</td>
+                          {autos.map((a, i) => (
+                            <td key={i} className="text-right px-4 py-2.5 font-semibold">{fn(a)}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </GlassCard>
+            </div>
+          );
+        })()}
+
         {isCampaign && (
           <>
             {/* Radar */}
@@ -691,6 +763,205 @@ function Comparador({
         )}
       </div>
     </div>
+  );
+}
+
+// ── Análise IA — Visão Geral do período ──────────────────────────────────────
+
+interface VisaoGeralTotals {
+  total: number; totalComercial: number; totalNews: number;
+  avgOpen: number; avgClick: number; avgBounce: number;
+  avgOpenC: number; avgOpenN: number; avgClickC: number; avgClickN: number;
+  totalRecip: number; abTests: number;
+}
+
+function VisaoGeralAI({ campaigns, totals }: { campaigns: EmailCampaign[]; totals: VisaoGeralTotals }) {
+  const [loading, setLoading] = useState(false);
+  const [result, setResult]   = useState<{
+    diagnostico: string;
+    destaques: string[];
+    alertas: string[];
+    acoes: string[];
+    contexto_setor: string;
+  } | null>(null);
+  const [error, setError] = useState("");
+
+  const generate = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      // Top 3 e bottom 3 campanhas por abertura
+      const sorted     = [...campaigns].filter(c => c.sent_at).sort((a, b) => b.open_rate - a.open_rate);
+      const top3       = sorted.slice(0, 3).map(c => `${c.name} (${pct(c.open_rate)})`).join(", ");
+      const bottom3    = sorted.slice(-3).map(c => `${c.name} (${pct(c.open_rate)})`).join(", ");
+      const highBounce = campaigns.filter(c => c.bounce_rate > 2).length;
+      const highSpam   = campaigns.filter(c => c.spam_rate > 0.1).length;
+      const bestScore  = Math.max(...campaigns.map(c => calcDelivScore(c).score));
+      const worstScore = Math.min(...campaigns.map(c => calcDelivScore(c).score));
+
+      const prompt = `Você é especialista sênior em email marketing para o setor de educação empresarial voltada para confecções e indústria têxtil no Brasil. A empresa é a Costurando Sucesso, que oferece cursos, mentorias e consultorias para empresários e gestores de confecções.
+
+Analise o panorama completo de email marketing do período:
+
+DADOS GERAIS:
+- Total de campanhas: ${totals.total} (${totals.totalComercial} comerciais, ${totals.totalNews} newsletters)
+- Total de destinatários: ${fmt(totals.totalRecip)}
+- Abertura média geral: ${pct(totals.avgOpen)} (benchmark setor educação B2B: 25-35%)
+- Clique médio geral: ${pct(totals.avgClick)} (benchmark: 2-4%)
+- Bounce médio: ${pct(totals.avgBounce)} (limite: 2%)
+- Campanhas com bounce acima de 2%: ${highBounce}
+- Campanhas com spam acima de 0.1%: ${highSpam}
+
+SPLIT COMERCIAL vs NEWS:
+- Comercial: abertura ${pct(totals.avgOpenC)}, clique ${pct(totals.avgClickC)}
+- Newsletter: abertura ${pct(totals.avgOpenN)}, clique ${pct(totals.avgClickN)}
+
+DESTAQUES:
+- Top 3 abertura: ${top3}
+- Bottom 3 abertura: ${bottom3}
+- Melhor score de entregabilidade: ${bestScore}/100
+- Pior score de entregabilidade: ${worstScore}/100
+- Testes A/B realizados: ${totals.abTests}
+
+CONTEXTO DO SETOR:
+O público é formado por empresários e gestores de confecções brasileiras. São pessoas práticas, com pouco tempo, que leem email principalmente de manhã cedo (6h-8h) e no horário de almoço. Respondem bem a conteúdo que resolve problema imediato do dia a dia da confecção (produção, custo, gestão de equipe, fornecedores). Campanhas de lançamento têm picos de abertura nos primeiros 2 dias. O setor tem sazonalidade marcada: alta em fev-mar (coleção inverno), jun-jul (coleção verão), set-out (planejamento fim de ano).
+
+Responda APENAS com JSON válido neste formato, sem texto antes ou depois:
+{
+  "diagnostico": "parágrafo de 2-3 frases com diagnóstico honesto e direto do período",
+  "destaques": ["destaque positivo 1", "destaque positivo 2", "destaque positivo 3"],
+  "alertas": ["alerta crítico 1", "alerta crítico 2"],
+  "acoes": ["ação prioritária 1 muito específica e acionável", "ação prioritária 2", "ação prioritária 3"],
+  "contexto_setor": "uma frase sobre como os resultados se comparam com o momento atual do setor de educação para confecções"
+}`;
+
+      const resp = await fetch("/api/claude", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1200,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      const data = await resp.json();
+      const text = data.content?.find((b: any) => b.type === "text")?.text ?? "";
+      const clean = text.replace(/```json|```/g, "").trim();
+      setResult(JSON.parse(clean));
+    } catch (e) {
+      setError("Erro ao gerar análise. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  }, [campaigns, totals]);
+
+  return (
+    <GlassCard>
+      <div className="flex items-center justify-between mb-4">
+        <SubTitle>Análise IA do período</SubTitle>
+        {result && (
+          <button onClick={generate}
+            className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+            <Sparkles className="h-3 w-3" /> Regerar
+          </button>
+        )}
+      </div>
+
+      {!result && !loading && !error && (
+        <div className="space-y-3">
+          {/* Insights fixos do setor enquanto não gera IA */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+            {[
+              { icon: Clock, title: "Melhor horário para o setor", body: "6h–8h (antes do chão de fábrica abrir) e 12h–13h (almoço). Evitar após 17h — empresários de confecção raramente checam email no fim do expediente." },
+              { icon: TrendingUp, title: "O que funciona no setor", body: "Assuntos com número + benefício direto (ex: '3 erros que aumentam seu custo de produção'). Newsletter educativa abre 40% mais que email puramente comercial." },
+              { icon: Shield, title: "Sazonalidade confecção", body: "Picos de engajamento: fev-mar (coleção inverno), jun-jul (verão), set-out (planejamento Black Friday). Evitar grandes campanhas em jan e jul — baixo engajamento histórico." },
+            ].map(({ icon: Icon, title, body }) => (
+              <div key={title} className="p-3 rounded-xl bg-muted/20 border border-border/50 space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Icon className="h-3 w-3 text-primary" />
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{title}</p>
+                </div>
+                <p className="text-[11px] text-foreground/80 leading-relaxed">{body}</p>
+              </div>
+            ))}
+          </div>
+          <button onClick={generate}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-primary/30 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors">
+            <Sparkles className="h-3.5 w-3.5" />
+            Gerar análise completa do período com IA
+          </button>
+        </div>
+      )}
+
+      {loading && (
+        <div className="space-y-2.5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-4 rounded" style={{ width: `${90 - i * 8}%` }} />
+          ))}
+        </div>
+      )}
+
+      {error && <p className="text-xs text-primary">{error}</p>}
+
+      {result && (
+        <div className="space-y-5">
+          {/* Diagnóstico */}
+          <div className="p-4 rounded-xl bg-muted/20 border border-border/50">
+            <p className="text-[11px] text-foreground/90 leading-relaxed">{result.diagnostico}</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Destaques */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-2 flex items-center gap-1">
+                <Trophy className="h-3 w-3" /> Destaques
+              </p>
+              <ul className="space-y-2">
+                {result.destaques.map((d, i) => (
+                  <li key={i} className="flex gap-2 text-[11px] text-foreground/80">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0 mt-0.5" />{d}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Alertas */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-2 flex items-center gap-1">
+                <TriangleAlert className="h-3 w-3" /> Alertas
+              </p>
+              <ul className="space-y-2">
+                {result.alertas.map((a, i) => (
+                  <li key={i} className="flex gap-2 text-[11px] text-foreground/80">
+                    <AlertCircle className="h-3 w-3 text-primary shrink-0 mt-0.5" />{a}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Ações */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-gold mb-2 flex items-center gap-1">
+                <Sparkles className="h-3 w-3" /> Ações prioritárias
+              </p>
+              <ul className="space-y-2">
+                {result.acoes.map((a, i) => (
+                  <li key={i} className="flex gap-2 text-[11px] text-foreground/80">
+                    <span className="text-gold font-bold shrink-0">{i + 1}.</span>{a}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Contexto setor */}
+          <div className="p-3 rounded-xl bg-primary/5 border border-primary/20">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1">Contexto do setor</p>
+            <p className="text-[11px] text-foreground/80">{result.contexto_setor}</p>
+          </div>
+        </div>
+      )}
+    </GlassCard>
   );
 }
 
@@ -809,6 +1080,9 @@ function VisaoGeral({ campaigns, loading }: { campaigns: EmailCampaign[]; loadin
           Math.round(campaigns.reduce((s, c) => s + calcDelivScore(c).score, 0) / (campaigns.length || 1))
         } subtitle="Entregabilidade geral /100" icon={Shield} />
       </div>
+
+      {/* Análise IA do período */}
+      <VisaoGeralAI campaigns={campaigns} totals={totals} />
     </div>
   );
 }
