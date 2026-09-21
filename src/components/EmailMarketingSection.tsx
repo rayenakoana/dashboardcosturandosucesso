@@ -2,9 +2,9 @@ import { useState, useMemo, useCallback } from "react";
 import { GlassCard } from "@/components/GlassCard";
 import { KPICard } from "@/components/KPICard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEmailCampaigns, useEmailAutomations, EmailCampaign, EmailAutomation } from "@/hooks/useEmailMarketing";
+import { useEmailCampaigns, EmailCampaign } from "@/hooks/useEmailMarketing";
 import {
-  Mail, Zap, TrendingUp, Users, MousePointerClick,
+  Mail, TrendingUp, Users, MousePointerClick,
   BarChart2, ChevronDown, ChevronUp, X, ArrowUpDown,
   CheckCircle2, AlertCircle, Newspaper, ShoppingBag,
   Sparkles, Shield, GitCompare, Clock, ArrowLeft,
@@ -50,7 +50,7 @@ const BENCHMARK = {
   delivery_rate:    { good: 98, warn: 95,  label: "Entrega",      ref: "Mínimo esperado" },
 };
 
-type EmailTab = "visao-geral" | "campanhas" | "automacoes";
+type EmailTab = "visao-geral" | "campanhas";
 
 function SubTitle({ children }: { children: React.ReactNode }) {
   return (
@@ -517,17 +517,13 @@ function Comparador({
   onClose,
   type,
 }: {
-  items: (EmailCampaign | EmailAutomation)[];
+  items: EmailCampaign[];
   onClose: () => void;
-  type: "campaign" | "automation";
 }) {
   const COLORS = [P, GOLD, GREEN, "hsl(220 80% 60%)", "hsl(280 70% 60%)"];
 
-  const isCampaign = type === "campaign";
-
   const radarData = useMemo(() => {
-    if (!isCampaign) return [];
-    const campaigns = items as EmailCampaign[];
+    const campaigns = items;
     const metrics = ["open_rate", "click_rate", "delivery_rate"] as const;
     const maxes = metrics.reduce((m, k) => ({
       ...m,
@@ -554,20 +550,19 @@ function Comparador({
       });
       return obj;
     });
-  }, [items, isCampaign]);
+  }, [items]);
 
   const barData = useMemo(() => {
-    if (!isCampaign) return [];
-    const campaigns = items as EmailCampaign[];
+    const campaigns = items;
     return [
       { metric: "Abertura (%)",     ...Object.fromEntries(campaigns.map((c, i) => [`item_${i}`, parseFloat(c.open_rate.toFixed(1))])) },
       { metric: "Clique (%)",       ...Object.fromEntries(campaigns.map((c, i) => [`item_${i}`, parseFloat(c.click_rate.toFixed(1))])) },
       { metric: "Bounce (%)",       ...Object.fromEntries(campaigns.map((c, i) => [`item_${i}`, parseFloat(c.bounce_rate.toFixed(2))])) },
       { metric: "Descadastro (%)",  ...Object.fromEntries(campaigns.map((c, i) => [`item_${i}`, parseFloat(c.unsubscribe_rate.toFixed(2))])) },
     ];
-  }, [items, isCampaign]);
+  }, [items]);
 
-  const getName = (item: EmailCampaign | EmailAutomation) =>
+  const getName = (item: EmailCampaign) =>
     item.name.length > 25 ? item.name.slice(0, 23) + "…" : item.name;
 
   return (
@@ -578,7 +573,7 @@ function Comparador({
           <div className="flex items-center gap-2">
             <GitCompare className="h-4 w-4 text-primary" />
             <h2 className="text-sm font-bold uppercase tracking-widest">
-              Comparador — {items.length} {isCampaign ? "campanhas" : "automações"}
+              Comparador — {items.length} campanhas
             </h2>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted/40 transition-colors">
@@ -596,80 +591,8 @@ function Comparador({
           ))}
         </div>
 
-        {!isCampaign && (() => {
-          const autos = items as EmailAutomation[];
-          const ACTION_LABELS: Record<string, string> = {
-            SDEMA: "E-mail", WTDEL: "Aguardar", SMSMS: "SMS",
-            ADDTG: "Tag+", REMTG: "Tag-", CONDIT: "Condição", SCORE: "Score",
-          };
-          const getActions = (a: EmailAutomation) => (a as any).actions as Array<{type:string}> | undefined ?? [];
-          const countType  = (a: EmailAutomation, t: string) => getActions(a).filter(ac => ac.type === t).length;
 
-          const structData = [
-            { metric: "E-mails",    ...Object.fromEntries(autos.map((a,i) => [`item_${i}`, countType(a,"SDEMA")])) },
-            { metric: "Aguardar",   ...Object.fromEntries(autos.map((a,i) => [`item_${i}`, countType(a,"WTDEL")])) },
-            { metric: "Condições",  ...Object.fromEntries(autos.map((a,i) => [`item_${i}`, countType(a,"CONDIT")])) },
-            { metric: "Total steps",...Object.fromEntries(autos.map((a,i) => [`item_${i}`, getActions(a).length])) },
-          ];
-
-          return (
-            <div className="space-y-4">
-              <GlassCard>
-                <SubTitle>Estrutura dos fluxos — comparação</SubTitle>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={structData} barGap={4}>
-                    <XAxis dataKey="metric" tick={{ fontSize: 10, fill: MUTED }} axisLine={false} tickLine={false} />
-                    <YAxis hide />
-                    <Tooltip {...TT} />
-                    {autos.map((_, i) => (
-                      <Bar key={i} dataKey={`item_${i}`} name={getName(autos[i])}
-                        fill={COLORS[i]} radius={[3,3,0,0]} />
-                    ))}
-                    <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </GlassCard>
-
-              <GlassCard className="!p-0 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Informação</th>
-                        {autos.map((a, i) => (
-                          <th key={i} className="text-right px-4 py-2.5 font-medium" style={{ color: COLORS[i] }}>
-                            {getName(a)}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[
-                        { label: "Status",        fn: (a: EmailAutomation) => a.status === "active" ? "✓ Ativa" : "Inativa" },
-                        { label: "Total de steps", fn: (a: EmailAutomation) => String(getActions(a).length || "—") },
-                        { label: "E-mails",        fn: (a: EmailAutomation) => String(countType(a,"SDEMA") || "—") },
-                        { label: "Aguardar",       fn: (a: EmailAutomation) => String(countType(a,"WTDEL") || "—") },
-                        { label: "Condições",      fn: (a: EmailAutomation) => String(countType(a,"CONDIT") || "—") },
-                        { label: "Criado",         fn: (a: EmailAutomation) => a.rd_created_at ? new Date(a.rd_created_at).toLocaleDateString("pt-BR", {month:"short",year:"numeric"}) : "—" },
-                        { label: "Atualizado",     fn: (a: EmailAutomation) => a.rd_updated_at ? new Date(a.rd_updated_at).toLocaleDateString("pt-BR", {month:"short",year:"numeric"}) : "—" },
-                      ].map(({ label, fn }) => (
-                        <tr key={label} className="border-b border-border/40 hover:bg-muted/10">
-                          <td className="px-4 py-2.5 text-muted-foreground">{label}</td>
-                          {autos.map((a, i) => (
-                            <td key={i} className="text-right px-4 py-2.5 font-semibold">{fn(a)}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </GlassCard>
-            </div>
-          );
-        })()}
-
-        {isCampaign && (
-          <>
+        <>
             {/* Radar */}
             <GlassCard>
               <SubTitle>Performance relativa (radar)</SubTitle>
@@ -759,8 +682,7 @@ function Comparador({
                 </table>
               </div>
             </GlassCard>
-          </>
-        )}
+        </>
       </div>
     </div>
   );
@@ -1250,197 +1172,8 @@ function Campanhas({
       {comparador && selectedCampaigns.length >= 2 && (
         <Comparador
           items={selectedCampaigns}
-          type="campaign"
           onClose={() => setComparador(false)}
         />
-      )}
-    </div>
-  );
-}
-
-// ── Aba Automações ────────────────────────────────────────────────────────────
-
-function Automacoes({ automations, loading }: { automations: EmailAutomation[]; loading: boolean }) {
-  const [search, setSearch]       = useState("");
-  const [showAll, setShowAll]     = useState(false);
-  const [selected, setSelected]   = useState<Set<string>>(new Set());
-  const [comparador, setComparador] = useState(false);
-
-  const ACTION_LABELS: Record<string, string> = {
-    SDEMA: "Enviar e-mail",
-    WTDEL: "Aguardar",
-    SMSMS: "Enviar SMS",
-    ADDTG: "Adicionar tag",
-    REMTG: "Remover tag",
-    ADDSEG: "Adicionar segmento",
-    REMSEG: "Remover segmento",
-    CONDIT: "Condição",
-    SCORE:  "Pontuar lead",
-  };
-
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return automations.filter(a => a.name.toLowerCase().includes(q));
-  }, [automations, search]);
-
-  const visible = showAll ? filtered : filtered.slice(0, 12);
-
-  const toggleSelect = (id: string) => {
-    setSelected(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
-
-  const selectedAutos = automations.filter(a => selected.has(a.id));
-
-  if (loading) return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-40 rounded-xl" />)}
-    </div>
-  );
-
-  // Estatísticas reais disponíveis
-  const statusCount = automations.reduce((m, a) => {
-    const s = a.status || "unknown";
-    m[s] = (m[s] || 0) + 1;
-    return m;
-  }, {} as Record<string, number>);
-
-  return (
-    <div className="space-y-4">
-      {/* KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KPICard title="Total de fluxos"   value={automations.length} icon={Zap} />
-        <KPICard title="Ativos"            value={statusCount["active"] || 0}
-          subtitle={`${statusCount["disabled"] || 0} desativados`} icon={CheckCircle2} />
-        <KPICard title="Com envio de e-mail" value={
-          automations.filter(a => (a as any).actions?.some((ac: any) => ac.type === "SDEMA")).length || "—"
-        } icon={Mail} />
-        <KPICard title="Criados em 2024+" value={
-          automations.filter(a => a.rd_created_at && a.rd_created_at >= "2024-01-01").length
-        } icon={TrendingUp} />
-      </div>
-
-      {/* Busca + comparador */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar automação..."
-          className="w-full sm:w-72 text-xs px-3 py-2 rounded-lg border border-border bg-card/60 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-        />
-        {selected.size >= 2 && (
-          <button onClick={() => setComparador(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground">
-            <GitCompare className="h-3 w-3" /> Comparar {selected.size}
-          </button>
-        )}
-        {selected.size > 0 && (
-          <button onClick={() => setSelected(new Set())}
-            className="text-[10px] text-muted-foreground hover:text-foreground">
-            Limpar seleção
-          </button>
-        )}
-      </div>
-
-      {/* Aviso sobre métricas */}
-      <div className="flex items-start gap-2 p-3 rounded-xl bg-muted/20 border border-border/50">
-        <AlertCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
-        <p className="text-[10px] text-muted-foreground">
-          A API do RD Station Marketing não expõe métricas de performance por automação (leads, conversões, e-mails enviados).
-          Os dados exibidos refletem a estrutura e configuração de cada fluxo.
-        </p>
-      </div>
-
-      {/* Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {visible.map(a => {
-          const isSelected = selected.has(a.id);
-          const actions = (a as any).actions as Array<{ type: string }> | undefined;
-          const emailSteps = actions?.filter(ac => ac.type === "SDEMA").length ?? 0;
-          const totalSteps = actions?.length ?? 0;
-
-          return (
-            <GlassCard key={a.id}
-              className={cn("!p-4 space-y-3 cursor-pointer transition-all",
-                isSelected && "ring-1 ring-primary/50")}
-              hover>
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-semibold leading-snug line-clamp-2">{a.name}</p>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <span className={cn(
-                      "px-1.5 py-0.5 rounded text-[9px] font-bold uppercase",
-                      a.status === "active" ? "bg-emerald-500/15 text-emerald-400" : "bg-muted/40 text-muted-foreground"
-                    )}>
-                      {a.status === "active" ? "Ativa" : a.status === "disabled" ? "Inativa" : a.status}
-                    </span>
-                    {emailSteps > 0 && (
-                      <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
-                        <Mail className="h-2.5 w-2.5" /> {emailSteps} e-mail{emailSteps > 1 ? "s" : ""}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <input type="checkbox" className="accent-primary shrink-0 mt-0.5"
-                  checked={isSelected}
-                  onChange={() => toggleSelect(a.id)}
-                  onClick={e => e.stopPropagation()} />
-              </div>
-
-              {/* Steps do fluxo */}
-              {actions && actions.length > 0 && (
-                <div className="space-y-1">
-                  <p className="text-[9px] text-muted-foreground uppercase tracking-wider">
-                    Estrutura do fluxo ({totalSteps} etapas)
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {actions.slice(0, 6).map((ac, i) => (
-                      <span key={i} className={cn(
-                        "px-1.5 py-0.5 rounded text-[9px] font-medium",
-                        ac.type === "SDEMA" ? "bg-primary/10 text-primary" :
-                        ac.type === "WTDEL" ? "bg-muted/30 text-muted-foreground" :
-                        "bg-muted/20 text-muted-foreground"
-                      )}>
-                        {ACTION_LABELS[ac.type] ?? ac.type}
-                      </span>
-                    ))}
-                    {actions.length > 6 && (
-                      <span className="px-1.5 py-0.5 rounded text-[9px] text-muted-foreground bg-muted/20">
-                        +{actions.length - 6}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Datas */}
-              <div className="flex gap-3 text-[9px] text-muted-foreground border-t border-border/40 pt-2">
-                {a.rd_created_at && (
-                  <span>Criado {new Date(a.rd_created_at).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })}</span>
-                )}
-                {a.rd_updated_at && (
-                  <span>· Atualizado {new Date(a.rd_updated_at).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })}</span>
-                )}
-              </div>
-            </GlassCard>
-          );
-        })}
-      </div>
-
-      {filtered.length > 12 && (
-        <button onClick={() => setShowAll(v => !v)}
-          className="w-full py-2 text-xs font-semibold text-muted-foreground hover:text-foreground border border-border rounded-xl transition-colors flex items-center justify-center gap-1">
-          {showAll
-            ? <><ChevronUp className="h-3 w-3" /> Ver menos</>
-            : <><ChevronDown className="h-3 w-3" /> Ver todas ({filtered.length})</>}
-        </button>
-      )}
-
-      {comparador && selectedAutos.length >= 2 && (
-        <Comparador items={selectedAutos} type="automation" onClose={() => setComparador(false)} />
       )}
     </div>
   );
@@ -1455,12 +1188,10 @@ export function EmailMarketingSection({ from, to }: Props) {
   const [campaignPage, setCampaignPage]     = useState<EmailCampaign | null>(null);
 
   const { data: campaigns  = [], isLoading: loadingCampaigns } = useEmailCampaigns(from, to);
-  const { data: automations = [], isLoading: loadingAutos    } = useEmailAutomations();
 
   const TABS = [
     { key: "visao-geral" as EmailTab, label: "Visão geral", Icon: TrendingUp },
     { key: "campanhas"   as EmailTab, label: "Campanhas",   Icon: Mail       },
-    { key: "automacoes"  as EmailTab, label: "Automações",  Icon: Zap        },
   ];
 
   // Página de detalhe da campanha
@@ -1498,7 +1229,6 @@ export function EmailMarketingSection({ from, to }: Props) {
           onOpenCampaign={setCampaignPage}
         />
       )}
-      {tab === "automacoes"  && <Automacoes automations={automations} loading={loadingAutos} />}
     </div>
   );
 }

@@ -26,23 +26,6 @@ export interface EmailCampaign {
   synced_at: string;
 }
 
-export interface EmailAutomation {
-  id: string;
-  name: string;
-  status: string;
-  leads_entered: number;
-  leads_active: number;
-  qualifications: number;
-  opportunities: number;
-  sales: number;
-  conversion_rate: number;
-  rd_created_at: string | null;
-  rd_updated_at: string | null;
-  synced_at: string;
-  // enriquecido via API direta (não está no Supabase)
-  actions?: Array<{ id: string; type: string }>;
-}
-
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
 export function useEmailCampaigns(from: string, to: string) {
@@ -58,22 +41,6 @@ export function useEmailCampaigns(from: string, to: string) {
         .limit(500);
       if (error) throw error;
       return (data ?? []) as EmailCampaign[];
-    },
-    staleTime: 1000 * 60 * 30,
-  });
-}
-
-export function useEmailAutomations() {
-  return useQuery({
-    queryKey: ["email_automations"],
-    queryFn: async () => {
-      const { data, error } = await supabaseWpp
-        .from("email_automations")
-        .select("*")
-        .order("rd_updated_at", { ascending: false })
-        .limit(200);
-      if (error) throw error;
-      return (data ?? []) as EmailAutomation[];
     },
     staleTime: 1000 * 60 * 30,
   });
