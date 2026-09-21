@@ -152,62 +152,82 @@ function DelivScore({ campaign }: { campaign: EmailCampaign }) {
 
 function CampaignAI({ campaign }: { campaign: EmailCampaign }) {
   const [result, setResult] = useState<{
-    insight_assunto: string;
+    insight_assunto: string | null;
     pontos: string[];
     riscos: string[];
     recomendacoes: string[];
   } | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState("");
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState("");
+  const [subjectInput, setSubjectInput] = useState("");
+  const [showInput, setShowInput] = useState(false);
 
-  const generate = useCallback(async () => {
+  const generate = useCallback(async (subjectOverride?: string) => {
     setLoading(true);
     setError("");
     setResult(null);
     try {
-      // Análise do assunto: detectar padrões
-      const subject = campaign.subject ?? "";
-      const temNumero   = /\d/.test(subject);
-      const temEmoji    = /[\u{1F300}-\u{1FAFF}]/u.test(subject);
-      const temPergunta = subject.includes("?");
-      const temUrgencia = /agora|hoje|últim|última|encerr|limit|vagas|expira/i.test(subject);
+      // Assunto: preferir override manual > campo do banco > null
+      const subject = subjectOverride ?? campaign.subject ?? "";
+      const temAssunto = subject.trim().length > 0;
+
+      // Análise do assunto (só se tiver)
+      const temNumero   = temAssunto && /\d/.test(subject);
+      const temEmoji    = temAssunto && /[\u{1F300}-\u{1FAFF}]/u.test(subject);
+      const temPergunta = temAssunto && subject.includes("?");
+      const temUrgencia = temAssunto && /agora|hoje|últim|última|encerr|limit|vagas|expira/i.test(subject);
       const tamanho     = subject.length;
-      const tipoPalavra = temPergunta ? "pergunta" : temUrgencia ? "urgência" : temNumero ? "número/dado" : "declarativo";
+      const tipoPalavra = !temAssunto ? null
+        : temPergunta ? "pergunta" : temUrgencia ? "urgência" : temNumero ? "número/dado" : "declarativo";
 
-      const prompt = `Você é especialista sênior em copywriting e email marketing para educação empresarial voltada a confecções e indústria têxtil brasileira. A empresa é a Costurando Sucesso (CS), que vende cursos, mentorias e consultorias para donos e gestores de confecções.
+      const blocoAssunto = temAssunto
+        ? [
+            "ASSUNTO DO EMAIL (linha de subject que o lead vê na caixa de entrada):",
+            subject,
+            "",
+            "ANÁLISE DO ASSUNTO:",
+            "- Tipo de gatilho: " + String(tipoPalavra),
+            "- Tem número/dado: " + (temNumero ? "sim" : "não"),
+            "- Tem emoji: " + (temEmoji ? "sim" : "não"),
+            "- Tem urgência: " + (temUrgencia ? "sim" : "não"),
+            "- Comprimento: " + tamanho + " caracteres (ideal: 40-60 para mobile)",
+          ].join("\n")
+        : "ASSUNTO: não disponível via API. Análise baseada nas métricas e nome da campanha.";
 
-CAMPANHA ANALISADA:
-- Nome: ${campaign.name}
-- Tipo: ${campaign.type === "news" ? "Newsletter (CS News)" : "Comercial (lançamento/oferta)"}
-- Assunto: "${subject || "não disponível"}"
-- Enviado em: ${campaign.sent_at ? new Date(campaign.sent_at).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }) : "N/A"}
-- Destinatários: ${campaign.recipients.toLocaleString("pt-BR")}
+      const insightPrompt = temAssunto
+        ? '"insight_assunto": "2 frases analisando o assunto: qual gatilho foi usado, como impactou a abertura de ' + pct(campaign.open_rate) + '.",'
+        : '"insight_assunto": null,';
 
-MÉTRICAS REAIS:
-- Abertura: ${pct(campaign.open_rate)} (benchmark do setor: 25–35%)
-- Clique: ${pct(campaign.click_rate)} (benchmark: 2–4%)
-- Bounce: ${pct(campaign.bounce_rate)} (máx: 2%)
-- Spam: ${pct(campaign.spam_rate)} (máx: 0.1%)
-- Descadastros: ${pct(campaign.unsubscribe_rate)} (máx: 0.5%)
-- Score entregabilidade: ${Math.round(campaign.delivery_rate)}%
-
-ANÁLISE AUTOMÁTICA DO ASSUNTO:
-- Gatilho detectado: ${tipoPalavra}
-- Tem número/dado: ${temNumero ? "sim" : "não"}
-- Tem emoji: ${temEmoji ? "sim" : "não"}
-- Tem urgência: ${temUrgencia ? "sim" : "não"}
-- Comprimento: ${tamanho} caracteres (ideal: 40–60)
-
-CONTEXTO DO PÚBLICO:
-Empresários e gestores de confecções brasileiras. Leem email cedo (6h–8h) ou no almoço. São práticos e diretos — respondem bem a assuntos que prometem resolver um problema do chão de fábrica. Desconfiam de promessas genéricas. Abertura acima de 30% é excelente para esse público; abaixo de 15% é sinal de assunto fraco ou horário errado.
-
-Responda APENAS com JSON válido neste formato, sem texto antes ou depois:
-{
-  "insight_assunto": "2 frases diretas analisando o assunto '${subject}': o que o gatilho usado (${tipoPalavra}) provavelmente causou nesse público, e como isso se reflete na abertura de ${pct(campaign.open_rate)}. Seja específico ao assunto real, não genérico.",
-  "pontos": ["ponto positivo concreto 1 baseado nas métricas e no assunto", "ponto positivo 2", "ponto positivo 3"],
-  "riscos": ["risco concreto 1 com número real da campanha", "risco 2"],
-  "recomendacoes": ["recomendação acionável 1 específica para o próximo email similar", "recomendação 2", "recomendação 3"]
-}`;
+      const prompt = [
+        "Você é especialista em email marketing para educação empresarial voltada a confecções no Brasil.",
+        "Empresa: Costurando Sucesso (CS) — cursos, mentorias e consultorias para gestores de confecções.",
+        "",
+        "CAMPANHA:",
+        "- Nome: " + campaign.name,
+        "- Tipo: " + (campaign.type === "news" ? "Newsletter" : "Comercial"),
+        "- Enviado: " + (campaign.sent_at ? new Date(campaign.sent_at).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }) : "N/A"),
+        "- Destinatários: " + campaign.recipients.toLocaleString("pt-BR"),
+        "",
+        blocoAssunto,
+        "",
+        "MÉTRICAS:",
+        "- Abertura: " + pct(campaign.open_rate) + " (benchmark 25-35%)",
+        "- Clique: " + pct(campaign.click_rate) + " (benchmark 2-4%)",
+        "- Bounce: " + pct(campaign.bounce_rate) + " (max 2%)",
+        "- Spam: " + pct(campaign.spam_rate) + " (max 0.1%)",
+        "- Descadastros: " + pct(campaign.unsubscribe_rate) + " (max 0.5%)",
+        "- Entrega: " + pct(campaign.delivery_rate),
+        "",
+        "PÚBLICO: Empresários de confecções, práticos, leem email cedo (6h-8h) ou no almoço.",
+        "",
+        "Responda APENAS com JSON válido sem texto antes ou depois:",
+        "{",
+        "  " + insightPrompt,
+        '  "pontos": ["ponto positivo 1 com número real", "ponto 2", "ponto 3"],',
+        '  "riscos": ["risco 1 com número real", "risco 2"],',
+        '  "recomendacoes": ["recomendação acionável 1", "recomendação 2", "recomendação 3"]',
+        "}",
+      ].join("\n");
 
       const resp = await fetch("/api/claude", {
         method: "POST",
@@ -242,11 +262,41 @@ Responda APENAS com JSON válido neste formato, sem texto antes ou depois:
 
   if (!result && !loading && !error) {
     return (
-      <button onClick={generate}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-primary/30 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors">
-        <Sparkles className="h-3.5 w-3.5" />
-        Gerar análise com IA
-      </button>
+      <div className="space-y-3">
+        {showInput ? (
+          <div className="flex gap-2">
+            <input
+              value={subjectInput}
+              onChange={e => setSubjectInput(e.target.value)}
+              placeholder="Cole o assunto do email aqui (opcional)..."
+              className="flex-1 text-xs px-3 py-2 rounded-lg border border-border bg-card/60 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+              onKeyDown={e => e.key === "Enter" && generate(subjectInput || undefined)}
+            />
+            <button
+              onClick={() => generate(subjectInput || undefined)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-primary text-primary-foreground">
+              <Sparkles className="h-3 w-3" /> Analisar
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <button onClick={() => generate()}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-primary/30 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors">
+              <Sparkles className="h-3.5 w-3.5" />
+              Gerar análise com IA
+            </button>
+            <button onClick={() => setShowInput(true)}
+              className="px-3 py-2.5 rounded-xl border border-border text-[10px] text-muted-foreground hover:text-foreground hover:border-border/80 transition-colors whitespace-nowrap">
+              + Informar assunto
+            </button>
+          </div>
+        )}
+        {!showInput && (
+          <p className="text-[9px] text-muted-foreground text-center">
+            Sem assunto: análise baseada nas métricas e nome da campanha · clique em "+ Informar assunto" para análise mais precisa
+          </p>
+        )}
+      </div>
     );
   }
 
@@ -292,6 +342,18 @@ Responda APENAS com JSON válido neste formato, sem texto antes ou depois:
             </p>
             <p className="text-[11px] text-foreground/90 leading-relaxed">{result.insight_assunto}</p>
           </div>
+        </div>
+      )}
+      {!result.insight_assunto && (
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/20 border border-border/40">
+          <AlertCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <p className="text-[10px] text-muted-foreground">
+            Assunto não disponível — análise baseada nas métricas.
+            <button onClick={() => { setResult(null); setShowInput(true); }}
+              className="ml-1 text-primary hover:underline">
+              Informar assunto para análise completa
+            </button>
+          </p>
         </div>
       )}
 
