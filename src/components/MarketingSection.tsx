@@ -540,71 +540,95 @@ export function MarketingSection({ from, to }: Props) {
             </div>
           </div>
 
-          {/* KPIs — sempre 4 colunas, independente do filtro */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {/* Seguidores EC */}
-            {(!igAccount || igAccount === "eduardocristianoriginal") && (() => {
-              const acc = "eduardocristianoriginal";
-              const f = followersByAccount[acc];
-              const delta = f ? f.last - f.first : 0;
-              const gained = dailyFiltered.filter(d => d.username === acc).reduce((s,d) => s + (d.followers_gained||0), 0);
-              const lost   = dailyFiltered.filter(d => d.username === acc).reduce((s,d) => s + (d.followers_lost||0), 0);
-              return <KPICard key={acc}
-                title="Seguidores @EC"
-                value={fmt(f?.last ?? 0)}
-                subtitle={`${delta>=0?"+":""}${delta.toLocaleString("pt-BR")} líquido · ↑${gained} ↓${lost}`}
-                icon={Users}/>;
-            })()}
-            {/* Seguidores CS */}
-            {(!igAccount || igAccount === "costurandosucesso") && (() => {
-              const acc = "costurandosucesso";
-              const f = followersByAccount[acc];
-              const delta = f ? f.last - f.first : 0;
-              const gained = dailyFiltered.filter(d => d.username === acc).reduce((s,d) => s + (d.followers_gained||0), 0);
-              const lost   = dailyFiltered.filter(d => d.username === acc).reduce((s,d) => s + (d.followers_lost||0), 0);
-              return <KPICard key={acc}
-                title="Seguidores @CS"
-                value={fmt(f?.last ?? 0)}
-                subtitle={`${delta>=0?"+":""}${delta.toLocaleString("pt-BR")} líquido · ↑${gained} ↓${lost}`}
-                icon={Users}/>;
-            })()}
-            {/* Quando filtra por uma conta só, preenche com KPIs extras */}
-            {igAccount && (
-              <KPICard title="Crescimento líquido" value={(() => {
-                const f = followersByAccount[igAccount];
-                return f ? `${f.last - f.first >= 0 ? "+" : ""}${(f.last - f.first).toLocaleString("pt-BR")}` : "—";
-              })()} subtitle="no período selecionado" icon={TrendingUp}/>
-            )}
-            <KPICard title="Posts no período" value={postsFiltered.length}
-              subtitle={`Eng. médio: ${fmt(igEngPost)}/post`} icon={TrendingUp}/>
-            {!igAccount && (
-              <KPICard title="Engajamento total" value={fmt(igEngTotal)}
-                subtitle={`${fmt(igAlcance)} alcance`} icon={Heart}/>
-            )}
-            {igAccount && (
-              <KPICard title="Engajamento total" value={fmt(igEngTotal)}
-                subtitle={`${fmt(igAlcance)} alcance`} icon={Heart}/>
-            )}
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <KPICard title="Taxa de engajamento" value={pct(igTaxaEng)}
-              subtitle="eng ÷ alcance × 100" icon={TrendingUp} accent="gold"/>
-            <KPICard title="Views totais" value={fmt(igViews)}
-              subtitle="Reels e vídeos" icon={Eye}/>
-          </div>
-
+          {/* KPIs */}
+          {!igAccount ? (() => {
+            // ── modo TODAS: total + EC + CS + Posts em grid 4 colunas
+            const fEC = followersByAccount["eduardocristianoriginal"];
+            const fCS = followersByAccount["costurandosucesso"];
+            const totalSeg = (fEC?.last ?? 0) + (fCS?.last ?? 0);
+            const totalDelta = ((fEC ? fEC.last - fEC.first : 0) + (fCS ? fCS.last - fCS.first : 0));
+            const gainedEC = dailyData.filter(d => d.username==="eduardocristianoriginal").reduce((s,d)=>s+(d.followers_gained||0),0);
+            const lostEC   = dailyData.filter(d => d.username==="eduardocristianoriginal").reduce((s,d)=>s+(d.followers_lost||0),0);
+            const gainedCS = dailyData.filter(d => d.username==="costurandosucesso").reduce((s,d)=>s+(d.followers_gained||0),0);
+            const lostCS   = dailyData.filter(d => d.username==="costurandosucesso").reduce((s,d)=>s+(d.followers_lost||0),0);
+            return (
+              <>
+                {/* linha 1: total + posts + eng + taxa */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <KPICard title="Total de seguidores"
+                    value={fmt(totalSeg)}
+                    subtitle={`${totalDelta>=0?"+":""}${totalDelta.toLocaleString("pt-BR")} líquido no período`}
+                    icon={Users}/>
+                  <KPICard title="Posts no período" value={postsFiltered.length}
+                    subtitle={`Eng. médio: ${fmt(igEngPost)}/post`} icon={TrendingUp}/>
+                  <KPICard title="Engajamento total" value={fmt(igEngTotal)}
+                    subtitle={`${fmt(igAlcance)} alcance`} icon={Heart}/>
+                  <KPICard title="Taxa de engajamento" value={pct(igTaxaEng)}
+                    subtitle="eng ÷ alcance × 100" icon={TrendingUp} accent="gold"/>
+                </div>
+                {/* linha 2: EC | CS | views */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <KPICard title="Seguidores @EC"
+                    value={fmt(fEC?.last ?? 0)}
+                    subtitle={`${(fEC ? fEC.last-fEC.first : 0)>=0?"+":""}${(fEC ? fEC.last-fEC.first : 0).toLocaleString("pt-BR")} líquido · ↑${gainedEC} ↓${lostEC}`}
+                    icon={Users}/>
+                  <KPICard title="Seguidores @CS"
+                    value={fmt(fCS?.last ?? 0)}
+                    subtitle={`${(fCS ? fCS.last-fCS.first : 0)>=0?"+":""}${(fCS ? fCS.last-fCS.first : 0).toLocaleString("pt-BR")} líquido · ↑${gainedCS} ↓${lostCS}`}
+                    icon={Users}/>
+                  <KPICard title="Views totais" value={fmt(igViews)}
+                    subtitle="Reels e vídeos" icon={Eye}/>
+                </div>
+              </>
+            );
+          })() : (() => {
+            // ── modo conta única: layout original
+            const f = followersByAccount[igAccount];
+            const delta = f ? f.last - f.first : 0;
+            const gained = dailyFiltered.filter(d => d.username===igAccount).reduce((s,d)=>s+(d.followers_gained||0),0);
+            const lost   = dailyFiltered.filter(d => d.username===igAccount).reduce((s,d)=>s+(d.followers_lost||0),0);
+            const label  = igAccount==="eduardocristianoriginal" ? "@EC" : "@CS";
+            return (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <KPICard title={`Seguidores ${label}`}
+                    value={fmt(f?.last ?? 0)}
+                    subtitle={`${delta>=0?"+":""}${delta.toLocaleString("pt-BR")} líquido · ↑${gained} ↓${lost}`}
+                    icon={Users}/>
+                  <KPICard title="Crescimento líquido"
+                    value={`${delta>=0?"+":""}${delta.toLocaleString("pt-BR")}`}
+                    subtitle="no período selecionado" icon={TrendingUp}/>
+                  <KPICard title="Posts no período" value={postsFiltered.length}
+                    subtitle={`Eng. médio: ${fmt(igEngPost)}/post`} icon={TrendingUp}/>
+                  <KPICard title="Engajamento total" value={fmt(igEngTotal)}
+                    subtitle={`${fmt(igAlcance)} alcance`} icon={Heart}/>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <KPICard title="Taxa de engajamento" value={pct(igTaxaEng)}
+                    subtitle="eng ÷ alcance × 100" icon={TrendingUp} accent="gold"/>
+                  <KPICard title="Views totais" value={fmt(igViews)}
+                    subtitle="Reels e vídeos" icon={Eye}/>
+                </div>
+              </>
+            );
+          })()}
           {/* Crescimento de seguidores com previsibilidade */}
           {followersChart.length > 0 && (
             <GlassCard>
               <SubTitle>Crescimento de seguidores</SubTitle>
               {followersChart.length > 1 ? (() => {
-                // Domínio Y proporcional — evita linha reta no topo com poucos pontos
-                const allVals = followersChart.flatMap(d =>
-                  visibleAccounts.map(acc => (d as any)[acc] ?? null).filter(Boolean)
+                // Domínio Y: pad proporcional dentro de cada série (não entre séries)
+                const valsByAcc = visibleAccounts.map(acc =>
+                  followersChart.map(d => (d as any)[acc] ?? null).filter((v): v is number => v !== null)
                 );
-                const minY = allVals.length > 0 ? Math.min(...allVals) : 0;
-                const maxY = allVals.length > 0 ? Math.max(...allVals) : 0;
-                const pad  = Math.max(Math.round((maxY - minY) * 0.5), 100);
+                const serieRanges = valsByAcc.map(vals => ({
+                  min: Math.min(...vals), max: Math.max(...vals),
+                }));
+                const globalMin = Math.min(...serieRanges.map(r => r.min));
+                const globalMax = Math.max(...serieRanges.map(r => r.max));
+                // pad = 20% da maior variação intra-série (evita linha reta), mín 100
+                const maxIntraRange = Math.max(...serieRanges.map(r => r.max - r.min), 100);
+                const pad = Math.max(Math.round(maxIntraRange * 0.2), 100);
                 return (
                   <ResponsiveContainer width="100%" height={180}>
                     <AreaChart data={followersChart}>
