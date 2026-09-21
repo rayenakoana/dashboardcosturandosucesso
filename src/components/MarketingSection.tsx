@@ -153,7 +153,9 @@ export function MarketingSection({ from, to }: Props) {
     setMetaAnalise("");
     try {
       const topC = porCampanhaRich[0];
-      const prompt = `Você é um analista de tráfego pago especialista em performance digital para o mercado brasileiro de moda/confecção.
+      const prompt = `Você é um analista de tráfego pago especialista em performance digital para o mercado brasileiro de educação e consultoria B2B.
+
+A empresa é a Costurando Sucesso — oferece cursos, mentorias e consultorias para confecções e indústrias do setor de moda/vestuário. O público-alvo são empresários e gestores de confecções.
 
 Dados do período — Meta Ads:
 - Investido total: R$ ${metaTotais.spend.toLocaleString("pt-BR",{maximumFractionDigits:0})}
