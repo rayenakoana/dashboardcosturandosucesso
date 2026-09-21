@@ -109,6 +109,13 @@ function DelivScore({ campaign }: { campaign: EmailCampaign }) {
       <div className="h-2 rounded-full bg-muted/30 overflow-hidden">
         <div className="h-full rounded-full transition-all" style={{ width: pctW, background: color }} />
       </div>
+      <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-1.5 pt-1.5 border-t border-border/30">
+        <span className="flex items-center gap-1">
+          <Users className="h-3 w-3" />
+          {fmt(campaign.recipients)} destinatários
+        </span>
+        <span>{fmt(campaign.delivered)} entregues</span>
+      </div>
       <div className="grid grid-cols-3 gap-2 mt-3">
         {[
           {
@@ -210,6 +217,7 @@ Responda APENAS com JSON válido neste formato, sem texto antes ou depois:
           messages: [{ role: "user", content: prompt }],
         }),
       });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
       let data: any;
       try { data = await resp.json(); } catch { throw new Error("Resposta inválida da API"); }
       const text = data.content?.find((b: any) => b.type === "text")?.text ?? "";
@@ -219,8 +227,9 @@ Responda APENAS com JSON válido neste formato, sem texto antes ou depois:
       if (!parsed.pontos || !parsed.recomendacoes) throw new Error("Estrutura inesperada");
       setResult(parsed);
     } catch (e: unknown) {
-      console.error("[CampaignAI] erro:", e);
-      setError("Não foi possível gerar análise agora.");
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[CampaignAI] erro:", msg);
+      setError(`Erro: ${msg}`);
     } finally {
       setLoading(false);
     }
@@ -448,10 +457,6 @@ function CampaignPage({
               {delivScore}
             </p>
             <p className="text-[9px] text-muted-foreground">/100</p>
-            <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center justify-end gap-1">
-              <Users className="h-3 w-3" />
-              {fmt(campaign.recipients)} destinatários · {fmt(campaign.delivered)} entregues
-            </p>
           </div>
         </div>
       </GlassCard>
