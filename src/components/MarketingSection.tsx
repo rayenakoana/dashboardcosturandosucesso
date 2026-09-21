@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { EmailMarketingSection } from "@/components/EmailMarketingSection";
 import { GlassCard } from "@/components/GlassCard";
 import { KPICard } from "@/components/KPICard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,7 +9,7 @@ import { useInstagramPostInsights, useInstagramAccountDaily, useInstagramProfile
 import {
   TrendingUp, Megaphone, MessageCircle, DollarSign,
   Users, BarChart2, ExternalLink, Heart, Instagram,
-  ArrowUpDown, ChevronUp, ChevronDown,
+  ArrowUpDown, ChevronUp, ChevronDown, Mail,
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -38,7 +39,7 @@ const P  = "hsl(355 82% 51%)";
 const P2 = "hsl(355 82% 51% / 0.5)";
 const MUTED = "hsl(0 0% 60%)";
 
-type Tab = "meta" | "wpp" | "instagram";
+type Tab = "meta" | "wpp" | "instagram" | "email";
 interface Props { from: string; to: string; }
 
 function SubTitle({ children }: { children: React.ReactNode }) {
@@ -460,6 +461,7 @@ Responda em 4 seções curtas (máx. 2 frases cada), sem emoji, sem markdown, s�
           { key:"meta",      label:"Meta Ads",      Icon:Megaphone     },
           { key:"wpp",       label:"WPP Campanhas", Icon:MessageCircle },
           { key:"instagram", label:"Instagram",     Icon:Instagram     },
+          { key:"email",     label:"E-mail",        Icon:Mail          },
         ] as {key:Tab;label:string;Icon:any}[]).map(({key,label,Icon}) => (
           <button key={key} onClick={() => setTab(key)}
             className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
@@ -699,6 +701,11 @@ Responda em 4 seções curtas (máx. 2 frases cada), sem emoji, sem markdown, s�
             <div className="text-center text-muted-foreground text-sm py-8">Nenhuma campanha WPP no período.</div>
           )}
         </div>
+      )}
+
+      {/* ── EMAIL MARKETING ── */}
+      {tab==="email" && (
+        <EmailMarketingSection from={from} to={to} />
       )}
 
       {/* ── INSTAGRAM ── */}
