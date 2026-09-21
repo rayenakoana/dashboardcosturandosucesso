@@ -11,7 +11,7 @@ import {
   ArrowUpDown, ChevronUp, ChevronDown,
 } from "lucide-react";
 import {
-  AreaChart, Area, BarChart, Bar,
+  AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
   Cell, ReferenceLine,
 } from "recharts";
@@ -78,21 +78,24 @@ export function MarketingSection({ from, to }: Props) {
       purchase_value: a.purchase_value + (r.purchase_value||0),
       impressions: a.impressions + (r.impressions||0),
       clicks: a.clicks + (r.clicks||0),
+      reach: (a.reach||0) + (r.reach||0),
     }),
-    { spend:0, leads:0, purchases:0, purchase_value:0, impressions:0, clicks:0 }
+    { spend:0, leads:0, purchases:0, purchase_value:0, impressions:0, clicks:0, reach:0 as number|null }
   ), [metaData]);
 
   const metaCPL  = metaTotais.leads > 0 ? metaTotais.spend / metaTotais.leads : 0;
   const metaROAS = metaTotais.spend > 0 ? metaTotais.purchase_value / metaTotais.spend : 0;
 
   const porCampanha = useMemo(() => {
-    const m: Record<string, { name: string; spend: number; leads: number; purchases: number; purchase_value: number }> = {};
+    const m: Record<string, { name: string; spend: number; leads: number; purchases: number; purchase_value: number; clicks: number; impressions: number }> = {};
     metaData.forEach(r => {
-      if (!m[r.campaign_id]) m[r.campaign_id] = { name: r.campaign_name, spend:0, leads:0, purchases:0, purchase_value:0 };
+      if (!m[r.campaign_id]) m[r.campaign_id] = { name: r.campaign_name, spend:0, leads:0, purchases:0, purchase_value:0, clicks:0, impressions:0 };
       m[r.campaign_id].spend          += r.spend||0;
       m[r.campaign_id].leads          += r.leads||0;
       m[r.campaign_id].purchases      += r.purchases||0;
       m[r.campaign_id].purchase_value += r.purchase_value||0;
+      m[r.campaign_id].clicks         += r.clicks||0;
+      m[r.campaign_id].impressions    += r.impressions||0;
     });
     return Object.values(m).sort((a,b) => b.spend - a.spend);
   }, [metaData]);
@@ -102,6 +105,97 @@ export function MarketingSection({ from, to }: Props) {
     Investido: parseFloat(c.spend.toFixed(2)),
     Leads: c.leads,
   }));
+
+  // Meta — métricas extras
+  const metaCTR      = metaTotais.impressions > 0 ? (metaTotais.clicks / metaTotais.impressions) * 100 : 0;
+  const metaCPC      = metaTotais.clicks > 0 ? metaTotais.spend / metaTotais.clicks : 0;
+  const metaFreqMedia = metaTotais.reach && metaTotais.reach > 0 ? metaTotais.impressions / metaTotais.reach : 0;
+
+  // Tendência diária — agrupa por date_start
+  const metaTendencia = useMemo(() => {
+    const byDay: Record<string, { date: string; spend: number; leads: number; impressions: number; clicks: number }> = {};
+    metaData.forEach(r => {
+      const d = r.date_start;
+      if (!byDay[d]) byDay[d] = { date: d, spend: 0, leads: 0, impressions: 0, clicks: 0 };
+      byDay[d].spend       += r.spend || 0;
+      byDay[d].leads       += r.leads || 0;
+      byDay[d].impressions += r.impressions || 0;
+      byDay[d].clicks      += r.clicks || 0;
+    });
+    return Object.values(byDay).sort((a,b) => a.date.localeCompare(b.date)).map(d => ({
+      ...d,
+      ctr: d.impressions > 0 ? parseFloat(((d.clicks/d.impressions)*100).toFixed(2)) : 0,
+      cpl: d.leads > 0 ? parseFloat((d.spend/d.leads).toFixed(2)) : 0,
+      date: d.date.slice(5), // "MM-DD"
+    }));
+  }, [metaData]);
+
+  // Por campanha enriquecido com CTR e badge
+  const porCampanhaRich = useMemo(() => porCampanha.map(c => {
+    const cpl  = c.leads > 0 ? c.spend / c.leads : 0;
+    const roas = c.spend > 0 ? c.purchase_value / c.spend : 0;
+    const ctr  = c.impressions > 0 ? (c.clicks / c.impressions) * 100 : 0;
+    // badge baseado em ROAS e CPL
+    const badge = roas >= 4 ? "Ótimo" : roas >= 2 ? "Bom" : cpl > 0 && cpl < 50 ? "Regular" : "—";
+    const badgeColor = badge === "Ótimo" ? "text-emerald-400 bg-emerald-500/10"
+      : badge === "Bom" ? "text-sky-400 bg-sky-500/10"
+      : badge === "Regular" ? "text-amber-400 bg-amber-500/10"
+      : "text-muted-foreground/40 bg-muted/10";
+    return { ...c, cpl, roas, ctr, badge, badgeColor };
+  }), [porCampanha]);
+
+  // Meta análise IA
+  const [metaAnalise, setMetaAnalise] = useState<string>("");
+  const [metaAnaliseLoading, setMetaAnaliseLoading] = useState(false);
+
+  async function gerarAnalyseMeta() {
+    setMetaAnaliseLoading(true);
+    setMetaAnalise("");
+    try {
+      const topC = porCampanhaRich[0];
+      const prompt = `Você é um analista de tráfego pago especialista em performance digital para o mercado brasileiro de moda/confecção.
+
+Dados do período — Meta Ads:
+- Investido total: R$ ${metaTotais.spend.toLocaleString("pt-BR",{maximumFractionDigits:0})}
+- Leads: ${metaTotais.leads} | CPL médio: R$ ${metaCPL.toFixed(0)}
+- Compras: ${metaTotais.purchases} | Receita: R$ ${metaTotais.purchase_value.toLocaleString("pt-BR",{maximumFractionDigits:0})}
+- ROAS: ${metaROAS.toFixed(2)}× | CTR: ${metaCTR.toFixed(2)}% | CPC: R$ ${metaCPC.toFixed(2)}
+- Impressões: ${fmt(metaTotais.impressions)} | Alcance: ${fmt(metaTotais.reach ?? 0)} | Frequência média: ${metaFreqMedia.toFixed(1)}×
+- Melhor campanha: ${topC?.name ?? "—"} (ROAS ${topC?.roas?.toFixed(1) ?? "—"}×, CPL R$ ${topC?.cpl?.toFixed(0) ?? "—"})
+- Total de campanhas ativas: ${porCampanha.length}
+
+Responda em 4 seções curtas (máx. 2 frases cada), sem emoji, sem markdown, só texto limpo:
+
+**Desempenho geral**
+[avalie o ROAS, CPL e CTR em relação a benchmarks do segmento]
+
+**Pontos de atenção**
+[identifique gargalos: frequência alta, CTR baixo, custo crescente, etc.]
+
+**Oportunidade**
+[uma ação concreta de otimização baseada nos dados]
+
+**Próximo passo**
+[recomendação tática imediata]`;
+
+      const res = await fetch("/api/claude", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 600,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      const data = await res.json();
+      const texto = data.content?.find((b: any) => b.type === "text")?.text ?? "";
+      setMetaAnalise(texto);
+    } catch {
+      setMetaAnalise("Erro ao gerar análise. Tente novamente.");
+    } finally {
+      setMetaAnaliseLoading(false);
+    }
+  }
 
   // ── WPP ─────────────────────────────────────────────────
   const wppTotais    = wppData?.totais;
@@ -377,30 +471,80 @@ export function MarketingSection({ from, to }: Props) {
       {/* ── META ADS ── */}
       {tab==="meta" && (
         <div className="space-y-4">
+
+          {/* KPIs linha 1 */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {loadingMeta ? Array.from({length:4}).map((_,i) => <Skeleton key={i} className="h-[90px] rounded-xl"/>) : (<>
               <KPICard title="Investido (Ads)"
                 value={`R$ ${metaTotais.spend.toLocaleString("pt-BR",{maximumFractionDigits:0})}`}
-                subtitle="Total no período" icon={DollarSign} />
+                subtitle="Total no período" icon={DollarSign}/>
               <KPICard title="Leads Gerados"
                 value={metaTotais.leads.toLocaleString("pt-BR")}
-                subtitle={`CPL R$ ${metaCPL.toLocaleString("pt-BR",{maximumFractionDigits:0})}`}
-                icon={Users} />
+                subtitle={`CPL R$ ${metaCPL.toFixed(0)}`}
+                icon={Users}/>
               <KPICard title="Compras (Meta)"
                 value={metaTotais.purchases.toLocaleString("pt-BR")}
-                subtitle={`R$ ${metaTotais.purchase_value.toLocaleString("pt-BR",{maximumFractionDigits:0})} em receita`}
-                icon={BarChart2} />
+                subtitle={`R$ ${metaTotais.purchase_value.toLocaleString("pt-BR",{maximumFractionDigits:0})} receita`}
+                icon={BarChart2}/>
               <KPICard title="ROAS"
                 value={`${metaROAS.toFixed(2)}×`}
-                subtitle={`${metaTotais.impressions.toLocaleString("pt-BR")} impressões`}
-                icon={TrendingUp} accent={metaROAS>=3?"gold":"red"} />
+                subtitle={`${fmt(metaTotais.impressions)} impressões`}
+                icon={TrendingUp} accent={metaROAS>=3?"gold":"red"}/>
             </>)}
           </div>
 
+          {/* KPIs linha 2 — CTR / CPC / Alcance / Frequência */}
+          {!loadingMeta && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <KPICard title="CTR"
+                value={`${metaCTR.toFixed(2)}%`}
+                subtitle="cliques ÷ impressões"
+                icon={TrendingUp} accent={metaCTR>=1?"gold":"red"}/>
+              <KPICard title="CPC"
+                value={`R$ ${metaCPC.toFixed(2)}`}
+                subtitle="custo por clique"
+                icon={DollarSign}/>
+              <KPICard title="Alcance"
+                value={fmt(metaTotais.reach ?? 0)}
+                subtitle="pessoas únicas"
+                icon={Users}/>
+              <KPICard title="Frequência"
+                value={`${metaFreqMedia.toFixed(1)}×`}
+                subtitle="impressões ÷ alcance"
+                icon={BarChart2} accent={metaFreqMedia>3?"red":undefined}/>
+            </div>
+          )}
+
+          {/* Tendência diária */}
+          {!loadingMeta && metaTendencia.length > 1 && (
+            <GlassCard>
+              <SubTitle>Tendência diária — Investido, Leads e CTR</SubTitle>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={metaTendencia} margin={{left:0,right:16}}>
+                  <XAxis dataKey="date" tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false}/>
+                  <YAxis yAxisId="brl" tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false}
+                    tickFormatter={v=>`R$${(v/1000).toFixed(0)}k`}/>
+                  <YAxis yAxisId="leads" orientation="right" tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false}/>
+                  <Tooltip {...TT} formatter={(v:number,name:string) =>
+                    name==="Investido" ? `R$ ${v.toLocaleString("pt-BR")}` :
+                    name==="CTR" ? `${v}%` : v}/>
+                  <Legend wrapperStyle={{fontSize:11,color:MUTED}}/>
+                  <Line yAxisId="brl"   type="monotone" dataKey="spend"  name="Investido"
+                    stroke={P}  strokeWidth={2} dot={false}/>
+                  <Line yAxisId="leads" type="monotone" dataKey="leads"  name="Leads"
+                    stroke="hsl(210 70% 55%)" strokeWidth={2} dot={false}/>
+                  <Line yAxisId="leads" type="monotone" dataKey="ctr"    name="CTR"
+                    stroke="hsl(140 60% 45%)" strokeWidth={1.5} dot={false} strokeDasharray="4 2"/>
+                </LineChart>
+              </ResponsiveContainer>
+            </GlassCard>
+          )}
+
+          {/* Gráfico Investido × Leads por campanha */}
           {!loadingMeta && metaChartData.length > 0 && (
             <GlassCard>
               <SubTitle>Investido × Leads por Campanha</SubTitle>
-              <ResponsiveContainer width="100%" height={220}>
+              <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={metaChartData} margin={{left:0,right:8}}>
                   <XAxis dataKey="name" tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false}/>
                   <YAxis yAxisId="left"  tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false}
@@ -410,46 +554,82 @@ export function MarketingSection({ from, to }: Props) {
                     name==="Investido" ? `R$ ${v.toLocaleString("pt-BR")}` : v}/>
                   <Legend wrapperStyle={{fontSize:11,color:MUTED}}/>
                   <Bar yAxisId="left"  dataKey="Investido" fill={P}  radius={[4,4,0,0]} opacity={0.85}/>
-                  <Bar yAxisId="right" dataKey="Leads"     fill={P2} radius={[4,4,0,0]} opacity={0.7}/>
+                  <Bar yAxisId="right" dataKey="Leads"     fill="hsl(210 70% 55%)" radius={[4,4,0,0]} opacity={0.7}/>
                 </BarChart>
               </ResponsiveContainer>
             </GlassCard>
           )}
 
-          {!loadingMeta && porCampanha.length > 0 && (
+          {/* Tabela enriquecida por campanha */}
+          {!loadingMeta && porCampanhaRich.length > 0 && (
             <GlassCard>
               <SubTitle>Detalhamento por Campanha</SubTitle>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-border">
-                      {["Campanha","Investido","Leads","CPL","Compras","ROAS"].map(h => (
+                      {["Campanha","Investido","Leads","CPL","CTR","ROAS","Status"].map(h => (
                         <th key={h} className={cn("py-2 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60",
                           h==="Campanha"?"text-left pr-3":"text-right pr-3")}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {porCampanha.map((c,i) => {
-                      const cpl  = c.leads>0 ? c.spend/c.leads : 0;
-                      const roas = c.spend>0 ? c.purchase_value/c.spend : 0;
-                      return (
-                        <tr key={i} className="border-b border-border/40 hover:bg-muted/10 transition-colors">
-                          <td className="py-2 pr-3 font-medium text-foreground max-w-[200px] truncate">{c.name}</td>
-                          <td className="py-2 pr-3 text-right text-muted-foreground">{brl(c.spend)}</td>
-                          <td className="py-2 pr-3 text-right font-semibold text-foreground">{c.leads}</td>
-                          <td className="py-2 pr-3 text-right text-muted-foreground">{cpl>0?brl(cpl):"—"}</td>
-                          <td className="py-2 pr-3 text-right text-muted-foreground">{c.purchases}</td>
-                          <td className={cn("py-2 pr-3 text-right font-semibold",
-                            roas>=3?"text-emerald-400":roas>0?"text-muted-foreground":"text-muted-foreground/40")}>
-                            {roas>0?`${roas.toFixed(1)}×`:"—"}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {porCampanhaRich.map((c,i) => (
+                      <tr key={i} className="border-b border-border/40 hover:bg-muted/10 transition-colors">
+                        <td className="py-2 pr-3 font-medium text-foreground max-w-[180px] truncate">{c.name}</td>
+                        <td className="py-2 pr-3 text-right text-muted-foreground">{brl(c.spend)}</td>
+                        <td className="py-2 pr-3 text-right font-semibold text-foreground">{c.leads}</td>
+                        <td className="py-2 pr-3 text-right text-muted-foreground">{c.cpl>0?brl(c.cpl):"—"}</td>
+                        <td className={cn("py-2 pr-3 text-right",c.ctr>=1?"text-emerald-400":c.ctr>0?"text-amber-400":"text-muted-foreground/40")}>
+                          {c.ctr>0?`${c.ctr.toFixed(2)}%`:"—"}</td>
+                        <td className={cn("py-2 pr-3 text-right font-semibold",
+                          c.roas>=4?"text-emerald-400":c.roas>=2?"text-sky-400":c.roas>0?"text-amber-400":"text-muted-foreground/40")}>
+                          {c.roas>0?`${c.roas.toFixed(1)}×`:"—"}</td>
+                        <td className="py-2 pr-3 text-right">
+                          <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-semibold", c.badgeColor)}>
+                            {c.badge}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
+            </GlassCard>
+          )}
+
+          {/* Análise IA */}
+          {!loadingMeta && metaTotais.spend > 0 && (
+            <GlassCard>
+              <div className="flex items-center justify-between mb-3">
+                <SubTitle>Análise & Insights — Meta Ads</SubTitle>
+                <button
+                  onClick={gerarAnalyseMeta}
+                  disabled={metaAnaliseLoading}
+                  className="text-[10px] font-semibold px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-all">
+                  {metaAnaliseLoading ? "Analisando…" : "+ Gerar análise"}
+                </button>
+              </div>
+              {metaAnalise ? (
+                <div className="space-y-3">
+                  {metaAnalise.split("\n\n").filter(Boolean).map((bloco, i) => {
+                    const lines = bloco.split("\n");
+                    const titulo = lines[0].replace(/\*\*/g,"").trim();
+                    const corpo  = lines.slice(1).join(" ").trim();
+                    return (
+                      <div key={i} className="border-l-2 border-primary/40 pl-3">
+                        <p className="text-[9px] font-bold uppercase tracking-widest text-primary/70 mb-0.5">{titulo}</p>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">{corpo}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-[11px] text-muted-foreground/60">
+                  {metaAnaliseLoading ? "Interpretando dados com IA…" : "Clique em \"Gerar análise\" para interpretar os dados do período com IA."}
+                </p>
+              )}
             </GlassCard>
           )}
 
