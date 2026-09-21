@@ -111,10 +111,19 @@ function DelivScore({ campaign }: { campaign: EmailCampaign }) {
       </div>
       <div className="grid grid-cols-3 gap-2 mt-3">
         {[
-          { key: "bounce_rate",      val: campaign.bounce_rate,      good: 1,    warn: 2,    inv: true  },
-          { key: "spam_rate",        val: campaign.spam_rate,        good: 0.05, warn: 0.1,  inv: true  },
-          { key: "unsubscribe_rate", val: campaign.unsubscribe_rate, good: 0.3,  warn: 0.5,  inv: true  },
-        ].map(({ key, val, good, warn, inv }) => {
+          {
+            key: "bounce_rate",      val: campaign.bounce_rate,      good: 1,    warn: 2,    inv: true,
+            abs: fmt(campaign.recipients - campaign.delivered),
+          },
+          {
+            key: "spam_rate",        val: campaign.spam_rate,        good: 0.05, warn: 0.1,  inv: true,
+            abs: fmt(Math.round(campaign.delivered * campaign.spam_rate / 100)),
+          },
+          {
+            key: "unsubscribe_rate", val: campaign.unsubscribe_rate, good: 0.3,  warn: 0.5,  inv: true,
+            abs: fmt(Math.round(campaign.delivered * campaign.unsubscribe_rate / 100)),
+          },
+        ].map(({ key, val, good, warn, inv, abs }) => {
           const ok  = inv ? val <= good : val >= good;
           const med = inv ? val <= warn : val >= warn;
           const col = ok ? GREEN : med ? GOLD : P;
@@ -123,6 +132,7 @@ function DelivScore({ campaign }: { campaign: EmailCampaign }) {
             <div key={key} className="text-center">
               <p className="text-[9px] text-muted-foreground">{lbl}</p>
               <p className="text-sm font-bold" style={{ color: col }}>{pct(val)}</p>
+              <p className="text-[9px] text-muted-foreground">({abs})</p>
             </div>
           );
         })}
@@ -363,6 +373,10 @@ function CampaignPage({
               {delivScore}
             </p>
             <p className="text-[9px] text-muted-foreground">/100</p>
+            <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center justify-end gap-1">
+              <Users className="h-3 w-3" />
+              {fmt(campaign.recipients)} destinatários · {fmt(campaign.delivered)} entregues
+            </p>
           </div>
         </div>
       </GlassCard>
@@ -370,18 +384,28 @@ function CampaignPage({
       {/* KPIs principais */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { title: "Abertura",     value: pct(campaign.open_rate),      bench: 30,   inv: false, icon: Mail            },
-          { title: "Clique",       value: pct(campaign.click_rate),      bench: 3,    inv: false, icon: MousePointerClick },
-          { title: "Bounce",       value: pct(campaign.bounce_rate),     bench: 2,    inv: true,  icon: AlertCircle     },
-          { title: "Descadastros", value: pct(campaign.unsubscribe_rate),bench: 0.5,  inv: true,  icon: Users           },
-        ].map(({ title, value, bench, inv, icon: Icon }) => {
+          {
+            title: "Abertura",     value: pct(campaign.open_rate),      bench: 30,  inv: false, icon: Mail,
+            abs: fmt(Math.round(campaign.delivered * campaign.open_rate / 100)) + " aberturas",
+          },
+          {
+            title: "Clique",       value: pct(campaign.click_rate),      bench: 3,   inv: false, icon: MousePointerClick,
+            abs: fmt(Math.round(campaign.delivered * campaign.click_rate / 100)) + " cliques",
+          },
+          {
+            title: "Bounce",       value: pct(campaign.bounce_rate),     bench: 2,   inv: true,  icon: AlertCircle,
+            abs: fmt(campaign.recipients - campaign.delivered) + " e-mails",
+          },
+          {
+            title: "Descadastros", value: pct(campaign.unsubscribe_rate),bench: 0.5, inv: true,  icon: Users,
+            abs: fmt(Math.round(campaign.delivered * campaign.unsubscribe_rate / 100)) + " descadastros",
+          },
+        ].map(({ title, value, bench, inv, icon: Icon, abs }) => {
           const num = parseFloat(value);
           const ok  = inv ? num <= bench : num >= bench;
           return (
             <KPICard key={title} title={title} value={value} icon={Icon}
-              subtitle={ok
-                ? `✓ ${inv ? "dentro" : "acima"} do benchmark (${bench}%)`
-                : `⚠ benchmark: ${bench}%`}
+              subtitle={`${abs} · ${ok ? `✓ ${inv ? "dentro" : "acima"} do benchmark` : `⚠ benchmark: ${bench}%`}`}
               trend={ok ? "up" : "down"} />
           );
         })}
