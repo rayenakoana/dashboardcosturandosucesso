@@ -643,7 +643,7 @@ export function MarketingSection({ from, to }: Props) {
                         </linearGradient>
                       </defs>
                       <XAxis dataKey="date" tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false}/>
-                      <YAxis domain={[minY - pad, maxY + pad]} tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false} tickFormatter={fmt}/>
+                      <YAxis domain={[globalMin - pad, globalMax + pad]} tick={{fill:MUTED,fontSize:10}} tickLine={false} axisLine={false} tickFormatter={fmt}/>
                       <Tooltip {...TT} formatter={(v:number) => fmt(v)}/>
                       <Legend iconType="circle" iconSize={7} wrapperStyle={{fontSize:11,color:MUTED}}/>
                       {visibleAccounts.map((acc,i) => (
