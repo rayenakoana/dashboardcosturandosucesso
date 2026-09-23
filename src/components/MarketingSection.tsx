@@ -32,6 +32,7 @@ const TT = {
 };
 
 const fmt = (n: number) => n >= 1e6 ? (n/1e6).toFixed(1)+"M" : n >= 1000 ? (n/1000).toFixed(1)+"k" : String(Math.round(n));
+const fmtFull = (n: number) => n.toLocaleString("pt-BR");
 const brl = (n: number) => `R$ ${n.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`;
 const pct = (n: number) => n.toFixed(1) + "%";
 
@@ -758,11 +759,11 @@ Responda em 4 seções curtas (máx. 2 frases cada), sem emoji, sem markdown, s�
                 {/* linha 2: EC | CS | views */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <KPICard title="Seguidores @EC"
-                    value={fmt(fEC?.last ?? 0)}
+                    value={fmtFull(fEC?.last ?? 0)}
                     subtitle={`${(fEC ? fEC.last-fEC.first : 0)>=0?"+":""}${(fEC ? fEC.last-fEC.first : 0).toLocaleString("pt-BR")} líquido · ↑${gainedEC} ↓${lostEC}`}
                     icon={Users}/>
                   <KPICard title="Seguidores @CS"
-                    value={fmt(fCS?.last ?? 0)}
+                    value={fmtFull(fCS?.last ?? 0)}
                     subtitle={`${(fCS ? fCS.last-fCS.first : 0)>=0?"+":""}${(fCS ? fCS.last-fCS.first : 0).toLocaleString("pt-BR")} líquido · ↑${gainedCS} ↓${lostCS}`}
                     icon={Users}/>
                   <KPICard title="Views totais" value={fmt(igViews)}
@@ -781,7 +782,7 @@ Responda em 4 seções curtas (máx. 2 frases cada), sem emoji, sem markdown, s�
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <KPICard title={`Seguidores ${label}`}
-                    value={fmt(f?.last ?? 0)}
+                    value={fmtFull(f?.last ?? 0)}
                     subtitle={`${delta>=0?"+":""}${delta.toLocaleString("pt-BR")} líquido · ↑${gained} ↓${lost}`}
                     icon={Users}/>
                   <KPICard title="Crescimento líquido"
