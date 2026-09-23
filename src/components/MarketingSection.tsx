@@ -1711,14 +1711,16 @@ function ImpactoConteudo({ postsData, dailyData, igAccount }: ImpactoConteudoPro
             Por publicação
           </p>
           {(() => {
-            const svgH = Math.max(180, Math.min(dadosPorPost.length * 36 + 60, 340));
+            const svgH = 260;
             const marginTop = 8, marginBottom = 44, marginLeft = 36, marginRight = 8;
             const innerH = svgH - marginTop - marginBottom;
             const n = dadosPorPost.length;
-            const colW = n > 0 ? (100 / n) : 100;
-            const barW = Math.min(6, colW * 0.2);
-            const zero = innerH / 2; // linha do zero no centro
+            const zero = innerH / 2;
             const scale = (innerH / 2) / (maxAbs || 1);
+            // largura fixa em px; espaçamento proporcional ao número de posts
+            const barPx = Math.max(4, Math.min(18, Math.floor(600 / n) - 4));
+            // mostrar label só a cada N posts para não sobrepor
+            const labelStep = n <= 10 ? 1 : n <= 20 ? 2 : n <= 40 ? 3 : 5;
             return (
               <svg width="100%" height={svgH} style={{cursor:"pointer", overflow:"visible"}}
                 onClick={(e: React.MouseEvent<SVGSVGElement>) => {
@@ -1732,58 +1734,58 @@ function ImpactoConteudo({ postsData, dailyData, igAccount }: ImpactoConteudoPro
                   {[-maxAbs, -Math.round(maxAbs/2), 0, Math.round(maxAbs/2), maxAbs].map(v => {
                     const yy = zero - v * scale;
                     return (
-                      <g key={v}>
-                        <text x={-4} y={yy+3} textAnchor="end" fill={MUTED} fontSize={9}>
-                          {v > 0 ? `+${v}` : v}
-                        </text>
-                      </g>
+                      <text key={v} x={-4} y={yy+3} textAnchor="end" fill={MUTED} fontSize={9}>
+                        {v > 0 ? `+${v}` : v}
+                      </text>
                     );
                   })}
                   {/* Barras */}
                   {dadosPorPost.map((p, i) => {
-                    const cx = ((i + 0.5) / n) * 100; // percent
                     const op = detalhePost ? (detalhePost.post_id === p.post_id ? 0.95 : 0.3) : 0.85;
-                    const gainH = p.gained * scale;
-                    const lostH = p.lost * scale;
+                    const gainH = Math.max(p.gained * scale, p.gained > 0 ? 2 : 0);
+                    const lostH = Math.max(p.lost * scale, p.lost > 0 ? 2 : 0);
+                    const showLabel = i % labelStep === 0;
+                    // posição X em % baseada no índice
+                    const pct = `${((i + 0.5) / n * 100).toFixed(2)}%`;
+                    const pctLeft = `calc(${pct} - ${barPx/2}px)`;
                     return (
                       <g key={i} data-idx={i}>
-                        {/* Barra verde — de zero para cima */}
                         {p.gained > 0 && (
                           <rect
                             data-idx={i}
-                            x={`${cx - barW/2}%`}
+                            x={pctLeft as any}
                             y={zero - gainH}
-                            width={`${barW}%`}
+                            width={barPx}
                             height={gainH}
                             fill="#4CAF87"
                             opacity={op}
-                            rx={3}
+                            rx={2}
                           />
                         )}
-                        {/* Barra vermelha — de zero para baixo */}
                         {p.lost > 0 && (
                           <rect
                             data-idx={i}
-                            x={`${cx - barW/2}%`}
+                            x={pctLeft as any}
                             y={zero}
-                            width={`${barW}%`}
+                            width={barPx}
                             height={lostH}
                             fill="hsl(355 82% 51%)"
                             opacity={op}
-                            rx={3}
+                            rx={2}
                           />
                         )}
-                        {/* Label X */}
-                        <text
-                          x={`${cx}%`}
-                          y={innerH + 14}
-                          textAnchor="end"
-                          fill={MUTED}
-                          fontSize={9}
-                          transform={`rotate(-45, ${cx}%, ${innerH + 14})`}
-                        >
-                          {`${p.dataLabel.slice(5)} ${p.tipo.slice(0,3)}`}
-                        </text>
+                        {showLabel && (
+                          <text
+                            x={pct as any}
+                            y={innerH + 14}
+                            textAnchor="end"
+                            fill={MUTED}
+                            fontSize={9}
+                            transform={`rotate(-45, ${pct}, ${innerH + 14})`}
+                          >
+                            {`${p.dataLabel.slice(5)} ${p.tipo.slice(0,3)}`}
+                          </text>
+                        )}
                       </g>
                     );
                   })}
