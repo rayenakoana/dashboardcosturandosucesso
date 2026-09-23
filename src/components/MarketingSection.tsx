@@ -1716,7 +1716,7 @@ function ImpactoConteudo({ postsData, dailyData, igAccount }: ImpactoConteudoPro
             const innerH = svgH - marginTop - marginBottom;
             const n = dadosPorPost.length;
             const colW = n > 0 ? (100 / n) : 100;
-            const barW = Math.min(24, colW * 0.5);
+            const barW = Math.min(6, colW * 0.2);
             const zero = innerH / 2; // linha do zero no centro
             const scale = (innerH / 2) / (maxAbs || 1);
             return (
