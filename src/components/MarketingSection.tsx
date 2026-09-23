@@ -1580,7 +1580,7 @@ function ImpactoConteudo({ postsData, dailyData, igAccount }: ImpactoConteudoPro
     })).sort((a,b)=>b.saldo-a.saldo);
   }, [dadosPorPost]);
 
-  const maxAbs = Math.max(...dadosPorPost.map(p=>Math.max(Math.abs(p.saldo),1)),1);
+  const maxAbs = Math.max(...dadosPorPost.map(p=>Math.max(p.gained, p.lost, 1)),1);
 
   const CustomTooltip = ({active,payload,label}: any) => {
     if (!active||!payload?.length) return null;
@@ -1711,7 +1711,9 @@ function ImpactoConteudo({ postsData, dailyData, igAccount }: ImpactoConteudoPro
             Por publicação
           </p>
           <ResponsiveContainer width="100%" height={Math.max(160, Math.min(dadosPorPost.length*28+40, 320))}>
-            <BarChart data={dadosPorPost} margin={{top:8,right:8,left:0,bottom:40}} barCategoryGap="30%"
+            <BarChart
+              data={dadosPorPost.map(p => ({ ...p, lostNeg: -p.lost }))}
+              margin={{top:8,right:8,left:0,bottom:40}} barCategoryGap="30%" barGap={2}
               onClick={handleBarClick} style={{cursor:"pointer"}}>
               <XAxis
                 dataKey="dataLabel"
@@ -1732,11 +1734,20 @@ function ImpactoConteudo({ postsData, dailyData, igAccount }: ImpactoConteudoPro
               />
               <ReferenceLine y={0} stroke={MUTED} strokeOpacity={0.3} strokeWidth={1}/>
               <Tooltip content={<CustomTooltip/>} cursor={{fill:"hsl(0 0% 100% / 0.03)"}}/>
-              <Bar dataKey="saldo" maxBarSize={28} radius={4}>
+              <Bar dataKey="gained" maxBarSize={14} radius={[4,4,0,0]} name="Ganhos">
                 {dadosPorPost.map((p,i)=>(
                   <Cell
                     key={i}
-                    fill={p.saldo>0?"#4CAF87":p.saldo<0?"hsl(355 82% 51%)":MUTED}
+                    fill="#4CAF87"
+                    opacity={detalhePost ? (detalhePost.post_id===p.post_id?1:0.4) : 0.85}
+                  />
+                ))}
+              </Bar>
+              <Bar dataKey="lostNeg" maxBarSize={14} radius={[0,0,4,4]} name="Perdas">
+                {dadosPorPost.map((p,i)=>(
+                  <Cell
+                    key={i}
+                    fill="hsl(355 82% 51%)"
                     opacity={detalhePost ? (detalhePost.post_id===p.post_id?1:0.4) : 0.85}
                   />
                 ))}
