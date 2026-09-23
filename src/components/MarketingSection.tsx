@@ -1734,7 +1734,7 @@ function ImpactoConteudo({ postsData, dailyData, igAccount }: ImpactoConteudoPro
               />
               <ReferenceLine y={0} stroke={MUTED} strokeOpacity={0.3} strokeWidth={1}/>
               <Tooltip content={<CustomTooltip/>} cursor={{fill:"hsl(0 0% 100% / 0.03)"}}/>
-              <Bar dataKey="gained" maxBarSize={14} radius={[4,4,0,0]} name="Ganhos">
+              <Bar dataKey="gained" maxBarSize={28} radius={[4,4,0,0]} stackId="a" name="Ganhos">
                 {dadosPorPost.map((p,i)=>(
                   <Cell
                     key={i}
@@ -1743,7 +1743,7 @@ function ImpactoConteudo({ postsData, dailyData, igAccount }: ImpactoConteudoPro
                   />
                 ))}
               </Bar>
-              <Bar dataKey="lostNeg" maxBarSize={14} radius={[0,0,4,4]} name="Perdas">
+              <Bar dataKey="lostNeg" maxBarSize={28} radius={[0,0,4,4]} stackId="b" name="Perdas">
                 {dadosPorPost.map((p,i)=>(
                   <Cell
                     key={i}
