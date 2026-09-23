@@ -1713,7 +1713,7 @@ function ImpactoConteudo({ postsData, dailyData, igAccount }: ImpactoConteudoPro
           <ResponsiveContainer width="100%" height={Math.max(160, Math.min(dadosPorPost.length*28+40, 320))}>
             <BarChart
               data={dadosPorPost.map(p => ({ ...p, lostNeg: -p.lost }))}
-              margin={{top:8,right:8,left:0,bottom:40}} barCategoryGap="30%" barGap={2}
+              margin={{top:8,right:8,left:0,bottom:40}} barCategoryGap="40%" barGap={-28}
               onClick={handleBarClick} style={{cursor:"pointer"}}>
               <XAxis
                 dataKey="dataLabel"
@@ -1734,22 +1734,16 @@ function ImpactoConteudo({ postsData, dailyData, igAccount }: ImpactoConteudoPro
               />
               <ReferenceLine y={0} stroke={MUTED} strokeOpacity={0.3} strokeWidth={1}/>
               <Tooltip content={<CustomTooltip/>} cursor={{fill:"hsl(0 0% 100% / 0.03)"}}/>
-              <Bar dataKey="gained" maxBarSize={28} radius={[4,4,0,0]} stackId="a" name="Ganhos">
+              <Bar dataKey="gained" maxBarSize={28} radius={[4,4,0,0]} name="Ganhos">
                 {dadosPorPost.map((p,i)=>(
-                  <Cell
-                    key={i}
-                    fill="#4CAF87"
-                    opacity={detalhePost ? (detalhePost.post_id===p.post_id?1:0.4) : 0.85}
-                  />
+                  <Cell key={i} fill="#4CAF87"
+                    opacity={detalhePost ? (detalhePost.post_id===p.post_id?0.95:0.3) : 0.85}/>
                 ))}
               </Bar>
-              <Bar dataKey="lostNeg" maxBarSize={28} radius={[0,0,4,4]} stackId="b" name="Perdas">
+              <Bar dataKey="lostNeg" maxBarSize={28} radius={[0,0,4,4]} name="Perdas">
                 {dadosPorPost.map((p,i)=>(
-                  <Cell
-                    key={i}
-                    fill="hsl(355 82% 51%)"
-                    opacity={detalhePost ? (detalhePost.post_id===p.post_id?1:0.4) : 0.85}
-                  />
+                  <Cell key={i} fill="hsl(355 82% 51%)"
+                    opacity={detalhePost ? (detalhePost.post_id===p.post_id?0.95:0.3) : 0.85}/>
                 ))}
               </Bar>
             </BarChart>
