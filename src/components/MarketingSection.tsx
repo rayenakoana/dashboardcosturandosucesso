@@ -1710,44 +1710,87 @@ function ImpactoConteudo({ postsData, dailyData, igAccount }: ImpactoConteudoPro
           <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-3">
             Por publicação
           </p>
-          <ResponsiveContainer width="100%" height={Math.max(160, Math.min(dadosPorPost.length*28+40, 320))}>
-            <BarChart
-              data={dadosPorPost.map(p => ({ ...p, lostNeg: -p.lost }))}
-              margin={{top:8,right:8,left:0,bottom:40}} barCategoryGap="40%" barGap={-28}
-              onClick={handleBarClick} style={{cursor:"pointer"}}>
-              <XAxis
-                dataKey="dataLabel"
-                tickLine={false} axisLine={false}
-                tick={{fill:MUTED, fontSize:9}}
-                interval={0}
-                angle={-45} textAnchor="end"
-                tickFormatter={(_,i) => {
-                  const p = dadosPorPost[i];
-                  return p ? `${p.dataLabel.slice(5)} ${p.tipo.slice(0,3)}` : "";
-                }}
-              />
-              <YAxis
-                tickLine={false} axisLine={false}
-                tick={{fill:MUTED, fontSize:9}}
-                tickFormatter={v=>(v>0?"+":"")+v}
-                domain={[-maxAbs, maxAbs]}
-              />
-              <ReferenceLine y={0} stroke={MUTED} strokeOpacity={0.3} strokeWidth={1}/>
-              <Tooltip content={<CustomTooltip/>} cursor={{fill:"hsl(0 0% 100% / 0.03)"}}/>
-              <Bar dataKey="gained" maxBarSize={28} radius={[4,4,0,0]} name="Ganhos">
-                {dadosPorPost.map((p,i)=>(
-                  <Cell key={i} fill="#4CAF87"
-                    opacity={detalhePost ? (detalhePost.post_id===p.post_id?0.95:0.3) : 0.85}/>
-                ))}
-              </Bar>
-              <Bar dataKey="lostNeg" maxBarSize={28} radius={[0,0,4,4]} name="Perdas">
-                {dadosPorPost.map((p,i)=>(
-                  <Cell key={i} fill="hsl(355 82% 51%)"
-                    opacity={detalhePost ? (detalhePost.post_id===p.post_id?0.95:0.3) : 0.85}/>
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          {(() => {
+            const svgH = Math.max(180, Math.min(dadosPorPost.length * 36 + 60, 340));
+            const marginTop = 8, marginBottom = 44, marginLeft = 36, marginRight = 8;
+            const innerH = svgH - marginTop - marginBottom;
+            const n = dadosPorPost.length;
+            const colW = n > 0 ? (100 / n) : 100;
+            const barW = Math.min(24, colW * 0.5);
+            const zero = innerH / 2; // linha do zero no centro
+            const scale = (innerH / 2) / (maxAbs || 1);
+            return (
+              <svg width="100%" height={svgH} style={{cursor:"pointer", overflow:"visible"}}
+                onClick={(e: React.MouseEvent<SVGSVGElement>) => {
+                  const idx = (e.target as SVGElement).getAttribute('data-idx');
+                  if (idx !== null) handleBarClick({ activePayload: [{ payload: dadosPorPost[+idx] }] });
+                }}>
+                <g transform={`translate(${marginLeft},${marginTop})`}>
+                  {/* Linha do zero */}
+                  <line x1={0} y1={zero} x2="100%" y2={zero} stroke={MUTED} strokeOpacity={0.3} strokeWidth={1}/>
+                  {/* Ticks Y */}
+                  {[-maxAbs, -Math.round(maxAbs/2), 0, Math.round(maxAbs/2), maxAbs].map(v => {
+                    const yy = zero - v * scale;
+                    return (
+                      <g key={v}>
+                        <text x={-4} y={yy+3} textAnchor="end" fill={MUTED} fontSize={9}>
+                          {v > 0 ? `+${v}` : v}
+                        </text>
+                      </g>
+                    );
+                  })}
+                  {/* Barras */}
+                  {dadosPorPost.map((p, i) => {
+                    const cx = ((i + 0.5) / n) * 100; // percent
+                    const op = detalhePost ? (detalhePost.post_id === p.post_id ? 0.95 : 0.3) : 0.85;
+                    const gainH = p.gained * scale;
+                    const lostH = p.lost * scale;
+                    return (
+                      <g key={i} data-idx={i}>
+                        {/* Barra verde — de zero para cima */}
+                        {p.gained > 0 && (
+                          <rect
+                            data-idx={i}
+                            x={`${cx - barW/2}%`}
+                            y={zero - gainH}
+                            width={`${barW}%`}
+                            height={gainH}
+                            fill="#4CAF87"
+                            opacity={op}
+                            rx={3}
+                          />
+                        )}
+                        {/* Barra vermelha — de zero para baixo */}
+                        {p.lost > 0 && (
+                          <rect
+                            data-idx={i}
+                            x={`${cx - barW/2}%`}
+                            y={zero}
+                            width={`${barW}%`}
+                            height={lostH}
+                            fill="hsl(355 82% 51%)"
+                            opacity={op}
+                            rx={3}
+                          />
+                        )}
+                        {/* Label X */}
+                        <text
+                          x={`${cx}%`}
+                          y={innerH + 14}
+                          textAnchor="end"
+                          fill={MUTED}
+                          fontSize={9}
+                          transform={`rotate(-45, ${cx}%, ${innerH + 14})`}
+                        >
+                          {`${p.dataLabel.slice(5)} ${p.tipo.slice(0,3)}`}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </g>
+              </svg>
+            );
+          })()}
 
           {/* Detalhe do post clicado */}
           {detalhePost && (
