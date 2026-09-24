@@ -38,11 +38,20 @@ function getStatusColor(real: number, meta: number) {
   return { bg: "#dc262620", border: "#dc2626", text: "#f87171" };
 }
 
+// Paleta de cores por etapa do funil (do topo ao fundo)
+const FUNIL_ETAPA_CORES = [
+  "#b91c1c", // Leads — vermelho escuro
+  "#C8102E", // MQL
+  "#e02040", // Reuniões agendadas
+  "#e8384f", // Reuniões realizadas
+  "#f05a6e", // Propostas
+  "#16a34a", // Fechados — verde sempre
+];
+
 function TrapezioFunil({
   etapas,
   conversoes,
   loading,
-  corBase,
 }: {
   etapas: { label: string; val: number; pctDeTopo: number }[];
   conversoes: { real: number; meta: number; label: string }[];
@@ -50,17 +59,27 @@ function TrapezioFunil({
   corBase: string;
 }) {
   const maxW = 100;
-  const minW = 28;
+  const minW = 34;
 
   return (
     <div className="w-full max-w-2xl mx-auto">
       {etapas.map((etapa, i) => {
         const widthPct = maxW - ((maxW - minW) / (etapas.length - 1)) * i;
+        const nextWidthPct = i < etapas.length - 1
+          ? maxW - ((maxW - minW) / (etapas.length - 1)) * (i + 1)
+          : widthPct;
         const conv = conversoes[i - 1];
+        const cor = FUNIL_ETAPA_CORES[i] ?? "#E8192C";
+
+        // clip-path trapézio: estreita de widthPct para nextWidthPct
+        const leftInset = ((widthPct - nextWidthPct) / widthPct / 2) * 100;
+        const rightInset = 100 - leftInset;
+        const clipPath = i < etapas.length - 1
+          ? `polygon(0 0, 100% 0, ${rightInset}% 100%, ${leftInset}% 100%)`
+          : "none";
 
         return (
           <div key={etapa.label}>
-            {/* Conector com taxa de conversão */}
             {i > 0 && conv && (
               <div className="flex items-center justify-center my-1">
                 <div className="flex items-center gap-2 px-3 py-1 rounded-full border text-[11px] font-semibold"
@@ -77,27 +96,28 @@ function TrapezioFunil({
               </div>
             )}
 
-            {/* Trapézio */}
             <div className="flex justify-center">
               <div
-                className="flex items-center justify-between px-4 transition-all duration-500"
+                className="relative flex items-center transition-all duration-500"
                 style={{
                   width: `${widthPct}%`,
-                  height: "44px",
-                  background: loading ? "#ffffff10" : corBase,
-                  opacity: loading ? 0.3 : 1 - i * 0.08,
-                  clipPath: i < etapas.length - 1
-                    ? `polygon(0 0, 100% 0, ${100 - (100 - (maxW - ((maxW - minW) / (etapas.length - 1)) * (i + 1)) / widthPct * 100) / 2}% 100%, ${(100 - (maxW - ((maxW - minW) / (etapas.length - 1)) * (i + 1)) / widthPct * 100) / 2}% 100%)`
-                    : "none",
-                  borderRadius: i === etapas.length - 1 ? "6px" : "4px 4px 0 0",
+                  height: "46px",
+                  background: loading ? "#ffffff10" : cor,
+                  opacity: loading ? 0.3 : 1,
+                  clipPath,
+                  borderRadius: i === etapas.length - 1 ? "6px" : undefined,
                 }}
               >
-                <span className="text-[11px] font-bold uppercase tracking-wide text-white truncate pr-2">
-                  {etapa.label}
-                </span>
-                <span className="text-base font-bold text-white flex-shrink-0">
-                  {loading ? "—" : etapa.val}
-                </span>
+                {/* Label centralizado com padding lateral para não sair do trapézio */}
+                <div className="absolute inset-0 flex items-center justify-between"
+                  style={{ paddingLeft: `${leftInset + 2}%`, paddingRight: `${(100 - rightInset) + 2}%` }}>
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-white leading-tight">
+                    {etapa.label}
+                  </span>
+                  <span className="text-sm font-bold text-white flex-shrink-0 ml-2">
+                    {loading ? "—" : etapa.val}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

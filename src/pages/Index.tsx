@@ -762,26 +762,55 @@ export default function Index() {
           <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
             <PieChartIcon className="h-3.5 w-3.5" /> Motivos de Perda (histórico)
           </h3>
-          {isLoading ? <ChartSkeleton /> : motivosData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <defs>
-                  {COLORS.map((c, i) => (
-                    <linearGradient key={i} id={`gradPie${i}`} x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor={c} stopOpacity={0.55} />
-                      <stop offset="100%" stopColor={c} stopOpacity={1} />
-                    </linearGradient>
-                  ))}
-                </defs>
-                <Pie data={motivosData} cx="50%" cy="50%" outerRadius={100} innerRadius={50} dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={{ stroke: "hsl(0 0% 30%)" }}>
-                  {motivosData.map((_, i) => <Cell key={i} fill={`url(#gradPie${i % COLORS.length})`} />)}
-                </Pie>
-                <Tooltip content={<PieTooltip />} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ zIndex: 50 }} />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
+          {isLoading ? <ChartSkeleton /> : motivosData.length > 0 ? (() => {
+            const total = motivosData.reduce((s, d) => s + d.value, 0);
+            const MOTIVO_COLORS = ["#C8102E","#E8384F","#FF6B6B","#FF8E8E","#FFB4B4","#991B1B","#FCA5A5","#be123c","#e11d48","#fb7185"];
+            return (
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                {/* Donut sem labels inline */}
+                <div className="flex-shrink-0 w-[180px] h-[180px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <defs>
+                        {MOTIVO_COLORS.map((c, i) => (
+                          <linearGradient key={i} id={`gradPie2_${i}`} x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor={c} stopOpacity={0.6} />
+                            <stop offset="100%" stopColor={c} stopOpacity={1} />
+                          </linearGradient>
+                        ))}
+                      </defs>
+                      <Pie data={motivosData} cx="50%" cy="50%" outerRadius={80} innerRadius={44} dataKey="value" startAngle={90} endAngle={-270}>
+                        {motivosData.map((_, i) => <Cell key={i} fill={`url(#gradPie2_${i % MOTIVO_COLORS.length})`} />)}
+                      </Pie>
+                      <Tooltip content={<PieTooltip />} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ zIndex: 50 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                {/* Lista ranking */}
+                <div className="flex-1 w-full space-y-1.5 min-w-0">
+                  {motivosData.slice(0, 8).map((d, i) => {
+                    const pct = ((d.value / total) * 100).toFixed(0);
+                    const cor = MOTIVO_COLORS[i % MOTIVO_COLORS.length];
+                    return (
+                      <div key={d.name} className="flex items-center gap-2 group">
+                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cor }} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="text-[11px] text-foreground/80 truncate pr-2">{d.name}</span>
+                            <span className="text-[11px] font-bold text-foreground/60 flex-shrink-0">{pct}%</span>
+                          </div>
+                          <div className="h-1 rounded-full bg-white/5 overflow-hidden">
+                            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: cor }} />
+                          </div>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground flex-shrink-0 w-6 text-right">{d.value}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })() : (
             <div className="h-[280px] flex items-center justify-center text-muted-foreground text-sm">Nenhum lead perdido no período</div>
           )}
         </GlassCard>
