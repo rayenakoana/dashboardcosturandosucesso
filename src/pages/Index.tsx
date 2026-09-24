@@ -356,9 +356,11 @@ export default function Index() {
 
   const motivosData = useMemo(() => {
     const map: Record<string, number> = {};
-    filteredVendas.filter(v => v.status === "Perdido").forEach(v => { const m = v.motivo_perda || "Não informado"; map[m] = (map[m] || 0) + 1; });
-    return Object.entries(map).map(([name, value]) => ({ name, value }));
-  }, [filteredVendas]);
+    // Usa todas as vendas perdidas independente do período (visão histórica de padrão)
+    const base = filterFunis.length > 0 ? vendas.filter(v => filterFunis.includes(v.funil)) : vendas;
+    base.filter(v => v.status === "Perdido").forEach(v => { const m = v.motivo_perda || "Não informado"; map[m] = (map[m] || 0) + 1; });
+    return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  }, [vendas, filterFunis]);
 
   const showUpData = useMemo(() => {
     const dateMap: Record<string, { confirmado: number; real: number }> = {};
@@ -723,7 +725,7 @@ export default function Index() {
 
         <GlassCard>
           <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
-            <PieChartIcon className="h-3.5 w-3.5" /> Motivos de Perda
+            <PieChartIcon className="h-3.5 w-3.5" /> Motivos de Perda (histórico)
           </h3>
           {isLoading ? <ChartSkeleton /> : motivosData.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
