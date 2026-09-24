@@ -29,15 +29,18 @@ export default function CSLive() {
   const now = new Date();
   const mesRef = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const monthStart = `${mesRef}-01`;
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    .toISOString().split("T")[0]; // último dia do mês atual
 
   const vendasDoMes = useMemo(
     () => vendas.filter(v =>
       v.status === "Fechado" &&
       v.data_fechamento &&
       v.data_fechamento >= monthStart &&
+      v.data_fechamento <= monthEnd &&
       (filterFunis.length === 0 || filterFunis.includes(v.funil))
     ),
-    [vendas, monthStart, filterFunis]
+    [vendas, monthStart, monthEnd, filterFunis]
   );
   const faturamento = vendasDoMes.reduce((s, v) => s + Number(v.valor), 0);
   const totalVendas = vendasDoMes.length;
