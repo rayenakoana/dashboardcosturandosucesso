@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { KPICard } from "@/components/KPICard";
 import { GlassCard } from "@/components/GlassCard";
+import { AIAnalysisButton } from "@/components/AIAnalysisButton";
 import { SDRPodium } from "@/components/SDRPodium";
 import { MetaXVendidoFunil } from "@/components/MetaXVendidoFunil";
 import { LeadsDiariosCard } from "@/components/LeadsDiariosCard";
@@ -557,9 +558,20 @@ export default function Index() {
 
       {/* Conversion KPIs from metricas_diarias */}
       <div>
-        <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
-          <Percent className="h-3.5 w-3.5" /> KPIs de Conversão (Input Diário)
-        </h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+            <Percent className="h-3.5 w-3.5" /> KPIs de Conversão (Input Diário)
+          </h2>
+          <AIAnalysisButton section="KPIs de Conversão" dataPayload={{
+            periodo: PERIOD_OPTIONS.find(p => p.value === period)?.label ?? period,
+            pct_agendamento: `${pctAgendamento.toFixed(1)}% (meta: 50%)`,
+            pct_showup: `${pctShowUpDiario.toFixed(1)}% (meta: 70%)`,
+            conversao_safra: `${pctLeadVenda.toFixed(1)}%`,
+            total_leads_diarios: totalLeadsDiarios,
+            mql_diarios: totalMQLDiarios,
+            vendas_da_safra: fechadasSafra.length,
+          }} />
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[120px] rounded-xl" />) : (
             <>
@@ -581,9 +593,23 @@ export default function Index() {
 
       {/* Commercial KPIs */}
       <div>
-        <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
-          <DollarSign className="h-3.5 w-3.5" /> Métricas Comerciais
-        </h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+            <DollarSign className="h-3.5 w-3.5" /> Métricas Comerciais
+          </h2>
+          <AIAnalysisButton section="Métricas Comerciais" dataPayload={{
+            periodo: PERIOD_OPTIONS.find(p => p.value === period)?.label ?? period,
+            faturamento_total: `R$ ${faturamento.toLocaleString("pt-BR")}`,
+            meta_faturamento: metaVendaGeral > 0 ? `R$ ${metaVendaGeral.toLocaleString("pt-BR")} (${((faturamento / metaVendaGeral) * 100).toFixed(0)}% atingido)` : "não definida",
+            faturamento_renovacao: `R$ ${faturamentoRenovacao.toLocaleString("pt-BR")}`,
+            ticket_medio: `R$ ${ticketMedio.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`,
+            total_vendas: totalVendasUnidades,
+            meta_volume: metaVolume > 0 ? `${metaVolume} un. (${((totalVendasUnidades / metaVolume) * 100).toFixed(0)}% atingido)` : "não definida",
+            roi: `${roi.toFixed(1)}%`,
+            cac: totalCustosAds > 0 ? `R$ ${cac.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}` : "sem dados de custo",
+            cpl: totalCustosAds > 0 ? `R$ ${cpl.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}` : "sem dados de custo",
+          }} />
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[120px] rounded-xl" />) : (
             <>
@@ -617,9 +643,18 @@ export default function Index() {
 
       {/* Revenue by Day Chart (data_fechamento) */}
       <GlassCard>
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
-          <DollarSign className="h-3.5 w-3.5" /> Faturamento por Dia (Data de Fechamento)
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+            <DollarSign className="h-3.5 w-3.5" /> Faturamento por Dia (Data de Fechamento)
+          </h3>
+          <AIAnalysisButton section="Faturamento por Dia" dataPayload={{
+            periodo: PERIOD_OPTIONS.find(p => p.value === period)?.label ?? period,
+            faturamento_total: `R$ ${faturamento.toLocaleString("pt-BR")}`,
+            total_dias_com_venda: receitaDiariaData.filter((d: any) => d.valor > 0).length,
+            maior_dia: receitaDiariaData.length > 0 ? receitaDiariaData.reduce((max: any, d: any) => d.valor > max.valor ? d : max, receitaDiariaData[0]) : null,
+            media_diaria: receitaDiariaData.length > 0 ? `R$ ${(faturamento / receitaDiariaData.filter((d: any) => d.valor > 0).length || 0).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}` : "—",
+          }} />
+        </div>
         {isLoading ? <ChartSkeleton /> : receitaDiariaData.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={receitaDiariaData}>
