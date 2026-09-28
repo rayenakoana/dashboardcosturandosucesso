@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { EmailMarketingSection } from "@/components/EmailMarketingSection";
 import { GlassCard } from "@/components/GlassCard";
 import { KPICard } from "@/components/KPICard";
@@ -10,6 +10,7 @@ import {
   TrendingUp, Megaphone, MessageCircle, DollarSign,
   Users, BarChart2, ExternalLink, Heart, Instagram,
   ArrowUpDown, ChevronUp, ChevronDown, Mail,
+  Sparkles, X, Loader2, RotateCcw, CheckCircle2, AlertTriangle, Zap,
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -17,6 +18,214 @@ import {
   Cell, ReferenceLine,
 } from "recharts";
 import { cn } from "@/lib/utils";
+
+// ── Painel de Análise IA reutilizável (mesmo visual do AIAnalysisButton) ──────
+
+interface AnalysisResult {
+  titulo: string;
+  resumo: string;
+  insights: string[];
+  alertas: string[];
+  acoes: string[];
+}
+
+function AIAnalysisPanel({
+  section,
+  buildPrompt,
+}: {
+  section: string;
+  buildPrompt: () => string;
+}) {
+  const [open, setOpen]       = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult]   = useState<AnalysisResult | null>(null);
+  const [error, setError]     = useState("");
+
+  const run = useCallback(async () => {
+    if (loading) return;
+    setOpen(true);
+    if (result) return;
+    setLoading(true);
+    setError("");
+    try {
+      const prompt = buildPrompt();
+      const res = await fetch("/api/claude", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 900,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const text = json?.content?.[0]?.text ?? "";
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("Sem JSON na resposta");
+      const parsed: AnalysisResult = JSON.parse(match[0]);
+      if (!parsed.insights || !parsed.alertas || !parsed.acoes) throw new Error("Estrutura inválida");
+      setResult(parsed);
+    } catch (e) {
+      setError("Erro ao gerar análise. Tente novamente.");
+      console.error("[AIAnalysisPanel]", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [buildPrompt, result, loading]);
+
+  const rerun = useCallback(() => {
+    setResult(null);
+    setError("");
+    setLoading(false);
+    setTimeout(async () => {
+      setLoading(true);
+      try {
+        const prompt = buildPrompt();
+        const res = await fetch("/api/claude", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-6",
+            max_tokens: 900,
+            messages: [{ role: "user", content: prompt }],
+          }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const text = json?.content?.[0]?.text ?? "";
+        const match = text.match(/\{[\s\S]*\}/);
+        if (!match) throw new Error("Sem JSON");
+        const parsed: AnalysisResult = JSON.parse(match[0]);
+        setResult(parsed);
+      } catch (e) {
+        setError("Erro ao gerar análise.");
+      } finally {
+        setLoading(false);
+      }
+    }, 50);
+  }, [buildPrompt]);
+
+  return (
+    <div className="w-full">
+      {!open && (
+        <button
+          onClick={run}
+          className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border border-primary/40 text-primary hover:bg-primary/10 hover:border-primary/70 transition-all"
+        >
+          <Sparkles className="h-3 w-3" />
+          Analisar
+        </button>
+      )}
+
+      {open && (
+        <div className="mt-4 rounded-2xl border border-primary/20 bg-card/60 backdrop-blur-sm overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border/50 bg-primary/5">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-primary">
+                Análise IA — {section}
+              </span>
+              {result && (
+                <span className="text-[10px] text-muted-foreground ml-1">· {result.titulo}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {result && !loading && (
+                <button
+                  onClick={rerun}
+                  className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded-lg hover:bg-primary/10"
+                >
+                  <RotateCcw className="h-3 w-3" /> Regerar
+                </button>
+              )}
+              <button
+                onClick={() => setOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-muted/40 transition-colors text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Loading */}
+          {loading && (
+            <div className="px-5 py-8 flex flex-col items-center gap-3">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <p className="text-[11px] text-muted-foreground">Analisando dados reais do período...</p>
+              <div className="flex gap-1.5 mt-1">
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="h-1 rounded-full bg-primary/30 animate-pulse" style={{ width: 40 + i * 16, animationDelay: `${i * 0.15}s` }} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Erro */}
+          {error && !loading && (
+            <div className="px-5 py-6 flex items-center justify-between">
+              <p className="text-xs text-primary">{error}</p>
+              <button onClick={rerun} className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground border border-border rounded-lg px-3 py-1.5 transition-colors">
+                <RotateCcw className="h-3 w-3" /> Tentar novamente
+              </button>
+            </div>
+          )}
+
+          {/* Resultado */}
+          {result && !loading && (
+            <div className="p-5 space-y-5">
+              <p className="text-[12px] text-foreground/80 leading-relaxed border-l-2 border-primary/50 pl-3">
+                {result.resumo}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Insights */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Pontos positivos</p>
+                  </div>
+                  {result.insights.map((item, i) => (
+                    <div key={i} className="flex gap-2.5 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/15">
+                      <span className="text-emerald-400 font-bold text-[10px] shrink-0 mt-0.5">{i + 1}</span>
+                      <p className="text-[11px] text-foreground/85 leading-relaxed">{item}</p>
+                    </div>
+                  ))}
+                </div>
+                {/* Alertas */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <AlertTriangle className="h-3.5 w-3.5 text-primary" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Pontos de atenção</p>
+                  </div>
+                  {result.alertas.map((item, i) => (
+                    <div key={i} className="flex gap-2.5 p-3 rounded-xl bg-primary/5 border border-primary/15">
+                      <span className="text-primary font-bold text-[10px] shrink-0 mt-0.5">{i + 1}</span>
+                      <p className="text-[11px] text-foreground/85 leading-relaxed">{item}</p>
+                    </div>
+                  ))}
+                </div>
+                {/* Ações */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <Zap className="h-3.5 w-3.5 text-yellow-400" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-400">Ações prioritárias</p>
+                  </div>
+                  {result.acoes.map((item, i) => (
+                    <div key={i} className="flex gap-2.5 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/15">
+                      <span className="text-yellow-400 font-bold text-[10px] shrink-0 mt-0.5">{i + 1}</span>
+                      <p className="text-[11px] text-foreground/85 leading-relaxed">{item}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const TT = {
   contentStyle: {
@@ -146,60 +355,42 @@ export function MarketingSection({ from, to }: Props) {
     return { ...c, cpl, roas, ctr, badge, badgeColor };
   }), [porCampanha]);
 
-  // Meta análise IA
-  const [metaAnalise, setMetaAnalise] = useState<string>("");
-  const [metaAnaliseLoading, setMetaAnaliseLoading] = useState(false);
+  // Meta análise IA — prompt builder
+  const buildPromptMeta = useCallback(() => {
+    const topC = porCampanhaRich[0];
+    return `Você é um analista de tráfego pago especialista em performance digital para o mercado brasileiro de educação e consultoria B2B voltado ao setor de confecções.
 
-  async function gerarAnalyseMeta() {
-    setMetaAnaliseLoading(true);
-    setMetaAnalise("");
-    try {
-      const topC = porCampanhaRich[0];
-      const prompt = `Você é um analista de tráfego pago especialista em performance digital para o mercado brasileiro de educação e consultoria B2B.
+Analise os dados de Meta Ads abaixo e responda APENAS com este JSON exato, sem texto antes ou depois:
 
-A empresa é a Costurando Sucesso — oferece cursos, mentorias e consultorias para confecções e indústrias do setor de moda/vestuário. O público-alvo são empresários e gestores de confecções.
+{
+  "titulo": "título curto da análise (máx 6 palavras)",
+  "resumo": "1 frase direta com diagnóstico do período usando números reais",
+  "insights": [
+    "ponto positivo 1 com número real",
+    "ponto positivo 2 com número real"
+  ],
+  "alertas": [
+    "problema crítico 1 com número e impacto concreto",
+    "problema crítico 2 com número e impacto concreto"
+  ],
+  "acoes": [
+    "ação tática imediata 1 específica e acionável",
+    "ação tática 2",
+    "ação tática 3"
+  ]
+}
 
-Dados do período — Meta Ads:
-- Investido total: R$ ${metaTotais.spend.toLocaleString("pt-BR",{maximumFractionDigits:0})}
+DADOS DO PERÍODO — Meta Ads:
+- Investido total: R$ ${metaTotais.spend.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
 - Leads: ${metaTotais.leads} | CPL médio: R$ ${metaCPL.toFixed(0)}
-- Compras: ${metaTotais.purchases} | Receita: R$ ${metaTotais.purchase_value.toLocaleString("pt-BR",{maximumFractionDigits:0})}
+- Compras: ${metaTotais.purchases} | Receita: R$ ${metaTotais.purchase_value.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
 - ROAS: ${metaROAS.toFixed(2)}× | CTR: ${metaCTR.toFixed(2)}% | CPC: R$ ${metaCPC.toFixed(2)}
-- Impressões: ${fmt(metaTotais.impressions)} | Alcance: ${fmt(metaTotais.reach ?? 0)} | Frequência média: ${metaFreqMedia.toFixed(1)}×
+- Impressões: ${metaTotais.impressions.toLocaleString("pt-BR")} | Alcance: ${(metaTotais.reach ?? 0).toLocaleString("pt-BR")} | Frequência média: ${metaFreqMedia.toFixed(1)}×
 - Melhor campanha: ${topC?.name ?? "—"} (ROAS ${topC?.roas?.toFixed(1) ?? "—"}×, CPL R$ ${topC?.cpl?.toFixed(0) ?? "—"})
 - Total de campanhas ativas: ${porCampanha.length}
 
-Responda em 4 seções curtas (máx. 2 frases cada), sem emoji, sem markdown, só texto limpo:
-
-**Desempenho geral**
-[avalie o ROAS, CPL e CTR em relação a benchmarks do segmento]
-
-**Pontos de atenção**
-[identifique gargalos: frequência alta, CTR baixo, custo crescente, etc.]
-
-**Oportunidade**
-[uma ação concreta de otimização baseada nos dados]
-
-**Próximo passo**
-[recomendação tática imediata]`;
-
-      const res = await fetch("/api/claude", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 600,
-          messages: [{ role: "user", content: prompt }],
-        }),
-      });
-      const data = await res.json();
-      const texto = data.content?.find((b: any) => b.type === "text")?.text ?? "";
-      setMetaAnalise(texto);
-    } catch {
-      setMetaAnalise("Erro ao gerar análise. Tente novamente.");
-    } finally {
-      setMetaAnaliseLoading(false);
-    }
-  }
+Benchmarks do setor educação B2B Brasil: ROAS > 3×, CPL < R$ 80, CTR > 1.5%, Frequência ideal 2-4×.`;
+  }, [metaTotais, metaCPL, metaROAS, metaCTR, metaCPC, metaFreqMedia, porCampanha, porCampanhaRich]);
 
   // ── WPP ─────────────────────────────────────────────────
   const wppTotais    = wppData?.totais;
@@ -607,34 +798,8 @@ Responda em 4 seções curtas (máx. 2 frases cada), sem emoji, sem markdown, s�
           {/* Análise IA */}
           {!loadingMeta && metaTotais.spend > 0 && (
             <GlassCard>
-              <div className="flex items-center justify-between mb-3">
-                <SubTitle>Análise & Insights — Meta Ads</SubTitle>
-                <button
-                  onClick={gerarAnalyseMeta}
-                  disabled={metaAnaliseLoading}
-                  className="text-[10px] font-semibold px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-all">
-                  {metaAnaliseLoading ? "Analisando…" : "+ Gerar análise"}
-                </button>
-              </div>
-              {metaAnalise ? (
-                <div className="space-y-3">
-                  {metaAnalise.split("\n\n").filter(Boolean).map((bloco, i) => {
-                    const lines = bloco.split("\n");
-                    const titulo = lines[0].replace(/\*\*/g,"").trim();
-                    const corpo  = lines.slice(1).join(" ").trim();
-                    return (
-                      <div key={i} className="border-l-2 border-primary/40 pl-3">
-                        <p className="text-[9px] font-bold uppercase tracking-widest text-primary/70 mb-0.5">{titulo}</p>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed">{corpo}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-[11px] text-muted-foreground/60">
-                  {metaAnaliseLoading ? "Interpretando dados com IA…" : "Clique em \"Gerar análise\" para interpretar os dados do período com IA."}
-                </p>
-              )}
+              <SubTitle>Análise & Insights — Meta Ads</SubTitle>
+              <AIAnalysisPanel section="Meta Ads" buildPrompt={buildPromptMeta} />
             </GlassCard>
           )}
 
@@ -1866,11 +2031,7 @@ function InstagramInsightsAI({
   igTaxaEng, igEngPost, erBenchmark, igAccount,
   followersByAccount, followersForecast,
 }: InsightsAIProps) {
-  const [analysis, setAnalysis] = useState<string>("");
-  const [loading, setLoading] = useState(false);
-  const [generated, setGenerated] = useState(false);
-
-  const buildPrompt = () => {
+  const buildPrompt = useCallback(() => {
     const conta = igAccount === "eduardocristianoriginal" ? "@eduardocristianoriginal"
       : igAccount === "costurandosucesso" ? "@costurandosucesso"
       : "todas as contas combinadas";
@@ -1896,26 +2057,43 @@ function InstagramInsightsAI({
     const baixo     = erBenchmark.find(f=>f.faixa.includes("Baixo"))?.posts ?? 0;
     const totalPosts = postsFiltered.length;
 
-    // Tendência de engajamento: últimos 7d vs 7d anteriores
     const agora = new Date();
     const d7 = new Date(agora); d7.setDate(agora.getDate()-7);
-    const d14 = new Date(agora); d14.getDate()-14;
-    const engUlt7  = postsFiltered.filter(p=>new Date(p.posted_at)>=d7).reduce((s,p)=>s+p.like_count+p.comments_count+p.shares+p.saved,0);
+    const d14 = new Date(agora); d14.setDate(agora.getDate()-14);
+    const engUlt7   = postsFiltered.filter(p=>new Date(p.posted_at)>=d7).reduce((s,p)=>s+p.like_count+p.comments_count+p.shares+p.saved,0);
     const engAntes7 = postsFiltered.filter(p=>new Date(p.posted_at)<d7 && new Date(p.posted_at)>=d14).reduce((s,p)=>s+p.like_count+p.comments_count+p.shares+p.saved,0);
     const tendEng = engAntes7 > 0 ? Math.round((engUlt7-engAntes7)/engAntes7*100) : null;
 
-    // Ritmo
     const sorted = [...postsFiltered].sort((a,b)=>b.posted_at.localeCompare(a.posted_at));
     const diasPeriodo = sorted.length > 1
       ? Math.max(1, Math.round((new Date(sorted[0].posted_at).getTime()-new Date(sorted[sorted.length-1].posted_at).getTime())/86400000))
       : 1;
     const postsSemana = parseFloat(((totalPosts/diasPeriodo)*7).toFixed(1));
 
-    return `Você é um analista de dados de redes sociais. Com base EXCLUSIVAMENTE nos números abaixo, escreva uma análise em português brasileiro com 4 seções curtas. Cada seção tem um título em negrito (formato **Título**) seguido de no máximo 2 frases. Não invente dados. Não mencione setor ou nicho. Não use emojis. Use os números exatamente como fornecidos.
+    return `Você é um analista de dados de redes sociais especializado em Instagram para o mercado brasileiro de educação B2B no setor de confecções.
+
+Analise os dados abaixo e responda APENAS com este JSON exato, sem texto antes ou depois:
+
+{
+  "titulo": "título curto da análise (máx 6 palavras)",
+  "resumo": "1 frase direta com diagnóstico do período usando os números reais fornecidos",
+  "insights": [
+    "ponto positivo 1 com número real dos dados",
+    "ponto positivo 2 com número real dos dados"
+  ],
+  "alertas": [
+    "problema ou risco 1 com número e impacto concreto",
+    "problema ou risco 2 com número e impacto concreto"
+  ],
+  "acoes": [
+    "ação específica e acionável 1 para melhorar os resultados",
+    "ação específica e acionável 2",
+    "ação específica e acionável 3"
+  ]
+}
 
 DADOS DO PERÍODO (${conta}):
-- Total de posts: ${totalPosts}
-- Ritmo: ${postsSemana} posts/semana
+- Total de posts: ${totalPosts} | Ritmo: ${postsSemana} posts/semana
 - Taxa de engajamento média: ${igTaxaEng.toFixed(1)}%
 - Engajamento médio por post: ${Math.round(igEngPost)}
 - Posts com ER >5% (excelente): ${excelente} de ${totalPosts} (${totalPosts>0?Math.round(excelente/totalPosts*100):0}%)
@@ -1925,134 +2103,15 @@ ${melhorFormato ? `- Melhor formato: ${melhorFormato.tipo} — ${Math.round(melh
 ${piorFormato && piorFormato !== melhorFormato ? `- Pior formato: ${piorFormato.tipo} — ${Math.round(piorFormato.engPorPost)} eng/post, ${piorFormato.taxaEng}% ER` : ""}
 ${melhorHorario ? `- Melhor horário: ${melhorHorario.hora} com ${melhorHorario.engMedio} eng. médio` : ""}
 ${topPost ? `- Post destaque: ${topPost.er.toFixed(1)}% ER em ${topPost.posted_at?.split("T")[0]} (${topPost.media_type==="VIDEO"?"Reel":topPost.media_type==="CAROUSEL_ALBUM"?"Carrossel":"Imagem"})` : ""}
-${followersInfo}
-
-Estruture EXATAMENTE assim (4 seções, sem numeração, só o título em negrito e o texto):
-
-**Crescimento e seguidores**
-[texto]
-
-**Engajamento**
-[texto]
-
-**O que está funcionando**
-[texto]
-
-**Oportunidade ou alerta**
-[texto]`;
-  };
-
-  // Parse das seções do texto retornado
-  function parseSections(text: string): { title: string; body: string }[] {
-    const sections: { title: string; body: string }[] = [];
-    const regex = /\*\*(.+?)\*\*\s*([\s\S]*?)(?=\n\*\*|$)/g;
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-      const body = match[2].trim();
-      if (body) sections.push({ title: match[1].trim(), body });
-    }
-    // fallback: parágrafos simples se não encontrar padrão
-    if (sections.length === 0) {
-      text.split("\n").filter(l=>l.trim()).forEach((l,i) => {
-        sections.push({ title: `Seção ${i+1}`, body: l.replace(/^\d+\.\s*/,"") });
-      });
-    }
-    return sections;
-  }
-
-  async function generate() {
-    setLoading(true);
-    setAnalysis("");
-    try {
-      const res = await fetch("/api/claude", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 1200,
-          messages: [{ role: "user", content: buildPrompt() }],
-        }),
-      });
-      const data = await res.json();
-      const text = data.content?.find((b:any) => b.type === "text")?.text ?? "Não foi possível gerar a análise.";
-      setAnalysis(text);
-      setGenerated(true);
-    } catch {
-      setAnalysis("Erro ao conectar com a API. Tente novamente.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const sections = analysis ? parseSections(analysis) : [];
+${followersInfo}`;
+  }, [postsFiltered, dailyFiltered, porFormato, horarioData, igTaxaEng, igEngPost, erBenchmark, igAccount, followersByAccount, followersForecast]);
 
   return (
     <GlassCard>
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/60">
-            Análise & Insights
-          </p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">
-            Interpretação automática dos dados do período
-          </p>
-        </div>
-        <button
-          onClick={generate}
-          disabled={loading}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border",
-            loading
-              ? "border-border text-muted-foreground cursor-not-allowed"
-              : "border-primary/40 text-primary hover:bg-primary/10"
-          )}>
-          {loading ? (
-            <>
-              <span className="inline-block h-3 w-3 rounded-full border-2 border-primary border-t-transparent animate-spin"/>
-              Analisando...
-            </>
-          ) : generated ? "Reanalisar" : "✦ Gerar análise"}
-        </button>
-      </div>
-
-      {!analysis && !loading && (
-        <div className="py-6 text-center text-[11px] text-muted-foreground/50">
-          Clique em "Gerar análise" para interpretar os dados do período com IA.
-        </div>
-      )}
-
-      {loading && (
-        <div className="space-y-3 py-2">
-          {[90,75,85,65].map((w,i) => (
-            <div key={i} className="space-y-1.5">
-              <div className="h-2.5 rounded bg-muted/30 animate-pulse w-24"/>
-              <div className="h-2 rounded bg-muted/20 animate-pulse" style={{width:`${w}%`}}/>
-              <div className="h-2 rounded bg-muted/15 animate-pulse" style={{width:`${w-15}%`}}/>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {sections.length > 0 && !loading && (
-        <div className="space-y-0">
-          {sections.map((s, i) => (
-            <div key={i} className={cn(
-              "py-3",
-              i < sections.length - 1 && "border-b border-border/30"
-            )}>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 mb-1.5">
-                {s.title}
-              </p>
-              <p className="text-[11px] text-foreground/80 leading-relaxed">
-                {s.body}
-              </p>
-            </div>
-          ))}
-          <p className="text-[9px] text-muted-foreground/30 pt-3">
-            Gerado com base nos dados exibidos · não substitui julgamento humano
-          </p>
-        </div>
-      )}
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/60 mb-4">
+        Análise & Insights — Instagram
+      </p>
+      <AIAnalysisPanel section="Instagram" buildPrompt={buildPrompt} />
     </GlassCard>
   );
 }
