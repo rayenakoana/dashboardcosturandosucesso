@@ -51,15 +51,9 @@ export function AIAnalysisButton({ section, dataPayload, className }: AIAnalysis
     const userMessage = `Analise a seção "${section}" com os seguintes dados reais do período selecionado:\n\n${JSON.stringify(dataPayload, null, 2)}`;
 
     try {
-      const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY ?? "";
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/claude", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
           max_tokens: 600,
@@ -67,6 +61,7 @@ export function AIAnalysisButton({ section, dataPayload, className }: AIAnalysis
           messages: [{ role: "user", content: userMessage }],
         }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       const text = json?.content?.[0]?.text ?? "";
       setAnalysis(text || "Não foi possível gerar a análise.");

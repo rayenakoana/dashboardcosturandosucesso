@@ -3,12 +3,13 @@ import { GlassCard } from "@/components/GlassCard";
 import { KPICard } from "@/components/KPICard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEmailCampaigns, EmailCampaign } from "@/hooks/useEmailMarketing";
+import { supabaseWpp } from "@/integrations/supabase/wppClient";
 import {
   Mail, TrendingUp, Users, MousePointerClick,
   BarChart2, ChevronDown, ChevronUp, X, ArrowUpDown,
   CheckCircle2, AlertCircle, Newspaper, ShoppingBag,
   Sparkles, Shield, GitCompare, Clock, ArrowLeft, ExternalLink,
-  TriangleAlert, Trophy, Layers,
+  TriangleAlert, Trophy, Layers, Pencil, Check,
 } from "lucide-react";
 import {
   BarChart, Bar, RadarChart, Radar, PolarGrid, PolarAngleAxis,
@@ -157,18 +158,16 @@ function CampaignAI({ campaign }: { campaign: EmailCampaign }) {
     riscos: string[];
     recomendacoes: string[];
   } | null>(null);
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState("");
-  const [subjectInput, setSubjectInput] = useState("");
-  const [showInput, setShowInput] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState("");
 
-  const generate = useCallback(async (subjectOverride?: string) => {
+  const generate = useCallback(async () => {
     setLoading(true);
     setError("");
     setResult(null);
     try {
-      // Assunto: preferir override manual > campo do banco > null
-      const subject = subjectOverride ?? campaign.subject ?? "";
+      // Assunto vem do campo já atualizado (campaign.subject inclui edição local)
+      const subject = campaign.subject ?? "";
       const temAssunto = subject.trim().length > 0;
 
       // Análise do assunto (só se tiver)
@@ -263,37 +262,14 @@ function CampaignAI({ campaign }: { campaign: EmailCampaign }) {
   if (!result && !loading && !error) {
     return (
       <div className="space-y-3">
-        {showInput ? (
-          <div className="flex gap-2">
-            <input
-              value={subjectInput}
-              onChange={e => setSubjectInput(e.target.value)}
-              placeholder="Cole o assunto do email aqui (opcional)..."
-              className="flex-1 text-xs px-3 py-2 rounded-lg border border-border bg-card/60 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-              onKeyDown={e => e.key === "Enter" && generate(subjectInput || undefined)}
-            />
-            <button
-              onClick={() => generate(subjectInput || undefined)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-primary text-primary-foreground">
-              <Sparkles className="h-3 w-3" /> Analisar
-            </button>
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            <button onClick={() => generate()}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-primary/30 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors">
-              <Sparkles className="h-3.5 w-3.5" />
-              Gerar análise com IA
-            </button>
-            <button onClick={() => setShowInput(true)}
-              className="px-3 py-2.5 rounded-xl border border-border text-[10px] text-muted-foreground hover:text-foreground hover:border-border/80 transition-colors whitespace-nowrap">
-              + Informar assunto
-            </button>
-          </div>
-        )}
-        {!showInput && (
+        <button onClick={() => generate()}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-primary/30 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors">
+          <Sparkles className="h-3.5 w-3.5" />
+          Gerar análise com IA
+        </button>
+        {!campaign.subject && (
           <p className="text-[9px] text-muted-foreground text-center">
-            Sem assunto: análise baseada nas métricas e nome da campanha · clique em "+ Informar assunto" para análise mais precisa
+            Sem assunto cadastrado · informe o assunto no cabeçalho acima para análise mais precisa
           </p>
         )}
       </div>
@@ -348,11 +324,7 @@ function CampaignAI({ campaign }: { campaign: EmailCampaign }) {
         <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/20 border border-border/40">
           <AlertCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <p className="text-[10px] text-muted-foreground">
-            Assunto não disponível — análise baseada nas métricas.
-            <button onClick={() => { setResult(null); setShowInput(true); }}
-              className="ml-1 text-primary hover:underline">
-              Informar assunto para análise completa
-            </button>
+            Assunto não cadastrado — análise baseada nas métricas e nome da campanha. Informe o assunto no cabeçalho acima e regere a análise.
           </p>
         </div>
       )}
@@ -412,6 +384,98 @@ function CampaignAI({ campaign }: { campaign: EmailCampaign }) {
   );
 }
 
+// ── Editor de Subject inline ──────────────────────────────────────────────────
+
+function SubjectEditor({
+  campaign,
+  onSaved,
+}: {
+  campaign: EmailCampaign;
+  onSaved: (subject: string) => void;
+}) {
+  const [editing, setEditing]   = useState(false);
+  const [value, setValue]       = useState(campaign.subject ?? "");
+  const [saving, setSaving]     = useState(false);
+  const [saved, setSaved]       = useState(false);
+  const [err, setErr]           = useState("");
+
+  const save = async () => {
+    const trimmed = value.trim();
+    if (!trimmed) { setEditing(false); return; }
+    setSaving(true);
+    setErr("");
+    try {
+      const { error } = await supabaseWpp
+        .from("email_campaigns")
+        .update({ subject: trimmed })
+        .eq("id", campaign.id);
+      if (error) throw error;
+      onSaved(trimmed);
+      setSaved(true);
+      setEditing(false);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (e: unknown) {
+      setErr("Erro ao salvar. Tente novamente.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-2 mt-1.5">
+        <input
+          autoFocus
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
+          placeholder="Ex: 3 erros que aumentam seu custo de produção"
+          className="flex-1 text-[11px] px-3 py-1.5 rounded-lg border border-primary/40 bg-card/80 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 min-w-0"
+        />
+        <button
+          onClick={save}
+          disabled={saving}
+          className="p-1.5 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 transition-colors disabled:opacity-50"
+        >
+          {saving ? <Sparkles className="h-3.5 w-3.5 animate-pulse" /> : <Check className="h-3.5 w-3.5" />}
+        </button>
+        <button onClick={() => setEditing(false)} className="p-1.5 rounded-lg hover:bg-muted/40 transition-colors">
+          <X className="h-3.5 w-3.5 text-muted-foreground" />
+        </button>
+        {err && <span className="text-[10px] text-primary">{err}</span>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 mt-1.5">
+      {campaign.subject || saved ? (
+        <>
+          <p className="text-[11px] text-muted-foreground">
+            Assunto: &ldquo;{value || campaign.subject}&rdquo;
+          </p>
+          {saved && <span className="text-[10px] text-emerald-400 font-semibold">✓ salvo</span>}
+          <button
+            onClick={() => setEditing(true)}
+            className="p-0.5 rounded hover:bg-muted/40 transition-colors text-muted-foreground hover:text-foreground"
+            title="Editar assunto"
+          >
+            <Pencil className="h-3 w-3" />
+          </button>
+        </>
+      ) : (
+        <button
+          onClick={() => setEditing(true)}
+          className="flex items-center gap-1 text-[10px] text-primary/70 hover:text-primary border border-dashed border-primary/30 hover:border-primary/60 px-2 py-1 rounded-lg transition-all"
+        >
+          <Pencil className="h-3 w-3" />
+          Informar assunto do e-mail
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ── Página completa de campanha ───────────────────────────────────────────────
 
 function CampaignPage({
@@ -423,6 +487,13 @@ function CampaignPage({
   allCampaigns: EmailCampaign[];
   onBack: () => void;
 }) {
+  // Subject editável localmente (sem precisar recarregar a lista)
+  const [localSubject, setLocalSubject] = useState<string>(campaign.subject ?? "");
+  const campaignWithSubject = useMemo(
+    () => ({ ...campaign, subject: localSubject || campaign.subject }),
+    [campaign, localSubject]
+  );
+
   // Detectar par A/B
   const abPair = useMemo(() => {
     if (!campaign.ab_group_id) return null;
@@ -493,9 +564,10 @@ function CampaignPage({
           <div className="space-y-1.5">
             <TypeBadge type={campaign.type} />
             <h2 className="text-base font-bold leading-snug">{campaign.name}</h2>
-            {campaign.subject && (
-              <p className="text-[11px] text-muted-foreground">Assunto: "{campaign.subject}"</p>
-            )}
+            <SubjectEditor
+              campaign={campaignWithSubject}
+              onSaved={(s) => setLocalSubject(s)}
+            />
             <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-1">
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
@@ -675,7 +747,7 @@ function CampaignPage({
       {/* Análise IA */}
       <GlassCard>
         <SubTitle>Análise com inteligência artificial</SubTitle>
-        <CampaignAI campaign={campaign} />
+        <CampaignAI campaign={campaignWithSubject} />
       </GlassCard>
     </div>
   );
