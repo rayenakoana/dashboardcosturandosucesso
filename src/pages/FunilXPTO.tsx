@@ -38,12 +38,9 @@ function getStatusColor(real: number, meta: number) {
   return { bg: "#dc262620", border: "#dc2626", text: "#f87171" };
 }
 
-// Retorna a cor da etapa dinamicamente
+// Cor dinâmica por etapa
 function getEtapaCor(index: number, data: FunilData): string {
-  const vals = [
-    data.leads, data.mql, data.reunioesAgendadas,
-    data.reunioesRealizadas, data.propostas, data.fechados,
-  ];
+  const vals = [data.leads, data.mql, data.reunioesAgendadas, data.reunioesRealizadas, data.propostas, data.fechados];
   if (index === 5) return data.fechados > 0 ? "#16a34a" : "#dc2626";
   if (vals[index] === 0) return "#dc2626";
   const cores = ["#b91c1c", "#C8102E", "#e02040", "#e8384f", "#f05a6e"];
@@ -59,10 +56,12 @@ function useCountUp(target: number, duration = 700, trigger: boolean) {
   useEffect(() => {
     if (!trigger) { setDisplay(0); return; }
     if (target === 0) { setDisplay(0); return; }
+
     start.current = null;
     const step = (ts: number) => {
       if (!start.current) start.current = ts;
       const progress = Math.min((ts - start.current) / duration, 1);
+      // ease-out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       setDisplay(Math.round(eased * target));
       if (progress < 1) raf.current = requestAnimationFrame(step);
@@ -74,6 +73,7 @@ function useCountUp(target: number, duration = 700, trigger: boolean) {
   return display;
 }
 
+// Injeta os keyframes de animação uma vez
 const STYLE_ID = "funil-anim-styles";
 function injectFunilStyles() {
   if (document.getElementById(STYLE_ID)) return;
@@ -88,17 +88,29 @@ function injectFunilStyles() {
       from { opacity: 0; transform: translateY(6px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+    @keyframes funilHoverPulse {
+      0%   { filter: brightness(1.25) drop-shadow(0 0 8px rgba(255,255,255,0.25)); }
+      50%  { filter: brightness(1.38) drop-shadow(0 0 14px rgba(255,255,255,0.35)); }
+      100% { filter: brightness(1.25) drop-shadow(0 0 8px rgba(255,255,255,0.25)); }
+    }
   `;
   document.head.appendChild(style);
 }
 
+// Subcomponente individual de cada barra — label acima, retângulo com número dentro
 function FunilBar({
-  etapa, conv, index, total, widthPct, nextWidthPct, loading, animated, data,
+  etapa,
+  conv,
+  index,
+  widthPct,
+  nextWidthPct,
+  loading,
+  animated,
+  data,
 }: {
   etapa: { label: string; val: number; pctDeTopo: number };
   conv?: { real: number; meta: number; label: string };
   index: number;
-  total: number;
   widthPct: number;
   nextWidthPct: number;
   loading: boolean;
@@ -112,20 +124,17 @@ function FunilBar({
   const badgeDelay = `${i * 80 + 30}ms`;
   const displayVal = useCountUp(etapa.val, 650, animated);
 
-  // SVG trapézio: viewBox 1000 × 44
-  // widthPct 0–100 → 0–1000 no viewBox
-  const vW = 1000, vH = 44;
-  const topL = (vW - widthPct * 10) / 2;
-  const topR = vW - topL;
-  const botL = (vW - nextWidthPct * 10) / 2;
-  const botR = vW - botL;
-  const points = `${topL},0 ${topR},0 ${botR},${vH} ${botL},${vH}`;
-
   return (
     <div>
+      {/* Badge de conversão entre etapas */}
       {i > 0 && conv && (
-        <div className="flex items-center justify-center my-1"
-          style={animated ? { animation: `funilBadgeIn 0.35s ease both`, animationDelay: badgeDelay } : { opacity: 0 }}>
+        <div
+          className="flex items-center justify-center my-1"
+          style={animated ? {
+            animation: `funilBadgeIn 0.35s ease both`,
+            animationDelay: badgeDelay,
+          } : { opacity: 0 }}
+        >
           <div className="flex items-center gap-2 px-3 py-1 rounded-full border text-[11px] font-semibold"
             style={{
               background: getStatusColor(conv.real, conv.meta).bg,
@@ -140,27 +149,32 @@ function FunilBar({
         </div>
       )}
 
-      <div className="text-center mb-1"
-        style={animated ? { animation: `funilBadgeIn 0.35s ease both`, animationDelay: barDelay } : { opacity: 0 }}>
+      {/* Label acima da barra — sempre legível, largura total */}
+      <div
+        className="text-center mb-1"
+        style={animated ? {
+          animation: `funilBadgeIn 0.35s ease both`,
+          animationDelay: barDelay,
+        } : { opacity: 0 }}
+      >
         <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
           {etapa.label}
         </span>
       </div>
 
+      {/* Trapézio SVG */}
       <div
         style={animated ? { animation: `funilBarIn 0.45s cubic-bezier(0.22,1,0.36,1) both`, animationDelay: barDelay } : { opacity: 0 }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        <svg width="100%" height="44" viewBox={`0 0 ${vW} ${vH}`} preserveAspectRatio="none"
-          style={{
-            display: "block",
-            filter: hovered && !loading ? "brightness(1.28) drop-shadow(0 0 10px rgba(255,255,255,0.25))" : undefined,
-            transition: "filter 0.2s ease",
-          }}>
-          <polygon points={points} fill={loading ? "#ffffff10" : cor} />
-          <text x={vW / 2} y={vH / 2 + 1} dominantBaseline="middle" textAnchor="middle"
-            fill="white" fontWeight="bold" fontSize="22"
+        <svg width="100%" height="44" viewBox="0 0 1000 44" preserveAspectRatio="none"
+          style={{ display: "block", filter: hovered && !loading ? "brightness(1.28) drop-shadow(0 0 10px rgba(255,255,255,0.25))" : undefined, transition: "filter 0.2s ease" }}>
+          <polygon
+            points={`${(1000-widthPct*10)/2},0 ${1000-(1000-widthPct*10)/2},0 ${1000-(1000-nextWidthPct*10)/2},44 ${(1000-nextWidthPct*10)/2},44`}
+            fill={loading ? "#ffffff10" : cor}
+          />
+          <text x="500" y="23" dominantBaseline="middle" textAnchor="middle" fill="white" fontWeight="bold" fontSize="22"
             style={{ fontFamily: "inherit", pointerEvents: "none" }}>
             {loading ? "—" : displayVal}
           </text>
@@ -171,7 +185,10 @@ function FunilBar({
 }
 
 function TrapezioFunil({
-  etapas, conversoes, loading, data,
+  etapas,
+  conversoes,
+  loading,
+  data,
 }: {
   etapas: { label: string; val: number; pctDeTopo: number }[];
   conversoes: { real: number; meta: number; label: string }[];
@@ -191,22 +208,27 @@ function TrapezioFunil({
     } else {
       setAnimated(false);
     }
-  }, [loading, etapas.map(e => e.val).join(",")]);
+  }, [loading]);
 
   const maxW = 100;
   const minW = 18;
   const topVal = etapas[0]?.val ?? 0;
 
+  // Larguras brutas proporcionais ao valor real
   const rawWidths = etapas.map((e, i) => {
     const ratio = topVal > 0 ? e.val / topVal : (i === 0 ? 1 : 0);
-    return ratio * maxW;
+    return Math.max(minW, ratio * maxW);
   });
 
+  // Smooth-drop: funil NUNCA pode alargar, e cada etapa cai no máximo 56% da etapa anterior
+  const MAX_DROP = 0.56;
   const widths = rawWidths.reduce<number[]>((acc, w, i) => {
-    if (i === 0) { acc.push(maxW); return acc; }
-    const monotonic = Math.min(w, acc[i - 1]);
-    const floor = acc[i - 1] * 0.44;
-    acc.push(Math.max(monotonic, floor, minW));
+    if (i === 0) {
+      acc.push(w);
+    } else {
+      const floor = acc[i - 1] * (1 - MAX_DROP);
+      acc.push(Math.min(w, acc[i - 1]) < floor ? floor : Math.min(w, acc[i - 1]));
+    }
     return acc;
   }, []);
 
@@ -218,7 +240,6 @@ function TrapezioFunil({
           etapa={etapa}
           conv={conversoes[i - 1]}
           index={i}
-          total={etapas.length}
           widthPct={widths[i]}
           nextWidthPct={i < etapas.length - 1 ? widths[i + 1] : widths[i] * 0.75}
           loading={loading}
@@ -344,8 +365,10 @@ export default function FunilXPTO() {
   ];
 
   const aiPayload = {
-    periodo: periodoLabel, funil: funilLabel,
-    leads_recebidos: data.leads, mql: data.mql,
+    periodo: periodoLabel,
+    funil: funilLabel,
+    leads_recebidos: data.leads,
+    mql: data.mql,
     pct_qualificacao: `${pct(data.mql, data.leads).toFixed(1)}% (meta: ${METAS.leads_para_mql}%)`,
     reunioes_agendadas: data.reunioesAgendadas,
     pct_agendamento: `${pct(data.reunioesAgendadas, data.mql).toFixed(1)}% (meta: ${METAS.mql_para_reuniao}%)`,
@@ -448,6 +471,7 @@ export default function FunilXPTO() {
           </div>
 
           <GlassCard>
+            {/* Header do card — só título, sem o botão IA aqui */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Funil de conversão — {funilLabel}
@@ -462,6 +486,7 @@ export default function FunilXPTO() {
               data={data}
             />
 
+            {/* Legenda de status */}
             <div className="flex items-center gap-4 mt-6 justify-center flex-wrap">
               <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />acima da meta
@@ -474,6 +499,7 @@ export default function FunilXPTO() {
               </div>
             </div>
 
+            {/* Botão IA fora do flex header — expande corretamente */}
             <div className="mt-6 pt-5 border-t border-border/40">
               <AIAnalysisButton section="Funil XPTO" dataPayload={aiPayload} />
             </div>
