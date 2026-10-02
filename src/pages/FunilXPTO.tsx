@@ -221,7 +221,7 @@ function TrapezioFunil({
   });
 
   // Smooth-drop: funil NUNCA pode alargar, e cada etapa cai no máximo 56% da etapa anterior
-  const MAX_DROP = 0.56;
+  const MAX_DROP = 0.30;
   const widths = rawWidths.reduce<number[]>((acc, w, i) => {
     if (i === 0) {
       acc.push(w);
