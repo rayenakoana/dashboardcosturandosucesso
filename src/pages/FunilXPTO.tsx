@@ -224,7 +224,7 @@ function TrapezioFunil({
   useEffect(() => {
     if (!loading) {
       setAnimated(false);
-      const t = setTimeout(() => setAnimated(true), 30);
+      const t = setTimeout(() => setAnimated(true), 80);
       return () => clearTimeout(t);
     } else {
       setAnimated(false);
@@ -241,9 +241,15 @@ function TrapezioFunil({
     return Math.max(minW, ratio * maxW);
   });
 
-  // Restrição monotônica: funil NUNCA pode alargar — cada barra <= barra anterior
+  // Smooth-drop: funil NUNCA pode alargar, e cada etapa cai no máximo 56% da etapa anterior
+  const MAX_DROP = 0.56;
   const widths = rawWidths.reduce<number[]>((acc, w, i) => {
-    acc.push(i === 0 ? w : Math.min(w, acc[i - 1]));
+    if (i === 0) {
+      acc.push(w);
+    } else {
+      const floor = acc[i - 1] * (1 - MAX_DROP);
+      acc.push(Math.min(w, acc[i - 1]) < floor ? floor : Math.min(w, acc[i - 1]));
+    }
     return acc;
   }, []);
 
