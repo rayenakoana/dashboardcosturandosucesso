@@ -98,14 +98,13 @@ function injectFunilStyles() {
   document.head.appendChild(style);
 }
 
-// Subcomponente individual de cada barra — hooks chamados corretamente no nível do componente
+// Subcomponente individual de cada barra
 function FunilBar({
   etapa,
   conv,
   index,
   total,
-  widthPct,      // largura desta barra (já constrangida monotonicamente)
-  nextWidthPct,  // largura da próxima barra (já constrangida)
+  widthPct,
   loading,
   animated,
 }: {
@@ -114,39 +113,22 @@ function FunilBar({
   index: number;
   total: number;
   widthPct: number;
-  nextWidthPct: number;
   loading: boolean;
   animated: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
   const i = index;
   const cor = FUNIL_ETAPA_CORES[i] ?? "#E8192C";
-
-  // clip-path trapézio — funil sempre afunila (widths já monotonicamente decrescentes)
-  const leftInset  = widthPct > 0 ? ((widthPct - nextWidthPct) / widthPct / 2) * 100 : 0;
-  const rightInset = 100 - leftInset;
-  const clipPath   = i < total - 1
-    ? `polygon(0 0, 100% 0, ${rightInset}% 100%, ${leftInset}% 100%)`
-    : "none";
-
-  const barDelay   = `${i * 80}ms`;
-  const badgeDelay = `${i * 80 + 30}ms`;
-
-  // Counter animado — hook no nível do componente
+  const barDelay   = `${i * 70}ms`;
+  const badgeDelay = `${i * 70 + 25}ms`;
   const displayVal = useCountUp(etapa.val, 650, animated);
-
-  const hoverStyle = hovered && !loading ? {
-    animation: `funilHoverPulse 1.2s ease-in-out infinite`,
-    transform: "scaleY(1.06)",
-    zIndex: 10,
-    cursor: "default",
-  } : {};
 
   return (
     <div>
+      {/* Badge de conversão entre etapas */}
       {i > 0 && conv && (
         <div
-          className="flex items-center justify-center my-1"
+          className="flex items-center justify-center my-1.5"
           style={animated ? {
             animation: `funilBadgeIn 0.35s ease both`,
             animationDelay: badgeDelay,
@@ -166,39 +148,51 @@ function FunilBar({
         </div>
       )}
 
-      <div className="flex justify-center" style={{ position: "relative" }}>
+      {/* Barra retangular centralizada — largura proporcional ao valor */}
+      <div className="flex justify-center">
         <div
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
           style={{
             width: `${widthPct}%`,
-            height: "46px",
+            height: "44px",
             background: loading ? "#ffffff10" : cor,
-            clipPath,
-            borderRadius: i === total - 1 ? "6px" : undefined,
+            borderRadius: "8px",
             position: "relative",
-            transition: "width 0.6s cubic-bezier(0.22,1,0.36,1), transform 0.2s ease",
+            transition: "width 0.55s cubic-bezier(0.22,1,0.36,1), transform 0.18s ease, filter 0.18s ease",
             transformOrigin: "center",
             ...(animated ? {
-              animation: `funilBarIn 0.45s cubic-bezier(0.22,1,0.36,1) both`,
+              animation: `funilBarIn 0.42s cubic-bezier(0.22,1,0.36,1) both`,
               animationDelay: barDelay,
             } : { opacity: 0 }),
-            ...hoverStyle,
+            ...(hovered && !loading ? {
+              animation: `funilHoverPulse 1.2s ease-in-out infinite`,
+              transform: "scaleY(1.05)",
+              zIndex: 10,
+            } : {}),
           }}
         >
-          <div className="absolute inset-0 flex items-center justify-between"
-            style={{ paddingLeft: `${leftInset + 2}%`, paddingRight: `${(100 - rightInset) + 2}%` }}>
-            <span className="text-[11px] font-bold uppercase tracking-wide text-white leading-tight"
-              style={{ textShadow: hovered ? "0 0 12px rgba(255,255,255,0.6)" : undefined }}>
+          <div className="absolute inset-0 flex items-center justify-between px-4">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-white leading-tight truncate mr-2"
+              style={{ textShadow: hovered ? "0 0 10px rgba(255,255,255,0.5)" : undefined }}>
               {etapa.label}
             </span>
-            <span className="text-sm font-bold text-white flex-shrink-0 ml-2"
-              style={{ textShadow: hovered ? "0 0 12px rgba(255,255,255,0.6)" : undefined }}>
+            <span className="text-sm font-bold text-white flex-shrink-0"
+              style={{ textShadow: hovered ? "0 0 10px rgba(255,255,255,0.5)" : undefined }}>
               {loading ? "—" : displayVal}
             </span>
           </div>
         </div>
       </div>
+
+      {/* Seta de conexão entre etapas */}
+      {i < total - 1 && (
+        <div className="flex justify-center my-0.5">
+          <svg width="16" height="10" viewBox="0 0 16 10" fill="none" className="opacity-30">
+            <path d="M8 10L0 0H16L8 10Z" fill="currentColor" />
+          </svg>
+        </div>
+      )}
     </div>
   );
 }
@@ -253,7 +247,6 @@ function TrapezioFunil({
           index={i}
           total={etapas.length}
           widthPct={widths[i]}
-          nextWidthPct={i < etapas.length - 1 ? widths[i + 1] : widths[i]}
           loading={loading}
           animated={animated}
         />
