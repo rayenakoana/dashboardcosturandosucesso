@@ -38,15 +38,12 @@ function getStatusColor(real: number, meta: number) {
   return { bg: "#dc262620", border: "#dc2626", text: "#f87171" };
 }
 
-// Paleta de cores por etapa do funil (do topo ao fundo)
-const FUNIL_ETAPA_CORES = [
-  "#b91c1c", // Leads — vermelho escuro
-  "#C8102E", // MQL
-  "#e02040", // Reuniões agendadas
-  "#e8384f", // Reuniões realizadas
-  "#f05a6e", // Propostas
-  "#16a34a", // Fechados — verde sempre
-];
+// Cor dinâmica por etapa, baseada na performance do valor atual
+function getEtapaCor(etapa: { label: string; val: number }) {
+  if (etapa.val === 0) return "#dc2626";
+  if (etapa.label === "Fechados") return "#16a34a";
+  return "#C8102E";
+}
 
 // Hook para animar um número de 0 até o valor alvo
 function useCountUp(target: number, duration = 700, trigger: boolean) {
@@ -98,39 +95,28 @@ function injectFunilStyles() {
   document.head.appendChild(style);
 }
 
-// Subcomponente individual de cada barra — label acima, trapézio com número dentro
+// Subcomponente individual de cada barra — label acima, retângulo com número dentro
 function FunilBar({
   etapa,
   conv,
   index,
-  total,
   widthPct,
-  nextWidthPct,
   loading,
   animated,
 }: {
   etapa: { label: string; val: number; pctDeTopo: number };
   conv?: { real: number; meta: number; label: string };
   index: number;
-  total: number;
   widthPct: number;
-  nextWidthPct: number;
   loading: boolean;
   animated: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
   const i = index;
-  const cor = FUNIL_ETAPA_CORES[i] ?? "#E8192C";
+  const cor = getEtapaCor(etapa);
   const barDelay   = `${i * 80}ms`;
   const badgeDelay = `${i * 80 + 30}ms`;
   const displayVal = useCountUp(etapa.val, 650, animated);
-
-  // clip-path trapézio conectando esta barra à próxima
-  const leftInset  = widthPct > 0 ? ((widthPct - nextWidthPct) / widthPct / 2) * 100 : 0;
-  const rightInset = 100 - leftInset;
-  const clipPath   = i < total - 1
-    ? `polygon(0 0, 100% 0, ${rightInset}% 100%, ${leftInset}% 100%)`
-    : "none";
 
   return (
     <div>
@@ -170,7 +156,7 @@ function FunilBar({
         </span>
       </div>
 
-      {/* Barra trapezoidal — só o número dentro */}
+      {/* Barra — retângulo com bordas arredondadas, só o número dentro */}
       <div className="flex justify-center">
         <div
           onMouseEnter={() => setHovered(true)}
@@ -179,8 +165,7 @@ function FunilBar({
             width: `${widthPct}%`,
             height: "40px",
             background: loading ? "#ffffff10" : cor,
-            clipPath,
-            borderRadius: i === total - 1 ? "6px" : undefined,
+            borderRadius: "6px",
             position: "relative",
             transition: "width 0.6s cubic-bezier(0.22,1,0.36,1), transform 0.2s ease",
             transformOrigin: "center",
@@ -261,9 +246,7 @@ function TrapezioFunil({
           etapa={etapa}
           conv={conversoes[i - 1]}
           index={i}
-          total={etapas.length}
           widthPct={widths[i]}
-          nextWidthPct={i < etapas.length - 1 ? widths[i + 1] : widths[i]}
           loading={loading}
           animated={animated}
         />
