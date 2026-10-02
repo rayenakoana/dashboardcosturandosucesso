@@ -101,38 +101,28 @@ function injectFunilStyles() {
 // Subcomponente individual de cada barra — hooks chamados corretamente no nível do componente
 function FunilBar({
   etapa,
-  nextEtapa,
   conv,
   index,
   total,
-  topVal,
+  widthPct,      // largura desta barra (já constrangida monotonicamente)
+  nextWidthPct,  // largura da próxima barra (já constrangida)
   loading,
   animated,
 }: {
   etapa: { label: string; val: number; pctDeTopo: number };
-  nextEtapa?: { label: string; val: number; pctDeTopo: number };
   conv?: { real: number; meta: number; label: string };
   index: number;
   total: number;
-  topVal: number;   // valor do topo (leads) para calcular proporção real
+  widthPct: number;
+  nextWidthPct: number;
   loading: boolean;
   animated: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
-  const maxW = 100;
-  const minW = 18; // mínimo visual para barras com valor muito baixo
   const i = index;
-
-  // Largura proporcional ao valor real relativo ao topo
-  const ratio     = topVal > 0 ? etapa.val / topVal : (i === 0 ? 1 : 0);
-  const nextRatio = nextEtapa && topVal > 0 ? nextEtapa.val / topVal : (i === total - 1 ? ratio : 0);
-
-  const widthPct     = Math.max(minW, ratio * maxW);
-  const nextWidthPct = i < total - 1 ? Math.max(minW, nextRatio * maxW) : widthPct;
-
   const cor = FUNIL_ETAPA_CORES[i] ?? "#E8192C";
 
-  // clip-path trapézio conectando esta barra à próxima
+  // clip-path trapézio — funil sempre afunila (widths já monotonicamente decrescentes)
   const leftInset  = widthPct > 0 ? ((widthPct - nextWidthPct) / widthPct / 2) * 100 : 0;
   const rightInset = 100 - leftInset;
   const clipPath   = i < total - 1
@@ -237,7 +227,21 @@ function TrapezioFunil({
     }
   }, [loading]);
 
+  const maxW = 100;
+  const minW = 18;
   const topVal = etapas[0]?.val ?? 0;
+
+  // Larguras brutas proporcionais ao valor real
+  const rawWidths = etapas.map((e, i) => {
+    const ratio = topVal > 0 ? e.val / topVal : (i === 0 ? 1 : 0);
+    return Math.max(minW, ratio * maxW);
+  });
+
+  // Restrição monotônica: funil NUNCA pode alargar — cada barra <= barra anterior
+  const widths = rawWidths.reduce<number[]>((acc, w, i) => {
+    acc.push(i === 0 ? w : Math.min(w, acc[i - 1]));
+    return acc;
+  }, []);
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -245,11 +249,11 @@ function TrapezioFunil({
         <FunilBar
           key={etapa.label}
           etapa={etapa}
-          nextEtapa={etapas[i + 1]}
           conv={conversoes[i - 1]}
           index={i}
           total={etapas.length}
-          topVal={topVal}
+          widthPct={widths[i]}
+          nextWidthPct={i < etapas.length - 1 ? widths[i + 1] : widths[i]}
           loading={loading}
           animated={animated}
         />
