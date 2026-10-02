@@ -221,16 +221,8 @@ function TrapezioFunil({
   });
 
   // Smooth-drop: funil NUNCA pode alargar, e cada etapa cai no máximo 56% da etapa anterior
-  const MAX_DROP = 0.30;
-  const widths = rawWidths.reduce<number[]>((acc, w, i) => {
-    if (i === 0) {
-      acc.push(w);
-    } else {
-      const floor = acc[i - 1] * (1 - MAX_DROP);
-      acc.push(Math.min(w, acc[i - 1]) < floor ? floor : Math.min(w, acc[i - 1]));
-    }
-    return acc;
-  }, []);
+  // Largura proporcional ao valor real, sem forçar monotonia
+  const widths = rawWidths.map(w => Math.max(minW, w));
 
   return (
     <div className="w-full max-w-2xl mx-auto">
