@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useConfiguracoes, useFunisVisiveis } from "@/hooks/useConfiguracoes";
 import { useCustosMarketing } from "@/hooks/useCustosMarketing";
@@ -48,6 +48,171 @@ const FUNIL_ETAPA_CORES = [
   "#16a34a", // Fechados — verde sempre
 ];
 
+// Hook para animar um número de 0 até o valor alvo
+function useCountUp(target: number, duration = 700, trigger: boolean) {
+  const [display, setDisplay] = useState(0);
+  const raf = useRef<number | null>(null);
+  const start = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!trigger) { setDisplay(0); return; }
+    if (target === 0) { setDisplay(0); return; }
+
+    start.current = null;
+    const step = (ts: number) => {
+      if (!start.current) start.current = ts;
+      const progress = Math.min((ts - start.current) / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(eased * target));
+      if (progress < 1) raf.current = requestAnimationFrame(step);
+    };
+    raf.current = requestAnimationFrame(step);
+    return () => { if (raf.current) cancelAnimationFrame(raf.current); };
+  }, [target, trigger, duration]);
+
+  return display;
+}
+
+// Injeta os keyframes de animação uma vez
+const STYLE_ID = "funil-anim-styles";
+function injectFunilStyles() {
+  if (document.getElementById(STYLE_ID)) return;
+  const style = document.createElement("style");
+  style.id = STYLE_ID;
+  style.textContent = `
+    @keyframes funilBarIn {
+      from { opacity: 0; transform: translateY(14px) scaleX(0.92); }
+      to   { opacity: 1; transform: translateY(0)   scaleX(1); }
+    }
+    @keyframes funilBadgeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes funilHoverPulse {
+      0%   { filter: brightness(1.25) drop-shadow(0 0 8px rgba(255,255,255,0.25)); }
+      50%  { filter: brightness(1.38) drop-shadow(0 0 14px rgba(255,255,255,0.35)); }
+      100% { filter: brightness(1.25) drop-shadow(0 0 8px rgba(255,255,255,0.25)); }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// Subcomponente individual de cada barra — hooks chamados corretamente no nível do componente
+function FunilBar({
+  etapa,
+  nextEtapa,
+  conv,
+  index,
+  total,
+  topVal,
+  loading,
+  animated,
+}: {
+  etapa: { label: string; val: number; pctDeTopo: number };
+  nextEtapa?: { label: string; val: number; pctDeTopo: number };
+  conv?: { real: number; meta: number; label: string };
+  index: number;
+  total: number;
+  topVal: number;   // valor do topo (leads) para calcular proporção real
+  loading: boolean;
+  animated: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const maxW = 100;
+  const minW = 18; // mínimo visual para barras com valor muito baixo
+  const i = index;
+
+  // Largura proporcional ao valor real relativo ao topo
+  const ratio     = topVal > 0 ? etapa.val / topVal : (i === 0 ? 1 : 0);
+  const nextRatio = nextEtapa && topVal > 0 ? nextEtapa.val / topVal : (i === total - 1 ? ratio : 0);
+
+  const widthPct     = Math.max(minW, ratio * maxW);
+  const nextWidthPct = i < total - 1 ? Math.max(minW, nextRatio * maxW) : widthPct;
+
+  const cor = FUNIL_ETAPA_CORES[i] ?? "#E8192C";
+
+  // clip-path trapézio conectando esta barra à próxima
+  const leftInset  = widthPct > 0 ? ((widthPct - nextWidthPct) / widthPct / 2) * 100 : 0;
+  const rightInset = 100 - leftInset;
+  const clipPath   = i < total - 1
+    ? `polygon(0 0, 100% 0, ${rightInset}% 100%, ${leftInset}% 100%)`
+    : "none";
+
+  const barDelay   = `${i * 80}ms`;
+  const badgeDelay = `${i * 80 + 30}ms`;
+
+  // Counter animado — hook no nível do componente
+  const displayVal = useCountUp(etapa.val, 650, animated);
+
+  const hoverStyle = hovered && !loading ? {
+    animation: `funilHoverPulse 1.2s ease-in-out infinite`,
+    transform: "scaleY(1.06)",
+    zIndex: 10,
+    cursor: "default",
+  } : {};
+
+  return (
+    <div>
+      {i > 0 && conv && (
+        <div
+          className="flex items-center justify-center my-1"
+          style={animated ? {
+            animation: `funilBadgeIn 0.35s ease both`,
+            animationDelay: badgeDelay,
+          } : { opacity: 0 }}
+        >
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full border text-[11px] font-semibold"
+            style={{
+              background: getStatusColor(conv.real, conv.meta).bg,
+              borderColor: getStatusColor(conv.real, conv.meta).border,
+              color: getStatusColor(conv.real, conv.meta).text,
+            }}>
+            <span>{conv.real.toFixed(1)}%</span>
+            <span className="text-[10px] opacity-70">{conv.label}</span>
+            <span className="opacity-50">·</span>
+            <span className="opacity-60">meta {conv.meta}%</span>
+          </div>
+        </div>
+      )}
+
+      <div className="flex justify-center" style={{ position: "relative" }}>
+        <div
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          style={{
+            width: `${widthPct}%`,
+            height: "46px",
+            background: loading ? "#ffffff10" : cor,
+            clipPath,
+            borderRadius: i === total - 1 ? "6px" : undefined,
+            position: "relative",
+            transition: "width 0.6s cubic-bezier(0.22,1,0.36,1), transform 0.2s ease",
+            transformOrigin: "center",
+            ...(animated ? {
+              animation: `funilBarIn 0.45s cubic-bezier(0.22,1,0.36,1) both`,
+              animationDelay: barDelay,
+            } : { opacity: 0 }),
+            ...hoverStyle,
+          }}
+        >
+          <div className="absolute inset-0 flex items-center justify-between"
+            style={{ paddingLeft: `${leftInset + 2}%`, paddingRight: `${(100 - rightInset) + 2}%` }}>
+            <span className="text-[11px] font-bold uppercase tracking-wide text-white leading-tight"
+              style={{ textShadow: hovered ? "0 0 12px rgba(255,255,255,0.6)" : undefined }}>
+              {etapa.label}
+            </span>
+            <span className="text-sm font-bold text-white flex-shrink-0 ml-2"
+              style={{ textShadow: hovered ? "0 0 12px rgba(255,255,255,0.6)" : undefined }}>
+              {loading ? "—" : displayVal}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TrapezioFunil({
   etapas,
   conversoes,
@@ -58,71 +223,37 @@ function TrapezioFunil({
   loading: boolean;
   corBase: string;
 }) {
-  const maxW = 100;
-  const minW = 34;
+  const [animated, setAnimated] = useState(false);
+
+  useEffect(() => { injectFunilStyles(); }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      setAnimated(false);
+      const t = setTimeout(() => setAnimated(true), 30);
+      return () => clearTimeout(t);
+    } else {
+      setAnimated(false);
+    }
+  }, [loading]);
+
+  const topVal = etapas[0]?.val ?? 0;
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {etapas.map((etapa, i) => {
-        const widthPct = maxW - ((maxW - minW) / (etapas.length - 1)) * i;
-        const nextWidthPct = i < etapas.length - 1
-          ? maxW - ((maxW - minW) / (etapas.length - 1)) * (i + 1)
-          : widthPct;
-        const conv = conversoes[i - 1];
-        const cor = FUNIL_ETAPA_CORES[i] ?? "#E8192C";
-
-        // clip-path trapézio: estreita de widthPct para nextWidthPct
-        const leftInset = ((widthPct - nextWidthPct) / widthPct / 2) * 100;
-        const rightInset = 100 - leftInset;
-        const clipPath = i < etapas.length - 1
-          ? `polygon(0 0, 100% 0, ${rightInset}% 100%, ${leftInset}% 100%)`
-          : "none";
-
-        return (
-          <div key={etapa.label}>
-            {i > 0 && conv && (
-              <div className="flex items-center justify-center my-1">
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full border text-[11px] font-semibold"
-                  style={{
-                    background: getStatusColor(conv.real, conv.meta).bg,
-                    borderColor: getStatusColor(conv.real, conv.meta).border,
-                    color: getStatusColor(conv.real, conv.meta).text,
-                  }}>
-                  <span>{conv.real.toFixed(1)}%</span>
-                  <span className="text-[10px] opacity-70">{conv.label}</span>
-                  <span className="opacity-50">·</span>
-                  <span className="opacity-60">meta {conv.meta}%</span>
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-center">
-              <div
-                className="relative flex items-center transition-all duration-500"
-                style={{
-                  width: `${widthPct}%`,
-                  height: "46px",
-                  background: loading ? "#ffffff10" : cor,
-                  opacity: loading ? 0.3 : 1,
-                  clipPath,
-                  borderRadius: i === etapas.length - 1 ? "6px" : undefined,
-                }}
-              >
-                {/* Label centralizado com padding lateral para não sair do trapézio */}
-                <div className="absolute inset-0 flex items-center justify-between"
-                  style={{ paddingLeft: `${leftInset + 2}%`, paddingRight: `${(100 - rightInset) + 2}%` }}>
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-white leading-tight">
-                    {etapa.label}
-                  </span>
-                  <span className="text-sm font-bold text-white flex-shrink-0 ml-2">
-                    {loading ? "—" : etapa.val}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })}
+      {etapas.map((etapa, i) => (
+        <FunilBar
+          key={etapa.label}
+          etapa={etapa}
+          nextEtapa={etapas[i + 1]}
+          conv={conversoes[i - 1]}
+          index={i}
+          total={etapas.length}
+          topVal={topVal}
+          loading={loading}
+          animated={animated}
+        />
+      ))}
     </div>
   );
 }
@@ -347,18 +478,20 @@ export default function FunilXPTO() {
           </div>
 
           <GlassCard>
+            {/* Header do card — só título, sem o botão IA aqui */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Funil de conversão — {funilLabel}
               </h3>
-              <AIAnalysisButton section="Funil XPTO" dataPayload={aiPayload} />
             </div>
+
             <TrapezioFunil
               etapas={etapas}
               conversoes={conversoes}
               loading={loading}
               corBase={corPrincipal}
             />
+
             {/* Legenda de status */}
             <div className="flex items-center gap-4 mt-6 justify-center flex-wrap">
               <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
@@ -370,6 +503,11 @@ export default function FunilXPTO() {
               <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                 <div className="w-2.5 h-2.5 rounded-full bg-red-500" />abaixo da meta
               </div>
+            </div>
+
+            {/* Botão IA fora do flex header — expande corretamente */}
+            <div className="mt-6 pt-5 border-t border-border/40">
+              <AIAnalysisButton section="Funil XPTO" dataPayload={aiPayload} />
             </div>
           </GlassCard>
         </>
