@@ -14,6 +14,126 @@ export type Database = {
   }
   public: {
     Tables: {
+      leads_diarios_por_funil: {
+        Row: {
+          id: string
+          data: string
+          pipeline_id: string
+          total_leads: number
+          total_leads_pagos: number | null
+          updated_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          data: string
+          pipeline_id: string
+          total_leads?: number
+          total_leads_pagos?: number | null
+          updated_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          data?: string
+          pipeline_id?: string
+          total_leads?: number
+          total_leads_pagos?: number | null
+          updated_at?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      leads_geografia: {
+        Row: {
+          deal_id: string
+          pipeline_id: string | null
+          pais: string | null
+          uf: string | null
+          estado: string | null
+          regiao: string | null
+          cidade: string | null
+          estado_organizacao: string | null
+          rating: number | null
+          created_at: string
+          deletado: boolean
+        }
+        Insert: {
+          deal_id: string
+          pipeline_id?: string | null
+          pais?: string | null
+          uf?: string | null
+          estado?: string | null
+          regiao?: string | null
+          cidade?: string | null
+          estado_organizacao?: string | null
+          rating?: number | null
+          created_at?: string
+          deletado?: boolean
+        }
+        Update: {
+          deal_id?: string
+          pipeline_id?: string | null
+          pais?: string | null
+          uf?: string | null
+          estado?: string | null
+          regiao?: string | null
+          cidade?: string | null
+          estado_organizacao?: string | null
+          rating?: number | null
+          created_at?: string
+          deletado?: boolean
+        }
+        Relationships: []
+      }
+      reunioes_agendadas: {
+        Row: {
+          id: string
+          data: string
+          pipeline_id: string | null
+          compareceu: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          data: string
+          pipeline_id?: string | null
+          compareceu?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          data?: string
+          pipeline_id?: string | null
+          compareceu?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      propostas_crm: {
+        Row: {
+          id: string
+          deal_id: string
+          data: string
+          pipeline_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          deal_id: string
+          data: string
+          pipeline_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          deal_id?: string
+          data?: string
+          pipeline_id?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       configuracoes: {
         Row: {
           created_at: string

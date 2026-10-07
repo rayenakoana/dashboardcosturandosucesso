@@ -323,19 +323,23 @@ export default function CSLive() {
         <ArrowLeft className="h-4 w-4" /> Sair do modo Live
       </Link>
 
-      <button
-        onClick={demoTrigger}
-        className="absolute top-6 right-6 text-xs px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground z-10"
-      >
-        <Zap className="inline h-3 w-3 mr-1" /> Testar comemoração
-      </button>
+      {import.meta.env.DEV && (
+        <>
+          <button
+            onClick={demoTrigger}
+            className="absolute top-6 right-6 text-xs px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground z-10"
+          >
+            <Zap className="inline h-3 w-3 mr-1" /> Testar comemoração
+          </button>
 
-      <button
-        onClick={celebrarMeta}
-        className="absolute top-6 right-48 text-xs px-3 py-2 rounded-lg border border-gold text-gold hover:bg-gold/10 z-10"
-      >
-        <Trophy className="inline h-3 w-3 mr-1" /> Testar meta batida
-      </button>
+          <button
+            onClick={celebrarMeta}
+            className="absolute top-6 right-48 text-xs px-3 py-2 rounded-lg border border-gold text-gold hover:bg-gold/10 z-10"
+          >
+            <Trophy className="inline h-3 w-3 mr-1" /> Testar meta batida
+          </button>
+        </>
+      )}
 
       {/* Emoji pop */}
       {pop && (

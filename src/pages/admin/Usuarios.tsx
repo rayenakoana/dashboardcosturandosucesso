@@ -4,8 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, UserPlus, CheckCircle2, XCircle } from "lucide-react";
 
-const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_ADMIN_CRIAR_USUARIO_URL;
-const N8N_ADMIN_SECRET = import.meta.env.VITE_N8N_ADMIN_SECRET;
 
 export default function Usuarios() {
   const [email, setEmail] = useState("");
@@ -18,12 +16,9 @@ export default function Usuarios() {
     setResultado(null);
     setEnviando(true);
     try {
-      const res = await fetch(N8N_WEBHOOK_URL, {
+      const res = await fetch("/api/admin/criar-usuario", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Admin-Secret": N8N_ADMIN_SECRET,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, senha }),
       });
       const data = await res.json();

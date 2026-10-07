@@ -7,6 +7,8 @@ RUN npm run build
 
 FROM nginx:alpine
 ARG ANTHROPIC_KEY
+ARG N8N_ADMIN_SECRET
+ARG N8N_ADMIN_URL
 RUN echo "server { \
     listen 80; \
     root /usr/share/nginx/html; \
@@ -17,6 +19,16 @@ RUN echo "server { \
         proxy_set_header Host api.anthropic.com; \
         proxy_set_header x-api-key \"${ANTHROPIC_KEY}\"; \
         proxy_set_header anthropic-version \"2023-06-01\"; \
+        proxy_set_header Content-Type \"application/json\"; \
+        add_header Access-Control-Allow-Origin *; \
+        add_header Access-Control-Allow-Methods \"POST, OPTIONS\"; \
+        add_header Access-Control-Allow-Headers \"Content-Type\"; \
+        if (\$request_method = OPTIONS) { return 204; } \
+    } \
+    location /api/admin/criar-usuario { \
+        proxy_pass ${N8N_ADMIN_URL}; \
+        proxy_ssl_server_name on; \
+        proxy_set_header X-Admin-Secret \"${N8N_ADMIN_SECRET}\"; \
         proxy_set_header Content-Type \"application/json\"; \
         add_header Access-Control-Allow-Origin *; \
         add_header Access-Control-Allow-Methods \"POST, OPTIONS\"; \
