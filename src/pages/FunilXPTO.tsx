@@ -194,46 +194,51 @@ function FunilHorizontal({
 
   return (
     <div>
-      {/* True SVG dynamic funnel */}
-      <FunilSVGCore
-        stages={stages}
-        loading={loading}
-        reduceMotion={prefersReduced || !animated}
-      />
+      {/* Scrollable wrapper — SVG + badges share a min-width so badges never overlap */}
+      <div style={{ overflowX: 'auto' }}>
+        <div style={{ minWidth: 560 }}>
+          {/* True SVG dynamic funnel */}
+          <FunilSVGCore
+            stages={stages}
+            loading={loading}
+            reduceMotion={prefersReduced || !animated}
+          />
 
-      {/* Conversion badges — positioned at each stage boundary */}
-      <div className="overflow-x-hidden relative" style={{ marginTop: 16 }}>
-        {/* Dotted connector line */}
-        <div style={{
-          position: 'absolute',
-          top: 3,
-          left: `${(1 / n) * 100}%`,
-          right: `${(1 / n) * 100}%`,
-          borderTop: '1px dashed rgba(120,130,150,0.25)',
-          pointerEvents: 'none',
-        }} />
+          {/* Conversion badges — positioned at each stage boundary */}
+          <div style={{ position: 'relative', marginTop: 16 }}>
+            {/* Dotted connector line */}
+            <div style={{
+              position: 'absolute',
+              top: 3,
+              left: `${(1 / n) * 100}%`,
+              right: `${(1 / n) * 100}%`,
+              borderTop: '1px dashed rgba(120,130,150,0.25)',
+              pointerEvents: 'none',
+            }} />
 
-        <div style={{ position: 'relative', height: 78 }}>
-          {conversoes.map((conv, i) => {
-            const leftPct = ((i + 1) / n) * 100;
-            return (
-              <div
-                key={i}
-                style={{
-                  position: 'absolute',
-                  left: `${leftPct}%`,
-                  top: 0,
-                  transform: 'translateX(-50%)',
-                }}
-              >
-                <ConvBadge
-                  conv={conv}
-                  animated={animated}
-                  delay={i * 60 + 280}
-                />
-              </div>
-            );
-          })}
+            <div style={{ position: 'relative', height: 78 }}>
+              {conversoes.map((conv, i) => {
+                const leftPct = ((i + 1) / n) * 100;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      position: 'absolute',
+                      left: `${leftPct}%`,
+                      top: 0,
+                      transform: 'translateX(-50%)',
+                    }}
+                  >
+                    <ConvBadge
+                      conv={conv}
+                      animated={animated}
+                      delay={i * 60 + 280}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 

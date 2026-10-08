@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import {
   BarChart3, GitMerge, Map, ShoppingCart, TrendingUp,
@@ -238,12 +238,42 @@ export function AppSidebar() {
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [isCollapsed, setIsCollapsed] = useState(() => readLS("cs-dash-sidebar-collapsed", false));
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     readLSObj("cs-dash-nav-groups", { comercial: true, marketing: true, gestao: true, sistema: true })
   );
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" && window.innerWidth < 768
+  );
+
+  // Mobile detection — auto-collapse on mount and on resize
+  useEffect(() => {
+    const update = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) setIsCollapsed(true);
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  // Auto-close sidebar on navigation when mobile
+  useEffect(() => {
+    if (isMobile) setIsCollapsed(true);
+  }, [location.pathname, location.search]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Listen for open event fired by Topbar hamburger
+  const handleOpenEvent = useCallback(() => {
+    if (window.innerWidth < 768) setIsCollapsed(false);
+  }, []);
+  useEffect(() => {
+    window.addEventListener("cs-sidebar:open", handleOpenEvent);
+    return () => window.removeEventListener("cs-sidebar:open", handleOpenEvent);
+  }, [handleOpenEvent]);
 
   useEffect(() => {
     const handler = () => setIsFullscreen(!!document.fullscreenElement);
@@ -292,11 +322,22 @@ export function AppSidebar() {
       : null;
 
   return (
+    <>
+    {/* Mobile backdrop */}
+    {isMobile && !isCollapsed && (
+      <div
+        className="fixed inset-0 z-40 bg-black/60"
+        onClick={() => setIsCollapsed(true)}
+        aria-hidden="true"
+      />
+    )}
     <aside
       className={cn(
-        "flex flex-col shrink-0 border-r border-sidebar-border bg-sidebar h-screen sticky top-0 overflow-hidden z-30",
+        "flex flex-col shrink-0 border-r border-sidebar-border bg-sidebar h-screen overflow-hidden",
         "sidebar-transition",
-        isCollapsed ? "w-[52px]" : "w-[220px]"
+        isMobile
+          ? cn("fixed top-0 left-0 z-50 w-[220px]", isCollapsed ? "-translate-x-full" : "translate-x-0")
+          : cn("sticky top-0 z-30", isCollapsed ? "w-[52px]" : "w-[220px]")
       )}
     >
       {/* ── Header ── */}
@@ -474,5 +515,6 @@ export function AppSidebar() {
         )}
       </div>
     </aside>
+    </>
   );
 }

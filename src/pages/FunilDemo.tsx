@@ -187,7 +187,11 @@ export default function FunilDemo() {
           </div>
         </div>
 
-        <FunilSVGCore stages={stages} showLabelStrip />
+        <div style={{ overflowX: 'auto' }}>
+          <div style={{ minWidth: 480 }}>
+            <FunilSVGCore stages={stages} showLabelStrip />
+          </div>
+        </div>
       </div>
 
       {/* Conversion rates */}
