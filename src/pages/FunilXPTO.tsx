@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useConfiguracoes, useFunisVisiveis } from "@/hooks/useConfiguracoes";
 import { useCustosMarketing } from "@/hooks/useCustosMarketing";
@@ -244,7 +245,9 @@ function TrapezioFunil({
 }
 
 export default function FunilXPTO() {
-  const [aba, setAba] = useState<"funil" | "sdr">("funil");
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") === "sdr" ? "sdr" : "funil";
+  const [aba, setAba] = useState<"funil" | "sdr">(initialTab);
   const [funisSel, setFunisSel] = useState<string[]>([]);
   const [periodo, setPeriodo] = useState<"hoje" | "semana" | "mes" | "personalizado">("mes");
   const [customStart, setCustomStart] = useState(getMesInicio());

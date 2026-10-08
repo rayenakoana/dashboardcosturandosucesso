@@ -1,37 +1,43 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   BarChart3, ShoppingCart, CalendarPlus, Layers,
   DollarSign, Target, Settings, Users, Map,
-  Radio, GitMerge, LogOut, Sun, Moon, Maximize, Minimize, TrendingUp,
+  Radio, LogOut, Sun, Moon, Maximize, Minimize, TrendingUp,
+  GitMerge, UserCheck, BarChart2, Instagram, MessageCircle, Mail,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 
-const publicItems = [
-  { title: "Dashboard",       url: "/",            icon: BarChart3,   end: true },
-  { title: "Mapa Geográfico", url: "/mapa",        icon: Map },
-  { title: "CS Live",         url: "/live",        icon: Radio },
-  { title: "Funil XPTO",      url: "/funil-xpto",  icon: GitMerge },
-  { title: "Marketing",        url: "/marketing",    icon: TrendingUp },
-];
-
-const adminItems = [
-  { title: "Comercial",        url: "/admin/comercial",     icon: ShoppingCart },
-  { title: "Input Diário",     url: "/admin/input-diario",  icon: CalendarPlus },
-  { title: "Gestão de Safras", url: "/admin/safras",        icon: Layers },
-  { title: "Marketing",        url: "/admin/marketing",     icon: DollarSign },
-  { title: "Metas",            url: "/admin/metas",         icon: Target },
-  { title: "Configurações",    url: "/admin/configuracoes", icon: Settings },
-  { title: "Usuários",         url: "/admin/usuarios",      icon: Users },
-];
+// Helpers
+function isActiveUrl(location: ReturnType<typeof useLocation>, path: string, tab?: string): boolean {
+  const pathMatch = location.pathname === path;
+  if (!pathMatch) return false;
+  if (!tab) return true;
+  const params = new URLSearchParams(location.search);
+  return params.get("tab") === tab;
+}
 
 export function AppSidebar() {
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [comercialOpen, setComercialOpen] = useState(false);
+  const [marketingOpen, setMarketingOpen] = useState(false);
+
+  // Auto-expand groups when their sub-items are active
+  useEffect(() => {
+    if (location.pathname === "/funil-xpto" || location.pathname === "/admin/comercial") {
+      setComercialOpen(true);
+    }
+    if (location.pathname === "/marketing") {
+      setMarketingOpen(true);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     const handler = () => setIsFullscreen(!!document.fullscreenElement);
@@ -60,6 +66,30 @@ export function AppSidebar() {
         : "text-muted-foreground hover:bg-primary/6 hover:text-foreground"
     );
 
+  const subItemClass = (active: boolean) =>
+    cn(
+      "flex items-center gap-2 pl-7 pr-3 py-1.5 rounded-lg text-xs font-medium transition-all relative",
+      active
+        ? "bg-primary/10 text-primary before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[2.5px] before:rounded-r-sm before:bg-primary"
+        : "text-muted-foreground hover:bg-primary/6 hover:text-foreground"
+    );
+
+  const groupHeaderClass = (active: boolean) =>
+    cn(
+      "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+      active
+        ? "bg-primary/10 text-primary"
+        : "text-muted-foreground hover:bg-primary/6 hover:text-foreground"
+    );
+
+  // Comercial group active = any sub-item active
+  const comercialActive =
+    location.pathname === "/funil-xpto" ||
+    location.pathname === "/admin/comercial";
+
+  // Marketing group active
+  const marketingActive = location.pathname === "/marketing";
+
   return (
     <aside className="flex flex-col w-56 shrink-0 border-r border-border bg-sidebar h-screen sticky top-0">
 
@@ -79,28 +109,176 @@ export function AppSidebar() {
         <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/60 px-3 pt-1 pb-1.5">
           Visão geral
         </p>
-        {publicItems.map(({ title, url, icon: Icon, end }) => (
-          <NavLink
-            key={url}
-            to={url}
-            end={end}
-            className={({ isActive }) => navItemClass(isActive)}
-          >
-            <Icon className="w-[15px] h-[15px] shrink-0" />
-            {title}
-          </NavLink>
-        ))}
+
+        <NavLink
+          to="/"
+          end
+          className={({ isActive }) => navItemClass(isActive)}
+        >
+          <BarChart3 className="w-[15px] h-[15px] shrink-0" />
+          Dashboard
+        </NavLink>
+
+        <NavLink to="/mapa" className={({ isActive }) => navItemClass(isActive)}>
+          <Map className="w-[15px] h-[15px] shrink-0" />
+          Mapa Geográfico
+        </NavLink>
+
+        <NavLink to="/live" className={({ isActive }) => navItemClass(isActive)}>
+          <Radio className="w-[15px] h-[15px] shrink-0" />
+          CS Live
+        </NavLink>
 
         {/* Divider */}
         <div className="my-2 border-t border-border/60 mx-1" />
 
-        {/* Admin */}
+        {/* Comercial group */}
+        <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/60 px-3 pb-1.5">
+          Comercial
+        </p>
+
+        <button
+          onClick={() => setComercialOpen(v => !v)}
+          className={groupHeaderClass(comercialActive && !comercialOpen)}
+        >
+          <GitMerge className="w-[15px] h-[15px] shrink-0" />
+          <span className="flex-1 text-left">Comercial</span>
+          <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", comercialOpen && "rotate-180")} />
+        </button>
+
+        {comercialOpen && (
+          <div className="space-y-0.5 mt-0.5">
+            {/* Performance Comercial — funil tab (default) */}
+            <NavLink
+              to="/funil-xpto"
+              end
+              className={() => subItemClass(
+                location.pathname === "/funil-xpto" &&
+                (!new URLSearchParams(location.search).get("tab") || new URLSearchParams(location.search).get("tab") === "funil")
+              )}
+            >
+              <BarChart2 className="w-[13px] h-[13px] shrink-0" />
+              Performance Comercial
+            </NavLink>
+
+            {/* Funil — same page, funil tab */}
+            <NavLink
+              to="/funil-xpto?tab=funil"
+              className={() => subItemClass(
+                location.pathname === "/funil-xpto" &&
+                (!new URLSearchParams(location.search).get("tab") || new URLSearchParams(location.search).get("tab") === "funil")
+              )}
+            >
+              <GitMerge className="w-[13px] h-[13px] shrink-0" />
+              Funil
+            </NavLink>
+
+            {/* SDRs — funil page, sdr tab */}
+            <NavLink
+              to="/funil-xpto?tab=sdr"
+              className={() => subItemClass(
+                location.pathname === "/funil-xpto" &&
+                new URLSearchParams(location.search).get("tab") === "sdr"
+              )}
+            >
+              <UserCheck className="w-[13px] h-[13px] shrink-0" />
+              SDRs
+            </NavLink>
+
+            {/* Vendas — admin protected */}
+            {user && (
+              <NavLink
+                to="/admin/comercial"
+                className={({ isActive }) => subItemClass(isActive)}
+              >
+                <ShoppingCart className="w-[13px] h-[13px] shrink-0" />
+                Vendas
+              </NavLink>
+            )}
+          </div>
+        )}
+
+        {/* Marketing group */}
+        <div className="mt-0.5" />
+        <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/60 px-3 pb-1.5 pt-1">
+          Marketing
+        </p>
+
+        <button
+          onClick={() => setMarketingOpen(v => !v)}
+          className={groupHeaderClass(marketingActive && !marketingOpen)}
+        >
+          <TrendingUp className="w-[15px] h-[15px] shrink-0" />
+          <span className="flex-1 text-left">Marketing</span>
+          <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", marketingOpen && "rotate-180")} />
+        </button>
+
+        {marketingOpen && (
+          <div className="space-y-0.5 mt-0.5">
+            <NavLink
+              to="/marketing?tab=instagram"
+              className={() => subItemClass(
+                location.pathname === "/marketing" &&
+                new URLSearchParams(location.search).get("tab") === "instagram"
+              )}
+            >
+              <Instagram className="w-[13px] h-[13px] shrink-0" />
+              Instagram
+            </NavLink>
+
+            <NavLink
+              to="/marketing?tab=wpp"
+              className={() => subItemClass(
+                location.pathname === "/marketing" &&
+                new URLSearchParams(location.search).get("tab") === "wpp"
+              )}
+            >
+              <MessageCircle className="w-[13px] h-[13px] shrink-0" />
+              WPP Campanhas
+            </NavLink>
+
+            <NavLink
+              to="/marketing"
+              end
+              className={() => subItemClass(
+                location.pathname === "/marketing" &&
+                (!new URLSearchParams(location.search).get("tab") || new URLSearchParams(location.search).get("tab") === "meta")
+              )}
+            >
+              <BarChart2 className="w-[13px] h-[13px] shrink-0" />
+              Meta Ads
+            </NavLink>
+
+            <NavLink
+              to="/marketing?tab=email"
+              className={() => subItemClass(
+                location.pathname === "/marketing" &&
+                new URLSearchParams(location.search).get("tab") === "email"
+              )}
+            >
+              <Mail className="w-[13px] h-[13px] shrink-0" />
+              E-mail Marketing
+            </NavLink>
+          </div>
+        )}
+
+        {/* Divider */}
+        <div className="my-2 border-t border-border/60 mx-1" />
+
+        {/* Admin items */}
         {user && (
           <>
             <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/60 px-3 pb-1.5">
-              Comercial &amp; Marketing
+              Administração
             </p>
-            {adminItems.map(({ title, url, icon: Icon }) => (
+            {[
+              { title: "Input Diário",     url: "/admin/input-diario",  icon: CalendarPlus },
+              { title: "Gestão de Safras", url: "/admin/safras",        icon: Layers },
+              { title: "Custos Marketing", url: "/admin/marketing",     icon: DollarSign },
+              { title: "Metas",            url: "/admin/metas",         icon: Target },
+              { title: "Configurações",    url: "/admin/configuracoes", icon: Settings },
+              { title: "Usuários",         url: "/admin/usuarios",      icon: Users },
+            ].map(({ title, url, icon: Icon }) => (
               <NavLink
                 key={url}
                 to={url}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { TrendingUp, ChevronDown } from "lucide-react";
 import { MarketingSection } from "@/components/MarketingSection";
 import { cn } from "@/lib/utils";
@@ -29,7 +30,14 @@ function getRange(period: Period, customStart: string, customEnd: string): { sta
   return { start: customStart || sub(29), end: customEnd || today };
 }
 
+type MarketingTab = "meta" | "wpp" | "instagram" | "email";
+const VALID_TABS: MarketingTab[] = ["meta", "wpp", "instagram", "email"];
+
 export default function MarketingDashboard() {
+  const [searchParams] = useSearchParams();
+  const rawTab = searchParams.get("tab") as MarketingTab | null;
+  const initialTab: MarketingTab = rawTab && VALID_TABS.includes(rawTab) ? rawTab : "meta";
+
   const [period, setPeriod]           = useState<Period>("30d");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd]     = useState("");
@@ -115,7 +123,7 @@ export default function MarketingDashboard() {
       </div>
 
       {/* ── Conteúdo ── */}
-      <MarketingSection from={start} to={end} />
+      <MarketingSection from={start} to={end} initialTab={initialTab} />
     </div>
   );
 }
