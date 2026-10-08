@@ -60,7 +60,7 @@ function Shell() {
             {/* Públicas */}
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/funil-xpto" element={<FunilXPTO />} />
-            <Route path="/funil-demo" element={<FunilDemo />} />
+            {import.meta.env.DEV && <Route path="/funil-demo" element={<FunilDemo />} />}
             <Route path="/mapa" element={<MapaGeografico />} />
             <Route path="/marketing" element={<MarketingDashboard />} />
 

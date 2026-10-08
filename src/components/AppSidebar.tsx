@@ -275,6 +275,16 @@ export function AppSidebar() {
     return () => window.removeEventListener("cs-sidebar:open", handleOpenEvent);
   }, [handleOpenEvent]);
 
+  // Escape key closes sidebar on mobile
+  useEffect(() => {
+    if (!isMobile) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isCollapsed) setIsCollapsed(true);
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [isMobile, isCollapsed]);
+
   useEffect(() => {
     const handler = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", handler);

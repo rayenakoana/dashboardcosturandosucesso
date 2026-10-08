@@ -168,9 +168,25 @@ function FunilHorizontal({
   loading: boolean;
 }) {
   const [animated, setAnimated] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const n = etapas.length;
 
   useEffect(() => { injectStyles(); }, []);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const check = () => {
+      setShowHint(el.scrollWidth > el.clientWidth + 4 && el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+    };
+    check();
+    el.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check);
+    return () => {
+      el.removeEventListener("scroll", check);
+      window.removeEventListener("resize", check);
+    };
+  }, [loading]);
   useEffect(() => {
     if (!loading) {
       setAnimated(false);
@@ -195,7 +211,8 @@ function FunilHorizontal({
   return (
     <div>
       {/* Scrollable wrapper — SVG + badges share a min-width so badges never overlap */}
-      <div style={{ overflowX: 'auto' }}>
+      <div style={{ position: 'relative' }}>
+      <div ref={scrollRef} style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <div style={{ minWidth: 560 }}>
           {/* True SVG dynamic funnel */}
           <FunilSVGCore
@@ -240,6 +257,19 @@ function FunilHorizontal({
             </div>
           </div>
         </div>
+      </div>
+      {showHint && (
+        <div aria-hidden="true" style={{
+          position: 'absolute', right: 0, top: 0, bottom: 0,
+          display: 'flex', alignItems: 'center', paddingRight: 10,
+          background: 'linear-gradient(to right, transparent, rgba(17,23,32,0.92) 30%)',
+          pointerEvents: 'none',
+          fontSize: 9.5, fontWeight: 600, color: 'rgba(255,255,255,0.45)',
+          letterSpacing: '0.02em', whiteSpace: 'nowrap', minWidth: 140,
+        }}>
+          Deslize para ver →
+        </div>
+      )}
       </div>
 
       {/* Legend */}
