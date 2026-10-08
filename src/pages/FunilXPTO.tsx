@@ -109,6 +109,7 @@ function ConvBadge({
   animated: boolean; delay: number;
 }) {
   const sc = getStatusColor(conv.real, conv.meta);
+  const hasData = conv.real > 0 || conv.meta > 0;
   return (
     <div
       className="flex flex-col items-center"
@@ -120,26 +121,35 @@ function ConvBadge({
         } : {}),
       }}
     >
+      {/* Connector vertical tick */}
+      <div style={{
+        width: 1, height: 8,
+        background: `${sc.border}80`,
+        flexShrink: 0, marginBottom: 4,
+      }} />
       {/* Connector dot */}
       <div style={{
-        width: 7, height: 7, borderRadius: '50%',
-        background: sc.border, flexShrink: 0, marginBottom: 7,
-        boxShadow: `0 0 6px ${sc.border}60`,
+        width: 6, height: 6, borderRadius: '50%',
+        background: sc.border, flexShrink: 0, marginBottom: 6,
+        boxShadow: `0 0 5px ${sc.border}50`,
       }} />
       <div
-        className="rounded-lg border text-center"
         style={{
-          background: sc.bg, borderColor: sc.border,
-          minWidth: 90, padding: '8px 10px',
+          background: sc.bg,
+          border: `1px solid ${sc.border}`,
+          borderRadius: 8,
+          minWidth: 82,
+          padding: '7px 9px',
+          textAlign: 'center',
         }}
       >
-        <div style={{ fontSize: 13, fontWeight: 900, lineHeight: 1, color: sc.text }}>
-          {conv.real.toFixed(1)}%
+        <div style={{ fontSize: 14, fontWeight: 900, lineHeight: 1, color: sc.text }}>
+          {hasData ? `${conv.real.toFixed(1)}%` : 'N/D'}
         </div>
-        <div style={{ fontSize: 9, lineHeight: 1.3, marginTop: 4, color: sc.text, opacity: 0.75 }}>
+        <div style={{ fontSize: 8.5, lineHeight: 1.3, marginTop: 3, color: sc.text, opacity: 0.75 }}>
           {conv.label}
         </div>
-        <div style={{ fontSize: 8, lineHeight: 1.3, marginTop: 2, color: 'rgba(255,255,255,0.3)' }}>
+        <div style={{ fontSize: 7.5, lineHeight: 1.3, marginTop: 2, color: 'rgba(255,255,255,0.28)' }}>
           meta {conv.meta}%
         </div>
       </div>
