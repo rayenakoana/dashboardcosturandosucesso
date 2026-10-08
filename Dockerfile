@@ -3,6 +3,15 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+# VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY são variáveis públicas (anon key).
+# Devem ser passadas em build time porque o Vite as embute no bundle durante npm run build.
+# NÃO são segredos: o anon key é exposto ao browser por design do Supabase.
+# Exemplo: docker build --build-arg VITE_SUPABASE_URL=https://xxx.supabase.co \
+#                       --build-arg VITE_SUPABASE_PUBLISHABLE_KEY=eyJ... .
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_PUBLISHABLE_KEY
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
 RUN npm run build
 
 FROM nginx:alpine

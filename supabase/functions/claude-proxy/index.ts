@@ -123,9 +123,11 @@ Deno.serve(async (req) => {
   const safeMaxTokens = Math.min(requestedTokens, MAX_TOKENS_CAP);
 
   // ── 4. Rate limiting por usuário (opt-in) ─────────────────────────────────
-  // Ativo apenas quando RATE_LIMIT_ENABLED=true E a migração foi aplicada.
-  // Fail-open: se o RPC falhar (tabela ausente, timeout), a chamada prossegue.
+  // RATE_LIMIT_ENABLED=true  → ativa o rate limiting.
+  // RATE_LIMIT_STRICT=true   → fail-closed: erros do RPC bloqueiam a chamada.
+  // Padrão (sem STRICT): fail-open — erros de infra não geram indisponibilidade.
   if (Deno.env.get("RATE_LIMIT_ENABLED") === "true") {
+    const strict = Deno.env.get("RATE_LIMIT_STRICT") === "true";
     try {
       const { data: rl, error: rlError } = await supabase.rpc("check_and_log_ai_call", {
         p_user_id: user.id,
@@ -133,9 +135,13 @@ Deno.serve(async (req) => {
       });
 
       if (rlError) {
-        // Log para depuração mas não bloqueia — evita indisponibilidade por
-        // falha de infra de métricas.
         console.error("[claude-proxy] rate limit RPC error:", rlError.message);
+        if (strict) {
+          return new Response(
+            JSON.stringify({ error: "Serviço temporariamente indisponível." }),
+            { status: 503, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
+          );
+        }
       } else if (rl && !rl.allowed) {
         return new Response(
           JSON.stringify({ error: "Limite de chamadas atingido. Tente novamente em alguns minutos." }),
@@ -144,6 +150,12 @@ Deno.serve(async (req) => {
       }
     } catch (rlEx) {
       console.error("[claude-proxy] rate limit check threw:", (rlEx as Error).message);
+      if (strict) {
+        return new Response(
+          JSON.stringify({ error: "Serviço temporariamente indisponível." }),
+          { status: 503, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
+        );
+      }
     }
   }
 

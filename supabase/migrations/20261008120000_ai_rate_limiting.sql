@@ -71,7 +71,18 @@ BEGIN
 END;
 $$;
 
+-- ── Restrição de execução do RPC ─────────────────────────────────────────────
+-- Sem REVOKE, qualquer usuário autenticado poderia chamar este RPC via REST API
+-- e passar um p_user_id arbitrário, esgotando a cota de outro usuário.
+-- Apenas o service_role (usado pela Edge Function) pode executar.
+REVOKE EXECUTE ON FUNCTION check_and_log_ai_call(uuid, text, int, int)
+  FROM PUBLIC, authenticated, anon;
+
+GRANT EXECUTE ON FUNCTION check_and_log_ai_call(uuid, text, int, int)
+  TO service_role;
+
 -- Comentário de ativação:
 -- 1. Aplicar esta migração: supabase db push
 -- 2. Ativar na Edge Function: supabase secrets set RATE_LIMIT_ENABLED=true
--- 3. Fazer deploy: supabase functions deploy claude-proxy
+-- 3. Fail-closed opcional: supabase secrets set RATE_LIMIT_STRICT=true
+-- 4. Fazer deploy: supabase functions deploy claude-proxy
