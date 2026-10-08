@@ -5,15 +5,19 @@
  * e encaminha ao endpoint de mensagens da API Anthropic.
  * A chave Anthropic nunca chega ao browser.
  *
- * Proteções de consumo:
- *   - Apenas usuários com JWT válido e ativo são aceitos.
- *   - Modelo fixado em lista segura; payloads que tentam usar outros modelos
- *     são rejeitados (evita uso de modelos mais caros).
- *   - max_tokens limitado a MAX_TOKENS_CAP (evita respostas longas não previstas).
- *   - Corpo da requisição limitado a 64 KB.
+ * Proteções:
+ *   - JWT verificado pelo runtime Supabase (verify_jwt=true) antes do código
+ *     executar, e confirmado com getUser() para validar existência do usuário.
+ *   - Corpo lido como bytes — limite real de 64 KB, independente de Content-Length.
+ *   - Modelo validado contra lista explícita de modelos permitidos.
+ *   - max_tokens capeado em MAX_TOKENS_CAP.
+ *   - Rate limiting por usuário via RPC Postgres (opt-in: RATE_LIMIT_ENABLED=true).
+ *     Se a tabela não existir ou o RPC falhar, a chamada prossegue (fail-open
+ *     intencional para evitar indisponibilidade por causa de infra de métricas).
  *
  * Segredos necessários (supabase secrets set):
- *   ANTHROPIC_KEY  Chave da API Anthropic
+ *   ANTHROPIC_KEY         Chave da API Anthropic
+ *   RATE_LIMIT_ENABLED    "true" para ativar — requer migração aplicada no banco
  *
  * Supabase injeta automaticamente SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY.
  */
@@ -28,7 +32,9 @@ const CORS_HEADERS = {
 
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 
-// Modelos permitidos — ampliar conforme necessário após avaliação de custo.
+const BODY_LIMIT_BYTES = 64 * 1024; // 64 KB — lido dos bytes reais, não do header
+
+// Modelos permitidos — ampliar após avaliação de custo.
 const ALLOWED_MODELS = new Set([
   "claude-sonnet-4-6",
   "claude-haiku-4-5",
@@ -46,6 +52,10 @@ Deno.serve(async (req) => {
   }
 
   // ── 1. Autenticar via Supabase JWT ────────────────────────────────────────
+  // O runtime Supabase já rejeitou tokens com assinatura inválida (verify_jwt=true).
+  // getUser() faz uma segunda verificação contra o servidor: confirma que o usuário
+  // ainda existe e lê app_metadata atualizado — tokens de usuários excluídos
+  // ou suspensos são rejeitados aqui mesmo que a assinatura seja válida.
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return new Response(
@@ -60,8 +70,6 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // getUser valida o token contra o servidor Supabase — não apenas decodifica
-  // localmente. Tokens revogados ou expirados são rejeitados aqui.
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
   if (authError || !user) {
@@ -71,9 +79,21 @@ Deno.serve(async (req) => {
     );
   }
 
-  // ── 2. Validar e limitar o corpo ──────────────────────────────────────────
-  const contentLength = Number(req.headers.get("content-length") ?? 0);
-  if (contentLength > 64 * 1024) {
+  // ── 2. Ler e limitar o corpo pelos bytes reais ────────────────────────────
+  // Não confiamos em Content-Length: o valor pode estar ausente, incorreto ou
+  // ser omitido intencionalmente por um cliente mal-formado. Lemos o stream
+  // inteiro e verificamos o tamanho antes de parsear.
+  let bodyBytes: ArrayBuffer;
+  try {
+    bodyBytes = await req.arrayBuffer();
+  } catch {
+    return new Response(
+      JSON.stringify({ error: "Erro ao ler corpo da requisição." }),
+      { status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
+    );
+  }
+
+  if (bodyBytes.byteLength > BODY_LIMIT_BYTES) {
     return new Response(
       JSON.stringify({ error: "Requisição muito grande." }),
       { status: 413, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
@@ -82,7 +102,7 @@ Deno.serve(async (req) => {
 
   let body: Record<string, unknown>;
   try {
-    body = await req.json();
+    body = JSON.parse(new TextDecoder().decode(bodyBytes));
   } catch {
     return new Response(
       JSON.stringify({ error: "Corpo da requisição inválido." }),
@@ -99,10 +119,35 @@ Deno.serve(async (req) => {
     );
   }
 
-  // Limita max_tokens mesmo que o frontend envie um valor maior.
   const requestedTokens = Number(body.max_tokens ?? MAX_TOKENS_CAP);
   const safeMaxTokens = Math.min(requestedTokens, MAX_TOKENS_CAP);
 
+  // ── 4. Rate limiting por usuário (opt-in) ─────────────────────────────────
+  // Ativo apenas quando RATE_LIMIT_ENABLED=true E a migração foi aplicada.
+  // Fail-open: se o RPC falhar (tabela ausente, timeout), a chamada prossegue.
+  if (Deno.env.get("RATE_LIMIT_ENABLED") === "true") {
+    try {
+      const { data: rl, error: rlError } = await supabase.rpc("check_and_log_ai_call", {
+        p_user_id: user.id,
+        p_model: requestedModel,
+      });
+
+      if (rlError) {
+        // Log para depuração mas não bloqueia — evita indisponibilidade por
+        // falha de infra de métricas.
+        console.error("[claude-proxy] rate limit RPC error:", rlError.message);
+      } else if (rl && !rl.allowed) {
+        return new Response(
+          JSON.stringify({ error: "Limite de chamadas atingido. Tente novamente em alguns minutos." }),
+          { status: 429, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
+        );
+      }
+    } catch (rlEx) {
+      console.error("[claude-proxy] rate limit check threw:", (rlEx as Error).message);
+    }
+  }
+
+  // ── 5. Encaminhar à Anthropic ─────────────────────────────────────────────
   const anthropicKey = Deno.env.get("ANTHROPIC_KEY");
   if (!anthropicKey) {
     console.error("[claude-proxy] ANTHROPIC_KEY não configurada.");
@@ -112,7 +157,6 @@ Deno.serve(async (req) => {
     );
   }
 
-  // ── 4. Encaminhar à Anthropic ─────────────────────────────────────────────
   const anthropicBody = { ...body, max_tokens: safeMaxTokens };
 
   let anthropicRes: Response;

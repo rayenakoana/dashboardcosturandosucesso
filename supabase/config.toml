@@ -1,1 +1,12 @@
 project_id = "syecwttpsvrmhdvinjmt"
+
+# Edge Functions — JWT obrigatório em todas as funções.
+# verify_jwt = true: Supabase rejeita o request antes de executar o código Deno
+# se o JWT estiver ausente, malformado ou com assinatura inválida.
+# O código de cada função ainda chama supabase.auth.getUser(token) para
+# confirmar que o usuário existe e ler app_metadata atualizado do servidor.
+[functions.claude-proxy]
+verify_jwt = true
+
+[functions.admin-criar-usuario]
+verify_jwt = true
