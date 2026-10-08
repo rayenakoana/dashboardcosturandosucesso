@@ -1,0 +1,72 @@
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # ── Anthropic proxy ──────────────────────────────────────────────────────
+    # A chave é injetada em runtime via variável de ambiente (não em build arg).
+    # Método restrito a POST + preflight OPTIONS.
+    # Nota: o endpoint não exige autenticação do usuário; qualquer cliente que
+    # conheça o path pode consumi-lo. Proteção adicional (Authorization check)
+    # requer alterar os múltiplos componentes que chamam /api/claude — proposta
+    # separada pendente de aprovação.
+    location /api/claude {
+        if ($request_method = OPTIONS) {
+            add_header Access-Control-Allow-Origin  * always;
+            add_header Access-Control-Allow-Methods "POST, OPTIONS" always;
+            add_header Access-Control-Allow-Headers "Content-Type" always;
+            return 204;
+        }
+
+        limit_except POST OPTIONS { deny all; }
+
+        proxy_pass              https://api.anthropic.com/v1/messages;
+        proxy_ssl_server_name   on;
+        proxy_set_header Host              api.anthropic.com;
+        proxy_set_header x-api-key         "${ANTHROPIC_KEY}";
+        proxy_set_header anthropic-version "2023-06-01";
+        proxy_set_header Content-Type      "application/json";
+
+        add_header Access-Control-Allow-Origin  * always;
+        add_header Access-Control-Allow-Methods "POST, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Content-Type" always;
+    }
+
+    # ── Admin proxy (criação de usuários via n8n) ────────────────────────────
+    # A chave N8N e a URL são injetadas em runtime via variável de ambiente.
+    # Método restrito a POST + preflight OPTIONS.
+    # Requer header Authorization (token Supabase) no request.
+    # Nginx encaminha o token ao n8n; n8n DEVE validá-lo.
+    # Limitação: Nginx não verifica nem decodifica o JWT — apenas exige sua
+    # presença e o repassa. Validação completa de identidade depende do n8n.
+    location /api/admin/criar-usuario {
+        if ($request_method = OPTIONS) {
+            add_header Access-Control-Allow-Origin  * always;
+            add_header Access-Control-Allow-Methods "POST, OPTIONS" always;
+            add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
+            return 204;
+        }
+
+        limit_except POST OPTIONS { deny all; }
+
+        if ($http_authorization = "") {
+            return 401;
+        }
+
+        proxy_pass              ${N8N_ADMIN_URL};
+        proxy_ssl_server_name   on;
+        proxy_set_header Host           $proxy_host;
+        proxy_set_header X-Admin-Secret "${N8N_ADMIN_SECRET}";
+        proxy_set_header Authorization  $http_authorization;
+        proxy_set_header Content-Type   "application/json";
+
+        add_header Access-Control-Allow-Origin  * always;
+        add_header Access-Control-Allow-Methods "POST, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
+    }
+
+    # ── SPA fallback ─────────────────────────────────────────────────────────
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

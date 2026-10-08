@@ -6,37 +6,13 @@ COPY . .
 RUN npm run build
 
 FROM nginx:alpine
-ARG ANTHROPIC_KEY
-ARG N8N_ADMIN_SECRET
-ARG N8N_ADMIN_URL
-RUN echo "server { \
-    listen 80; \
-    root /usr/share/nginx/html; \
-    index index.html; \
-    location /api/claude { \
-        proxy_pass https://api.anthropic.com/v1/messages; \
-        proxy_ssl_server_name on; \
-        proxy_set_header Host api.anthropic.com; \
-        proxy_set_header x-api-key \"${ANTHROPIC_KEY}\"; \
-        proxy_set_header anthropic-version \"2023-06-01\"; \
-        proxy_set_header Content-Type \"application/json\"; \
-        add_header Access-Control-Allow-Origin *; \
-        add_header Access-Control-Allow-Methods \"POST, OPTIONS\"; \
-        add_header Access-Control-Allow-Headers \"Content-Type\"; \
-        if (\$request_method = OPTIONS) { return 204; } \
-    } \
-    location /api/admin/criar-usuario { \
-        proxy_pass ${N8N_ADMIN_URL}; \
-        proxy_ssl_server_name on; \
-        proxy_set_header X-Admin-Secret \"${N8N_ADMIN_SECRET}\"; \
-        proxy_set_header Content-Type \"application/json\"; \
-        add_header Access-Control-Allow-Origin *; \
-        add_header Access-Control-Allow-Methods \"POST, OPTIONS\"; \
-        add_header Access-Control-Allow-Headers \"Content-Type\"; \
-        if (\$request_method = OPTIONS) { return 204; } \
-    } \
-    location / { try_files \$uri \$uri/ /index.html; } \
-}" > /etc/nginx/conf.d/default.conf
+# Segredos NÃO são mais build args — são injetados em runtime.
+# Passe-os na execução do container:
+#   docker run -e ANTHROPIC_KEY=... -e N8N_ADMIN_SECRET=... -e N8N_ADMIN_URL=... <imagem>
+# ou via Docker Compose (environment: / env_file:) ou secrets do orquestrador.
+COPY nginx/default.conf.template /etc/nginx/conf.d/default.conf.template
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/docker-entrypoint.sh"]

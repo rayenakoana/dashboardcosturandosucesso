@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, UserPlus, CheckCircle2, XCircle } from "lucide-react";
-
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Usuarios() {
+  const { session } = useAuth();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -14,11 +15,22 @@ export default function Usuarios() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setResultado(null);
+
+    if (!session?.access_token) {
+      setResultado({ ok: false, msg: "Sessão expirada. Faça login novamente." });
+      return;
+    }
+
     setEnviando(true);
     try {
       const res = await fetch("/api/admin/criar-usuario", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          // Token Supabase encaminhado ao Nginx, que o repassa ao n8n.
+          // O Nginx exige sua presença; o n8n é responsável por validá-lo.
+          "Authorization": `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ email, senha }),
       });
       const data = await res.json();
