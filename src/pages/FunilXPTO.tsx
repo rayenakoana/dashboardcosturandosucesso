@@ -245,9 +245,16 @@ function TrapezioFunil({
 }
 
 export default function FunilXPTO() {
-  const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get("tab") === "sdr" ? "sdr" : "funil";
-  const [aba, setAba] = useState<"funil" | "sdr">(initialTab);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const aba: "funil" | "sdr" = searchParams.get("tab") === "sdr" ? "sdr" : "funil";
+
+  function setAba(value: "funil" | "sdr") {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", value);
+      return next;
+    }, { replace: true });
+  }
   const [funisSel, setFunisSel] = useState<string[]>([]);
   const [periodo, setPeriodo] = useState<"hoje" | "semana" | "mes" | "personalizado">("mes");
   const [customStart, setCustomStart] = useState(getMesInicio());
