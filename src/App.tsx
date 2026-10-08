@@ -21,6 +21,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Usuarios from "./pages/admin/Usuarios";
 import NotFound from "./pages/NotFound";
 import MarketingDashboard from "./pages/MarketingDashboard";
+import Perfil from "./pages/Perfil";
 
 const queryClient = new QueryClient();
 
@@ -52,7 +53,7 @@ function Shell() {
       <main className="flex-1 overflow-y-auto px-4 md:px-6 py-6">
         <Routes>
           {/* Públicas */}
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
           <Route path="/funil-xpto" element={<FunilXPTO />} />
           <Route path="/mapa" element={<MapaGeografico />} />
           <Route path="/marketing" element={<MarketingDashboard />} />
@@ -65,6 +66,7 @@ function Shell() {
           <Route path="/admin/metas"         element={<ProtectedRoute><Metas /></ProtectedRoute>} />
           <Route path="/admin/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
           <Route path="/admin/usuarios"      element={<ProtectedRoute><Usuarios /></ProtectedRoute>} />
+          <Route path="/admin/perfil"       element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

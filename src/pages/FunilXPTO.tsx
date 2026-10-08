@@ -18,6 +18,15 @@ const METAS = {
   proposta_para_fechado: 30,
 };
 
+const FUNIL_ETAPA_CORES = [
+  "#b91c1c",
+  "#C8102E",
+  "#e02040",
+  "#e8384f",
+  "#f05a6e",
+  "#16a34a",
+];
+
 function getHoje() { return new Date().toISOString().split("T")[0]; }
 function getMesInicio() { return getHoje().substring(0, 7) + "-01"; }
 function getSemanaAtras() {
@@ -33,6 +42,7 @@ interface FunilData {
 const pct = (a: number, b: number) => b > 0 ? (a / b) * 100 : 0;
 
 function getStatusColor(real: number, meta: number) {
+  if (real > 100) return { bg: "#6b728020", border: "#6b7280", text: "#9ca3af" };
   if (real >= meta) return { bg: "#16a34a20", border: "#16a34a", text: "#4ade80" };
   if (real >= meta * 0.7) return { bg: "#d9770620", border: "#d97706", text: "#fbbf24" };
   return { bg: "#dc262620", border: "#dc2626", text: "#f87171" };
@@ -97,89 +107,45 @@ function injectFunilStyles() {
   document.head.appendChild(style);
 }
 
-// Subcomponente individual de cada barra — label acima, retângulo com número dentro
-function FunilBar({
-  etapa,
-  conv,
-  index,
-  widthPct,
-  nextWidthPct,
-  loading,
-  animated,
-  data,
-}: {
-  etapa: { label: string; val: number; pctDeTopo: number };
-  conv?: { real: number; meta: number; label: string };
-  index: number;
-  widthPct: number;
-  nextWidthPct: number;
-  loading: boolean;
-  animated: boolean;
-  data: FunilData;
-}) {
-  const [hovered, setHovered] = useState(false);
-  const i = index;
-  const cor = getEtapaCor(i, data);
-  const barDelay   = `${i * 80}ms`;
-  const badgeDelay = `${i * 80 + 30}ms`;
+// Card individual de etapa
+function FunilCard({etapa,conv,index,loading,animated,cor}:{etapa:{label:string;val:number;pctDeTopo:number};conv?:{real:number;meta:number;label:string};index:number;loading:boolean;animated:boolean;cor:string;}) {
   const displayVal = useCountUp(etapa.val, 650, animated);
-
+  const sc = conv ? getStatusColor(conv.real, conv.meta) : null;
   return (
     <div>
-      {/* Badge de conversão entre etapas */}
-      {i > 0 && conv && (
-        <div
-          className="flex items-center justify-center my-1"
-          style={animated ? {
-            animation: `funilBadgeIn 0.35s ease both`,
-            animationDelay: badgeDelay,
-          } : { opacity: 0 }}
-        >
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full border text-[11px] font-semibold"
-            style={{
-              background: getStatusColor(conv.real, conv.meta).bg,
-              borderColor: getStatusColor(conv.real, conv.meta).border,
-              color: getStatusColor(conv.real, conv.meta).text,
-            }}>
-            <span>{conv.real.toFixed(1)}%</span>
-            <span className="text-[10px] opacity-70">{conv.label}</span>
-            <span className="opacity-50">·</span>
-            <span className="opacity-60">meta {conv.meta}%</span>
+      {index > 0 && conv && sc && (
+        <div className="flex items-center gap-2 py-1" style={animated?{animation:"funilBadgeIn 0.28s ease both",animationDelay:`${index*60+20}ms`}:{opacity:0}}>
+          <div className="flex-1 h-px" style={{background:"rgba(255,255,255,0.07)"}}/>
+          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-semibold shrink-0" style={{background:sc.bg,borderColor:sc.border,color:sc.text}}>
+            <span>{conv.real > 100 ? '⚠ ' + conv.real.toFixed(0) + '%' : conv.real.toFixed(1) + '%'}</span>
+            <span className="opacity-60">{conv.label}</span>
+            <span className="opacity-40">·</span>
+            <span className="opacity-50">meta {conv.meta}%</span>
           </div>
+          <div className="flex-1 h-px" style={{background:"rgba(255,255,255,0.07)"}}/>
         </div>
       )}
-
-      {/* Label acima da barra — sempre legível, largura total */}
-      <div
-        className="text-center mb-1"
-        style={animated ? {
-          animation: `funilBadgeIn 0.35s ease both`,
-          animationDelay: barDelay,
-        } : { opacity: 0 }}
-      >
-        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-          {etapa.label}
-        </span>
+      <div className="rounded-xl flex items-center gap-4 px-4 py-3 border" style={{borderLeft:`4px solid ${sc?sc.border:cor}`,borderTop:"1px solid rgba(255,255,255,0.06)",borderRight:"1px solid rgba(255,255,255,0.06)",borderBottom:"1px solid rgba(255,255,255,0.06)",background:loading?"rgba(255,255,255,0.03)":sc?`${sc.border}18`:`${cor}12`,...(animated?{animation:"funilBarIn 0.38s cubic-bezier(0.22,1,0.36,1) both",animationDelay:`${index*60}ms`}:{opacity:0})}}>
+        <div className="flex-1 min-w-0">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground truncate">{etapa.label}</p>
+          <p className="text-2xl font-black leading-none mt-0.5" style={{color:loading?"rgba(255,255,255,0.15)":sc?sc.text:"rgba(255,255,255,0.9)"}}>{loading?"—":displayVal}</p>
+        </div>
+        <div className="text-right shrink-0">
+          <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">do topo</p>
+          <p className="text-base font-bold" style={{color:loading?"rgba(255,255,255,0.15)":"rgba(255,255,255,0.55)"}}>{loading?"—":index===0?"100%":`${etapa.pctDeTopo.toFixed(0)}%`}</p>
+        </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Trapézio SVG */}
-      <div
-        style={animated ? { animation: `funilBarIn 0.45s cubic-bezier(0.22,1,0.36,1) both`, animationDelay: barDelay } : { opacity: 0 }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        <svg width="100%" height="44" viewBox="0 0 1000 44" preserveAspectRatio="none"
-          style={{ display: "block", filter: hovered && !loading ? "brightness(1.28) drop-shadow(0 0 10px rgba(255,255,255,0.25))" : undefined, transition: "filter 0.2s ease" }}>
-          <polygon
-            points={`${(1000-widthPct*10)/2},0 ${1000-(1000-widthPct*10)/2},0 ${1000-(1000-nextWidthPct*10)/2},44 ${(1000-nextWidthPct*10)/2},44`}
-            fill={loading ? "#ffffff10" : cor}
-          />
-          <text x="500" y="23" dominantBaseline="middle" textAnchor="middle" fill="white" fontWeight="bold" fontSize="22"
-            style={{ fontFamily: "inherit", pointerEvents: "none" }}>
-            {loading ? "—" : displayVal}
-          </text>
-        </svg>
-      </div>
+function FunilCards({etapas,conversoes,loading,animated}:{etapas:{label:string;val:number;pctDeTopo:number}[];conversoes:{real:number;meta:number;label:string}[];loading:boolean;animated:boolean;}) {
+  return (
+    <div className="w-full max-w-xl mx-auto flex flex-col gap-1">
+      {etapas.map((etapa,i) => {
+        const cor = loading?"#ffffff18":(FUNIL_ETAPA_CORES[i]??"#E8192C");
+        return <FunilCard key={etapa.label} etapa={etapa} conv={conversoes[i-1]} index={i} loading={loading} animated={animated} cor={cor}/>;
+      })}
     </div>
   );
 }
@@ -188,13 +154,11 @@ function TrapezioFunil({
   etapas,
   conversoes,
   loading,
-  data,
 }: {
   etapas: { label: string; val: number; pctDeTopo: number }[];
   conversoes: { real: number; meta: number; label: string }[];
   loading: boolean;
   corBase: string;
-  data: FunilData;
 }) {
   const [animated, setAnimated] = useState(false);
 
@@ -208,38 +172,15 @@ function TrapezioFunil({
     } else {
       setAnimated(false);
     }
-  }, [loading]);
-
-  const maxW = 100;
-  const minW = 18;
-  const topVal = etapas[0]?.val ?? 0;
-
-  // Larguras brutas proporcionais ao valor real
-  const rawWidths = etapas.map((e, i) => {
-    const ratio = topVal > 0 ? e.val / topVal : (i === 0 ? 1 : 0);
-    return Math.max(minW, ratio * maxW);
-  });
-
-  // Smooth-drop: funil NUNCA pode alargar, e cada etapa cai no máximo 56% da etapa anterior
-  // Largura proporcional ao valor real, sem forçar monotonia
-  const widths = rawWidths.map(w => Math.max(minW, w));
+  }, [loading, etapas.map(e => e.val).join(",")]);
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      {etapas.map((etapa, i) => (
-        <FunilBar
-          key={etapa.label}
-          etapa={etapa}
-          conv={conversoes[i - 1]}
-          index={i}
-          widthPct={widths[i]}
-          nextWidthPct={i < etapas.length - 1 ? widths[i + 1] : widths[i] * 0.75}
-          loading={loading}
-          animated={animated}
-          data={data}
-        />
-      ))}
-    </div>
+    <FunilCards
+      etapas={etapas}
+      conversoes={conversoes}
+      loading={loading}
+      animated={animated}
+    />
   );
 }
 
@@ -304,34 +245,30 @@ export default function FunilXPTO() {
 
   async function fetchData() {
     setLoading(true);
+
+    // Leads totais (ainda via leads_diarios_por_funil — não tem deal_id)
     let leadsQuery = supabase.from("leads_diarios_por_funil").select("total_leads, total_leads_pagos").gte("data", start).lte("data", end);
     if (!todosSelecionados) leadsQuery = leadsQuery.in("pipeline_id", pipelineIdsFiltrados);
     const { data: leadsRows } = await leadsQuery;
     const totalLeads = (leadsRows ?? []).reduce((s: number, r: any) => s + r.total_leads, 0);
     const totalLeadsPagos = (leadsRows ?? []).reduce((s: number, r: any) => s + (r.total_leads_pagos || 0), 0);
 
-    let mqlQuery = supabase.from("leads_geografia").select("id").eq("deletado", false).in("rating", [3, 5]).gte("created_at", start).lte("created_at", end + "T23:59:59");
-    if (!todosSelecionados) mqlQuery = mqlQuery.in("pipeline_id", pipelineIdsFiltrados);
-    const { data: mqlRows } = await mqlQuery;
-    const totalMQL = (mqlRows ?? []).length;
+    // MQL, propostas e fechados via funil_por_lead (ancorando pelo created_at do lead)
+    let funilQuery = supabase.from("funil_por_lead").select("is_mql, tem_proposta, fechado").gte("data_entrada", start).lte("data_entrada", end).eq("deletado", false);
+    if (!todosSelecionados) funilQuery = funilQuery.in("pipeline_id", pipelineIdsFiltrados);
+    if (campanhasSel) funilQuery = funilQuery.eq("campanha", campanhasSel);
+    if (origensSel) funilQuery = funilQuery.eq("origem", origensSel);
+    const { data: funilRows } = await funilQuery;
+    const totalMQL = (funilRows ?? []).filter((r: any) => r.is_mql === 1).length;
+    const totalPropostas = (funilRows ?? []).filter((r: any) => r.tem_proposta === 1).length;
+    const totalFechados = (funilRows ?? []).filter((r: any) => r.fechado === 1).length;
 
+    // Reuniões — sem deal_id na tabela, mantém por data da reunião
     let reunQuery = supabase.from("reunioes_agendadas").select("compareceu").gte("data", start).lte("data", end);
     if (!todosSelecionados) reunQuery = reunQuery.in("pipeline_id", pipelineIdsFiltrados);
     const { data: reunRows } = await reunQuery;
     const totalAgendadas = (reunRows ?? []).length;
     const totalRealizadas = (reunRows ?? []).filter((r: any) => r.compareceu === true).length;
-
-    let propQuery = supabase.from("propostas_crm").select("deal_id").gte("data", start).lte("data", end);
-    if (!todosSelecionados) propQuery = propQuery.in("pipeline_id", pipelineIdsFiltrados);
-    const { data: propRows } = await propQuery;
-    const totalPropostas = (propRows ?? []).length;
-
-    let vendaQuery = supabase.from("vendas").select("status, funil").gte("data_fechamento", start).lte("data_fechamento", end);
-    if (!todosSelecionados) vendaQuery = vendaQuery.in("funil", funisFiltrados);
-    if (campanhasSel) vendaQuery = vendaQuery.eq("campanha", campanhasSel);
-    if (origensSel) vendaQuery = vendaQuery.eq("origem", origensSel);
-    const { data: vendasRows } = await vendaQuery;
-    const totalFechados = (vendasRows ?? []).filter((v: any) => v.status === "Fechado").length;
 
     setData({ leads: totalLeads, leadsPagos: totalLeadsPagos, mql: totalMQL, reunioesAgendadas: totalAgendadas, reunioesRealizadas: totalRealizadas, propostas: totalPropostas, fechados: totalFechados });
     setLoading(false);

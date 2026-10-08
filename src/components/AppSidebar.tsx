@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, Link } from "react-router-dom";
 import {
   BarChart3, ShoppingCart, CalendarPlus, Layers,
   DollarSign, Target, Settings, Users, Map,
@@ -139,13 +139,20 @@ export function AppSidebar() {
 
         {/* User row */}
         {user ? (
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg group cursor-default">
-            <div className="w-7 h-7 rounded-full bg-gradient-red flex items-center justify-center text-[10px] font-bold text-white shrink-0">
-              {user.email?.slice(0, 2).toUpperCase()}
-            </div>
+          <Link to="/admin/perfil" className="flex items-center gap-2.5 px-3 py-2 rounded-lg group hover:bg-muted/40 transition-colors cursor-pointer">
+            {(() => {
+              const avatarUrl = localStorage.getItem("avatar_" + user.id) ?? user.user_metadata?.avatar_url ?? null;
+              return avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="w-9 h-9 rounded-full object-cover shrink-0 ring-2 ring-border" />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-gradient-red flex items-center justify-center text-xs font-bold text-white shrink-0">
+                  {(user.user_metadata?.full_name ?? user.email ?? "").slice(0, 2).toUpperCase()}
+                </div>
+              );
+            })()}
             <div className="flex-1 min-w-0">
-              <div className="text-xs font-medium text-foreground truncate">{user.email}</div>
-              <div className="text-[10px] text-muted-foreground">Admin</div>
+              <div className="text-xs font-medium text-foreground truncate">{user.user_metadata?.full_name || user.email}</div>
+              <div className="text-[10px] text-muted-foreground truncate">{user.user_metadata?.full_name ? user.email : "Admin"}</div>
             </div>
             <button
               onClick={handleSignOut}
@@ -154,7 +161,7 @@ export function AppSidebar() {
             >
               <LogOut className="h-3.5 w-3.5" />
             </button>
-          </div>
+          </Link>
         ) : (
           <NavLink
             to="/login"
