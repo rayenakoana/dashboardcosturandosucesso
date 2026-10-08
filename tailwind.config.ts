@@ -9,7 +9,7 @@ export default {
     extend: {
       fontFamily: {
         display: ["'Barlow Condensed'", "sans-serif"],
-        sans: ["Inter", "sans-serif"],
+        sans: ["'Poppins'", "Inter", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

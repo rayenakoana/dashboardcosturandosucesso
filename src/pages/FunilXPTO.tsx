@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useConfiguracoes, useFunisVisiveis } from "@/hooks/useConfiguracoes";
@@ -6,7 +6,7 @@ import { useCustosMarketing } from "@/hooks/useCustosMarketing";
 import { GlassCard } from "@/components/GlassCard";
 import { AIAnalysisButton } from "@/components/AIAnalysisButton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Filter } from "lucide-react";
+import { Filter, Users, UserCheck, CalendarCheck, Users2, FileText, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PIPELINE_IDS, FUNIL_CORES } from "@/lib/funis";
 import { PerformanceSDR } from "@/components/PerformanceSDR";
@@ -34,18 +34,10 @@ interface FunilData {
 const pct = (a: number, b: number) => b > 0 ? (a / b) * 100 : 0;
 
 function getStatusColor(real: number, meta: number) {
+  if (real > 100) return { bg: "#6b728020", border: "#6b7280", text: "#9ca3af" };
   if (real >= meta) return { bg: "#16a34a20", border: "#16a34a", text: "#4ade80" };
   if (real >= meta * 0.7) return { bg: "#d9770620", border: "#d97706", text: "#fbbf24" };
   return { bg: "#dc262620", border: "#dc2626", text: "#f87171" };
-}
-
-// Cor dinâmica por etapa
-function getEtapaCor(index: number, data: FunilData): string {
-  const vals = [data.leads, data.mql, data.reunioesAgendadas, data.reunioesRealizadas, data.propostas, data.fechados];
-  if (index === 5) return data.fechados > 0 ? "#16a34a" : "#dc2626";
-  if (vals[index] === 0) return "#dc2626";
-  const cores = ["#b91c1c", "#C8102E", "#e02040", "#e8384f", "#f05a6e"];
-  return cores[index] ?? "#C8102E";
 }
 
 // Hook para animar um número de 0 até o valor alvo
@@ -98,104 +90,94 @@ function injectFunilStyles() {
   document.head.appendChild(style);
 }
 
-// Subcomponente individual de cada barra — label acima, retângulo com número dentro
-function FunilBar({
-  etapa,
-  conv,
-  index,
-  widthPct,
-  nextWidthPct,
-  loading,
-  animated,
-  data,
-}: {
+function StageCard({ etapa, index, loading, animated, statusColor }: {
   etapa: { label: string; val: number; pctDeTopo: number };
-  conv?: { real: number; meta: number; label: string };
-  index: number;
-  widthPct: number;
-  nextWidthPct: number;
-  loading: boolean;
-  animated: boolean;
-  data: FunilData;
+  index: number; loading: boolean; animated: boolean;
+  statusColor: { bg: string; border: string; text: string } | null;
 }) {
-  const [hovered, setHovered] = useState(false);
-  const i = index;
-  const cor = getEtapaCor(i, data);
-  const barDelay   = `${i * 80}ms`;
-  const badgeDelay = `${i * 80 + 30}ms`;
   const displayVal = useCountUp(etapa.val, 650, animated);
+  const isFirst = index === 0;
+  const borderColor = isFirst ? '#F7304E' : (statusColor?.border ?? '#26303C');
+  const textColor = loading ? 'rgba(255,255,255,0.15)' : isFirst ? '#F7304E' : (statusColor?.text ?? 'rgba(255,255,255,0.85)');
 
   return (
-    <div>
-      {/* Badge de conversão entre etapas */}
-      {i > 0 && conv && (
-        <div
-          className="flex items-center justify-center my-1"
-          style={animated ? {
-            animation: `funilBadgeIn 0.35s ease both`,
-            animationDelay: badgeDelay,
-          } : { opacity: 0 }}
-        >
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full border text-[11px] font-semibold"
-            style={{
-              background: getStatusColor(conv.real, conv.meta).bg,
-              borderColor: getStatusColor(conv.real, conv.meta).border,
-              color: getStatusColor(conv.real, conv.meta).text,
-            }}>
-            <span>{conv.real.toFixed(1)}%</span>
-            <span className="text-[10px] opacity-70">{conv.label}</span>
-            <span className="opacity-50">·</span>
-            <span className="opacity-60">meta {conv.meta}%</span>
-          </div>
+    <div
+      className="flex flex-col gap-1.5 px-3 py-3 rounded-lg w-[130px] md:w-[150px] shrink-0 border border-border/60"
+      style={{
+        borderLeftWidth: '3px',
+        borderLeftColor: borderColor,
+        background: loading ? 'rgba(255,255,255,0.02)' : isFirst ? 'rgba(247,48,78,0.06)' : statusColor ? `${statusColor.border}10` : 'rgba(255,255,255,0.02)',
+        ...(animated ? { animation: 'funilBarIn 0.38s cubic-bezier(0.22,1,0.36,1) both', animationDelay: `${index * 70}ms` } : { opacity: 0 }),
+      }}
+    >
+      <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground leading-tight line-clamp-2">{etapa.label}</p>
+      <p className="text-2xl font-black leading-none mt-0.5" style={{ color: textColor }}>
+        {loading ? '—' : displayVal}
+      </p>
+      <div className="mt-auto pt-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-[9px] text-muted-foreground/60 font-medium">do total</span>
+          <span className="text-[9px] font-semibold" style={{ color: loading ? 'rgba(255,255,255,0.15)' : borderColor }}>
+            {index === 0 ? '100%' : `${etapa.pctDeTopo.toFixed(0)}%`}
+          </span>
         </div>
-      )}
-
-      {/* Label acima da barra — sempre legível, largura total */}
-      <div
-        className="text-center mb-1"
-        style={animated ? {
-          animation: `funilBadgeIn 0.35s ease both`,
-          animationDelay: barDelay,
-        } : { opacity: 0 }}
-      >
-        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-          {etapa.label}
-        </span>
-      </div>
-
-      {/* Trapézio SVG */}
-      <div
-        style={animated ? { animation: `funilBarIn 0.45s cubic-bezier(0.22,1,0.36,1) both`, animationDelay: barDelay } : { opacity: 0 }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        <svg width="100%" height="44" viewBox="0 0 1000 44" preserveAspectRatio="none"
-          style={{ display: "block", filter: hovered && !loading ? "brightness(1.28) drop-shadow(0 0 10px rgba(255,255,255,0.25))" : undefined, transition: "filter 0.2s ease" }}>
-          <polygon
-            points={`${(1000-widthPct*10)/2},0 ${1000-(1000-widthPct*10)/2},0 ${1000-(1000-nextWidthPct*10)/2},44 ${(1000-nextWidthPct*10)/2},44`}
-            fill={loading ? "#ffffff10" : cor}
+        <div className="mt-1 h-[2px] rounded-full bg-border/30 overflow-hidden">
+          <div
+            className="h-full rounded-full"
+            style={{
+              width: loading ? '0%' : `${Math.min(100, etapa.pctDeTopo)}%`,
+              background: borderColor,
+              transition: 'width 0.7s cubic-bezier(0.22,1,0.36,1)',
+            }}
           />
-          <text x="500" y="23" dominantBaseline="middle" textAnchor="middle" fill="white" fontWeight="bold" fontSize="22"
-            style={{ fontFamily: "inherit", pointerEvents: "none" }}>
-            {loading ? "—" : displayVal}
-          </text>
-        </svg>
+        </div>
       </div>
     </div>
   );
 }
 
-function TrapezioFunil({
-  etapas,
-  conversoes,
-  loading,
-  data,
+function StageConnector({ conversion, loading, animated, index }: {
+  conversion: { real: number; meta: number; label: string };
+  loading: boolean; animated: boolean; index: number;
+}) {
+  const sc = loading ? null : getStatusColor(conversion.real, conversion.meta);
+  return (
+    <div
+      className="flex flex-col items-center justify-center shrink-0 px-0.5"
+      style={{
+        width: '44px',
+        ...(animated ? { animation: 'funilBadgeIn 0.28s ease both', animationDelay: `${index * 70 + 30}ms` } : { opacity: 0 }),
+      }}
+    >
+      {/* Arrow line */}
+      <div className="flex items-center w-full mb-1.5">
+        <div className="flex-1 h-px bg-border/40" />
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0">
+          <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/30" />
+        </svg>
+      </div>
+      {/* Conversion badge */}
+      {!loading && sc && (
+        <div
+          className="px-1.5 py-0.5 rounded-full border text-center w-full"
+          style={{ background: sc.bg, borderColor: sc.border }}
+        >
+          <p className="text-[8px] font-bold leading-tight" style={{ color: sc.text }}>
+            {conversion.real > 100 ? `${conversion.real.toFixed(0)}%` : `${conversion.real.toFixed(1)}%`}
+          </p>
+          <p className="text-[7px] text-muted-foreground/50 leading-tight">/{conversion.meta}%</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HorizontalFunil({
+  etapas, conversoes, loading,
 }: {
   etapas: { label: string; val: number; pctDeTopo: number }[];
   conversoes: { real: number; meta: number; label: string }[];
   loading: boolean;
-  corBase: string;
-  data: FunilData;
 }) {
   const [animated, setAnimated] = useState(false);
 
@@ -211,35 +193,18 @@ function TrapezioFunil({
     }
   }, [loading]);
 
-  const maxW = 100;
-  const minW = 18;
-  const topVal = etapas[0]?.val ?? 0;
-
-  // Larguras brutas proporcionais ao valor real
-  const rawWidths = etapas.map((e, i) => {
-    const ratio = topVal > 0 ? e.val / topVal : (i === 0 ? 1 : 0);
-    return Math.max(minW, ratio * maxW);
-  });
-
-  // Smooth-drop: funil NUNCA pode alargar, e cada etapa cai no máximo 56% da etapa anterior
-  // Largura proporcional ao valor real, sem forçar monotonia
-  const widths = rawWidths.map(w => Math.max(minW, w));
-
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      {etapas.map((etapa, i) => (
-        <FunilBar
-          key={etapa.label}
-          etapa={etapa}
-          conv={conversoes[i - 1]}
-          index={i}
-          widthPct={widths[i]}
-          nextWidthPct={i < etapas.length - 1 ? widths[i + 1] : widths[i] * 0.75}
-          loading={loading}
-          animated={animated}
-          data={data}
-        />
-      ))}
+    <div className="overflow-x-auto -mx-1 px-1 pb-1">
+      <div className="flex items-stretch" style={{ minWidth: 'max-content' }}>
+        {etapas.map((etapa, i) => (
+          <React.Fragment key={etapa.label}>
+            <StageCard etapa={etapa} index={i} loading={loading} animated={animated} statusColor={i > 0 ? getStatusColor(conversoes[i - 1].real, conversoes[i - 1].meta) : null} />
+            {i < etapas.length - 1 && (
+              <StageConnector conversion={conversoes[i]} loading={loading} animated={animated} index={i} />
+            )}
+          </React.Fragment>
+        ))}
+      </div>
     </div>
   );
 }
@@ -385,6 +350,9 @@ export default function FunilXPTO() {
     cac: totalCustosAds > 0 ? `R$ ${cac.toFixed(0)}` : "sem dados de custo",
   };
 
+  // suppress unused variable warning
+  void corPrincipal;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -457,35 +425,53 @@ export default function FunilXPTO() {
         <PerformanceSDR funil={todosSelecionados ? undefined : funisSel[0]} periodoStart={new Date(start + "T00:00:00")} periodoEnd={new Date(end + "T23:59:59")} />
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {[
-              { label: "Total de leads", val: loading ? "—" : String(data.leads), sub: "Meta: 300/mês", color: "text-primary" },
-              { label: "Taxa de fechamento", val: loading ? "—" : `${pct(data.fechados, data.leads).toFixed(1)}%`, sub: "Meta: 10%", color: "text-foreground" },
+              { label: "Leads Recebidos",     val: data.leads,               icon: Users,         meta: "300/mês" },
+              { label: "MQL Qualificados",    val: data.mql,                 icon: UserCheck,     meta: `meta ${METAS.leads_para_mql}% leads` },
+              { label: "Reuniões Agendadas",  val: data.reunioesAgendadas,   icon: CalendarCheck, meta: `meta ${METAS.mql_para_reuniao}% MQL` },
+              { label: "Reuniões Realizadas", val: data.reunioesRealizadas,  icon: Users2,        meta: `meta ${METAS.reuniao_para_show}% agend.` },
+              { label: "Propostas Enviadas",  val: data.propostas,           icon: FileText,      meta: `meta ${METAS.show_para_proposta}% reun.` },
+              { label: "Vendas Fechadas",     val: data.fechados,            icon: TrendingUp,    meta: `meta ${METAS.proposta_para_fechado}% prop.` },
+            ].map((k) => (
+              <div key={k.label} className="glass-card !p-3.5 flex flex-col gap-1.5">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground leading-tight">{k.label}</span>
+                  <k.icon className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+                </div>
+                <p className="text-[22px] font-black leading-none text-foreground">
+                  {loading ? '—' : k.val}
+                </p>
+                <p className="text-[10px] text-muted-foreground/60">{k.meta}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* CPL / CAC secondary row */}
+          <div className="grid grid-cols-2 gap-3">
+            {[
               { label: "CPL", val: loading ? "—" : totalCustosAds === 0 ? "R$ —" : `R$ ${cpl.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`, sub: loading ? "" : totalCustosAds === 0 ? "Cadastre custos" : `${data.leadsPagos} leads via Ads`, color: "text-amber-400" },
               { label: "CAC", val: loading ? "—" : totalCustosAds === 0 ? "R$ —" : `R$ ${cac.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`, sub: loading ? "" : totalCustosAds === 0 ? "Cadastre custos" : "Custo por Aquisição", color: "text-amber-400" },
             ].map((k) => (
-              <GlassCard key={k.label}>
+              <div key={k.label} className="glass-card !p-3.5">
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">{k.label}</div>
                 <div className={cn("text-2xl font-bold leading-none", k.color)}>{k.val}</div>
-                <div className="text-[11px] text-emerald-500/80 mt-1.5 font-medium">{k.sub}</div>
-              </GlassCard>
+                <div className="text-[11px] text-muted-foreground/60 mt-1.5">{k.sub}</div>
+              </div>
             ))}
           </div>
 
           <GlassCard>
-            {/* Header do card — só título, sem o botão IA aqui */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Funil de conversão — {funilLabel}
               </h3>
             </div>
 
-            <TrapezioFunil
+            <HorizontalFunil
               etapas={etapas}
               conversoes={conversoes}
               loading={loading}
-              corBase={corPrincipal}
-              data={data}
             />
 
             {/* Legenda de status */}
@@ -501,7 +487,6 @@ export default function FunilXPTO() {
               </div>
             </div>
 
-            {/* Botão IA fora do flex header — expande corretamente */}
             <div className="mt-6 pt-5 border-t border-border/40">
               <AIAnalysisButton section="Funil XPTO" dataPayload={aiPayload} />
             </div>
