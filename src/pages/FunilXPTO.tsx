@@ -6,11 +6,15 @@ import { useCustosMarketing } from "@/hooks/useCustosMarketing";
 import { GlassCard } from "@/components/GlassCard";
 import { AIAnalysisButton } from "@/components/AIAnalysisButton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Filter, Users, UserCheck, CalendarCheck, Users2, FileText, TrendingUp } from "lucide-react";
+import {
+  Filter, Users, UserCheck, CalendarCheck, Users2, FileText, TrendingUp,
+  AlertTriangle, TrendingDown, Lightbulb,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PIPELINE_IDS, FUNIL_CORES } from "@/lib/funis";
 import { PerformanceSDR } from "@/components/PerformanceSDR";
 
+// ── Business constants (unchanged from 9088d0b) ───────────────────────────
 const METAS = {
   leads_para_mql: 35,
   mql_para_reuniao: 70,
@@ -33,17 +37,24 @@ interface FunilData {
 
 const pct = (a: number, b: number) => b > 0 ? (a / b) * 100 : 0;
 
-// real > 100 → cinza: aplica-se apenas a taxas de conversão entre etapas (a/b * 100).
-// Uma taxa >100% indica anomalia de dados (ex: mais realizadas que agendadas) — cinza
-// sinaliza dado inconsistente sem suprimir alertas de meta.
-// Os cards KPI (atingimento de meta absoluto) não usam getStatusColor.
+// Conversion >100% → gray: inter-stage rates can exceed 100% when the two tables
+// use different date reference fields (created_at vs data vs data_fechamento).
+// Gray signals a potentially inconsistent denominator without hiding the value.
 function getStatusColor(real: number, meta: number) {
-  if (real > 100) return { bg: "#6b728020", border: "#6b7280", text: "#9ca3af" };
-  if (real >= meta) return { bg: "#16a34a20", border: "#16a34a", text: "#4ade80" };
-  if (real >= meta * 0.7) return { bg: "#d9770620", border: "#d97706", text: "#fbbf24" };
-  return { bg: "#dc262620", border: "#dc2626", text: "#f87171" };
+  if (real > 100) return { bg: "#6b728018", border: "#6b7280", text: "#9ca3af" };
+  if (real >= meta) return { bg: "#16a34a18", border: "#16a34a", text: "#4ade80" };
+  if (real >= meta * 0.7) return { bg: "#d9770618", border: "#d97706", text: "#fbbf24" };
+  return { bg: "#dc262618", border: "#dc2626", text: "#f87171" };
 }
 
+function getBarColor(real: number, meta: number): string {
+  if (real > 100) return "#6b7280";
+  if (real >= meta) return "#16a34a";
+  if (real >= meta * 0.7) return "#d97706";
+  return "#dc2626";
+}
+
+// ── useCountUp ────────────────────────────────────────────────────────────
 function useCountUp(target: number, duration = 700, trigger: boolean) {
   const [display, setDisplay] = useState(0);
   const raf = useRef<number | null>(null);
@@ -52,7 +63,6 @@ function useCountUp(target: number, duration = 700, trigger: boolean) {
   useEffect(() => {
     if (!trigger) { setDisplay(0); return; }
     if (target === 0) { setDisplay(0); return; }
-
     start.current = null;
     const step = (ts: number) => {
       if (!start.current) start.current = ts;
@@ -68,30 +78,49 @@ function useCountUp(target: number, duration = 700, trigger: boolean) {
   return display;
 }
 
-const STYLE_ID = "funil-anim-styles";
-function injectFunilStyles() {
-  if (document.getElementById(STYLE_ID)) return;
-  const style = document.createElement("style");
-  style.id = STYLE_ID;
-  style.textContent = `
-    @keyframes funilBarIn {
-      from { opacity: 0; transform: scaleX(0.93); }
-      to   { opacity: 1; transform: scaleX(1); }
+// ── CSS animations ────────────────────────────────────────────────────────
+const ANIM_ID = "funil-premium-styles";
+function injectStyles() {
+  if (document.getElementById(ANIM_ID)) return;
+  const s = document.createElement("style");
+  s.id = ANIM_ID;
+  s.textContent = `
+    @keyframes funilStageIn {
+      from { opacity:0; clip-path: inset(0 8% 0 0); }
+      to   { opacity:1; clip-path: inset(0 0 0 0); }
     }
     @keyframes funilBadgeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from { opacity:0; transform:translateY(10px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @keyframes funilKpiIn {
+      from { opacity:0; transform:translateY(4px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @keyframes barGrow {
+      from { width:0; }
     }
   `;
-  document.head.appendChild(style);
+  document.head.appendChild(s);
 }
 
-// ── Trapezoid Funil ──────────────────────────────────────────────────────────
-
+// ── Funnel stage icons ────────────────────────────────────────────────────
 const STAGE_ICONS = [Users, UserCheck, CalendarCheck, Users2, FileText, TrendingUp];
-const ARROW_PX = 26; // horizontal extent of the chevron notch/point
 
-// One chevron stage — extracted as a component so useCountUp runs at the top level
+// Diagonal notch: 22px — clearly visible chevron connection without harsh cuts
+const D = 22;
+
+// Premium color progression: bright crimson → deep maroon
+const STAGE_BG = [
+  "linear-gradient(150deg, hsl(351 88% 46%) 0%, hsl(351 86% 39%) 100%)",
+  "linear-gradient(150deg, hsl(351 85% 35%) 0%, hsl(351 82% 28%) 100%)",
+  "linear-gradient(150deg, hsl(351 82% 24%) 0%, hsl(351 80% 19%) 100%)",
+  "linear-gradient(150deg, hsl(351 80% 18%) 0%, hsl(351 78% 14%) 100%)",
+  "linear-gradient(150deg, hsl(351 78% 13%) 0%, hsl(351 75% 10%) 100%)",
+  "linear-gradient(150deg, hsl(351 76% 10%) 0%, hsl(351 72%  7%) 100%)",
+];
+
+// One chevron/parallelogram stage — extracted so useCountUp runs at component top level
 function ChevronStage({
   etapa, index, total, animated, loading,
 }: {
@@ -100,58 +129,113 @@ function ChevronStage({
 }) {
   const displayVal = useCountUp(etapa.val, 650, animated);
   const Icon = STAGE_ICONS[index];
-  const A = ARROW_PX;
   const isFirst = index === 0;
-  const isLast = index === total - 1;
+  const isLast  = index === total - 1;
 
+  // Chevron clip-path: subtle 13px diagonal notch
   const clipPath = isFirst
-    ? `polygon(0 0, calc(100% - ${A}px) 0, 100% 50%, calc(100% - ${A}px) 100%, 0 100%)`
+    ? `polygon(0 0, calc(100% - ${D}px) 0, 100% 50%, calc(100% - ${D}px) 100%, 0 100%)`
     : isLast
-    ? `polygon(${A}px 0, 100% 0, 100% 100%, ${A}px 100%, 0 50%)`
-    : `polygon(${A}px 0, calc(100% - ${A}px) 0, 100% 50%, calc(100% - ${A}px) 100%, ${A}px 100%, 0 50%)`;
-
-  // Subtle shade variation per stage to keep visual separation
-  const lightness = 18 - index * 1.5;
-  const bg = `linear-gradient(160deg, hsl(351 65% ${lightness + 6}%) 0%, hsl(351 70% ${lightness}%) 100%)`;
+    ? `polygon(${D}px 0, 100% 0, 100% 100%, ${D}px 100%, 0 50%)`
+    : `polygon(${D}px 0, calc(100% - ${D}px) 0, 100% 50%, calc(100% - ${D}px) 100%, ${D}px 100%, 0 50%)`;
 
   return (
     <div
       className="flex-1 flex flex-col items-center justify-center text-white select-none"
       style={{
         clipPath,
-        marginLeft: index > 0 ? -A : 0,
+        marginLeft: index > 0 ? -D : 0,
         zIndex: total - index,
-        background: bg,
-        paddingLeft: isFirst ? 14 : A + 6,
-        paddingRight: isLast ? 14 : A + 6,
-        minHeight: 148,
+        background: STAGE_BG[index] ?? STAGE_BG[STAGE_BG.length - 1],
+        paddingLeft:  isFirst ? 16 : D + 10,
+        paddingRight: isLast  ? 16 : D + 10,
+        minHeight: 188,
+        position: 'relative',
         ...(animated ? {
-          animation: `funilBarIn 0.42s cubic-bezier(0.22,1,0.36,1) both`,
-          animationDelay: `${index * 55}ms`,
+          animation: `funilStageIn 0.48s cubic-bezier(0.22,1,0.36,1) both`,
+          animationDelay: `${index * 60}ms`,
         } : { opacity: 0 }),
       }}
     >
-      <Icon className="w-5 h-5 mb-1.5 opacity-60 shrink-0" />
-      <div className="text-[22px] font-black leading-none">
-        {loading ? '—' : displayVal}
+      {/* Subtle highlight edge at top */}
+      <div style={{
+        position: 'absolute', top: 0,
+        left: isFirst ? 0 : D + 2,
+        right: isLast ? 0 : D + 2,
+        height: 1,
+        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
+      }} />
+
+      <Icon className="w-5 h-5 mb-2 shrink-0" style={{ opacity: 0.5 }} />
+
+      <div style={{ fontSize: 38, fontWeight: 900, lineHeight: 1, textAlign: 'center' }}>
+        {loading ? <span style={{ opacity: 0.25 }}>—</span> : displayVal}
       </div>
-      <div
-        className="text-[8.5px] font-bold uppercase tracking-wider mt-1 text-center leading-snug px-1"
-        style={{ opacity: 0.65 }}
-      >
+
+      <div style={{
+        fontSize: 10, fontWeight: 600, textAlign: 'center',
+        marginTop: 6, opacity: 0.65, lineHeight: 1.3,
+        maxWidth: 100, paddingLeft: 4, paddingRight: 4,
+      }}>
         {etapa.label}
       </div>
-      <div className="text-[10px] font-semibold mt-1.5" style={{ opacity: 0.9 }}>
-        {index === 0 ? '100%' : `${etapa.pctDeTopo.toFixed(0)}%`}
+
+      <div style={{ fontSize: 13, fontWeight: 700, marginTop: 8, opacity: 0.85 }}>
+        {index === 0 ? '100%' : `${etapa.pctDeTopo.toFixed(1)}%`}
       </div>
     </div>
   );
 }
 
-function TrapezoidFunil({
-  etapas,
-  conversoes,
-  loading,
+// ── Conversion badge ──────────────────────────────────────────────────────
+function ConvBadge({
+  conv, animated, delay,
+}: {
+  conv: { real: number; meta: number; label: string };
+  animated: boolean; delay: number;
+}) {
+  const sc = getStatusColor(conv.real, conv.meta);
+  return (
+    <div
+      className="flex flex-col items-center"
+      style={{
+        opacity: animated ? undefined : 0,
+        ...(animated ? {
+          animation: `funilBadgeIn 0.38s ease both`,
+          animationDelay: `${delay}ms`,
+        } : {}),
+      }}
+    >
+      {/* Connector dot */}
+      <div style={{
+        width: 7, height: 7, borderRadius: '50%',
+        background: sc.border, flexShrink: 0, marginBottom: 7,
+        boxShadow: `0 0 6px ${sc.border}60`,
+      }} />
+      <div
+        className="rounded-lg border text-center"
+        style={{
+          background: sc.bg, borderColor: sc.border,
+          minWidth: 90, padding: '8px 10px',
+        }}
+      >
+        <div style={{ fontSize: 13, fontWeight: 900, lineHeight: 1, color: sc.text }}>
+          {conv.real.toFixed(1)}%
+        </div>
+        <div style={{ fontSize: 9, lineHeight: 1.3, marginTop: 4, color: sc.text, opacity: 0.75 }}>
+          {conv.label}
+        </div>
+        <div style={{ fontSize: 8, lineHeight: 1.3, marginTop: 2, color: 'rgba(255,255,255,0.3)' }}>
+          meta {conv.meta}%
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Horizontal funnel + badges ────────────────────────────────────────────
+function FunilHorizontal({
+  etapas, conversoes, loading,
 }: {
   etapas: { label: string; val: number; pctDeTopo: number }[];
   conversoes: { real: number; meta: number; label: string }[];
@@ -160,8 +244,7 @@ function TrapezoidFunil({
   const [animated, setAnimated] = useState(false);
   const n = etapas.length;
 
-  useEffect(() => { injectFunilStyles(); }, []);
-
+  useEffect(() => { injectStyles(); }, []);
   useEffect(() => {
     if (!loading) {
       setAnimated(false);
@@ -174,12 +257,12 @@ function TrapezoidFunil({
 
   return (
     <div>
-      {/* ── Connected chevron funnel ── */}
-      <div className="overflow-x-auto -mx-1 px-1">
-        <div className="flex items-stretch" style={{ minWidth: 520 }}>
+      {/* Chevron stages */}
+      <div className="overflow-x-auto">
+        <div className="flex items-stretch" style={{ minWidth: 580 }}>
           {etapas.map((etapa, i) => (
             <ChevronStage
-              key={etapa.label}
+              key={i}
               etapa={etapa}
               index={i}
               total={n}
@@ -190,62 +273,53 @@ function TrapezoidFunil({
         </div>
       </div>
 
-      {/* ── Conversion badges — one per transition ── */}
-      <div className="overflow-x-hidden -mx-1 px-1">
-        <div className="relative mt-2.5" style={{ minWidth: 520, height: 58 }}>
+      {/* Conversion badges — positioned at each stage boundary */}
+      <div className="overflow-x-hidden relative" style={{ minWidth: 580, marginTop: 16 }}>
+        {/* Dotted connector line */}
+        <div style={{
+          position: 'absolute',
+          top: 3, // aligns with badge dot center
+          left: `${(1 / n) * 100}%`,
+          right: `${(1 / n) * 100}%`,
+          borderTop: '1px dashed rgba(120,130,150,0.25)',
+          pointerEvents: 'none',
+        }} />
+
+        <div style={{ position: 'relative', height: 78, minWidth: 580 }}>
           {conversoes.map((conv, i) => {
-            const sc = loading ? null : getStatusColor(conv.real, conv.meta);
-            // Badge is centered at the (i+1)/n fraction of the total width
             const leftPct = ((i + 1) / n) * 100;
             return (
               <div
                 key={i}
-                className="absolute -translate-x-1/2"
                 style={{
+                  position: 'absolute',
                   left: `${leftPct}%`,
                   top: 0,
-                  ...(animated ? {
-                    animation: `funilBadgeIn 0.3s ease both`,
-                    animationDelay: `${i * 55 + 200}ms`,
-                  } : { opacity: 0 }),
+                  transform: 'translateX(-50%)',
                 }}
               >
-                {sc && (
-                  <div
-                    className="rounded-lg border text-center px-2.5 py-1.5"
-                    style={{
-                      background: sc.bg,
-                      borderColor: sc.border,
-                      minWidth: 88,
-                      backdropFilter: 'blur(4px)',
-                    }}
-                  >
-                    <div className="text-[11px] font-black leading-tight" style={{ color: sc.text }}>
-                      {conv.real.toFixed(1)}%
-                    </div>
-                    <div className="text-[8.5px] leading-tight mt-px" style={{ color: sc.text, opacity: 0.75 }}>
-                      {conv.label}
-                    </div>
-                    <div className="text-[8px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                      meta {conv.meta}%
-                    </div>
-                  </div>
-                )}
+                <ConvBadge
+                  conv={conv}
+                  animated={animated}
+                  delay={i * 60 + 280}
+                />
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* ── Status legend ── */}
-      <div className="flex items-center gap-4 mt-3 justify-center flex-wrap">
+      {/* Legend */}
+      <div className="flex items-center gap-5 mt-3 justify-center flex-wrap">
         {[
-          { color: 'bg-emerald-500', label: 'acima da meta' },
-          { color: 'bg-amber-500', label: 'próximo da meta' },
-          { color: 'bg-red-500', label: 'abaixo da meta' },
+          { color: '#16a34a', label: 'acima da meta' },
+          { color: '#d97706', label: 'próximo da meta' },
+          { color: '#dc2626', label: 'abaixo da meta' },
+          { color: '#6b7280', label: 'taxa inconsistente' },
         ].map(({ color, label }) => (
-          <div key={label} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-            <div className={cn("w-2.5 h-2.5 rounded-full", color)} />{label}
+          <div key={label} className="flex items-center gap-1.5" style={{ fontSize: 10, color: '#6b7280' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
+            {label}
           </div>
         ))}
       </div>
@@ -253,8 +327,176 @@ function TrapezoidFunil({
   );
 }
 
-// ── Main page ────────────────────────────────────────────────────────────────
+// ── Insights panel ────────────────────────────────────────────────────────
+// Derives insights purely from existing conversoes data — no new queries.
+function InsightsPanel({
+  conversoes, loading,
+}: {
+  conversoes: { real: number; meta: number; label: string }[];
+  loading: boolean;
+}) {
+  const NAMES = [
+    "Leads → MQL",
+    "MQL → Agendamento",
+    "Agendamento → Reunião",
+    "Reunião → Proposta",
+    "Proposta → Venda",
+  ];
 
+  const items = conversoes.map((c, i) => ({
+    name: NAMES[i],
+    real: c.real,
+    meta: c.meta,
+    label: c.label,
+    gap: c.real <= 100 ? c.meta - c.real : null,
+  }));
+
+  const valid = items.filter(i => i.gap !== null && i.real <= 100);
+  const belowMeta = valid.filter(i => i.real < i.meta);
+
+  // Gargalo: biggest absolute gap below meta
+  const gargalo = [...belowMeta].sort((a, b) => (b.gap ?? 0) - (a.gap ?? 0))[0];
+  // Ponto crítico: lowest ratio real/meta (most critical proportionally)
+  const critico = [...valid].sort((a, b) => (a.real / a.meta) - (b.real / b.meta))[0];
+  // Oportunidade: closest to meta from below (smallest positive gap)
+  const oportunidade = [...belowMeta].sort((a, b) => (a.gap ?? 99) - (b.gap ?? 99))[0];
+
+  const insights: {
+    tipo: string; cor: string; bgCor: string; icon: React.ElementType;
+    titulo: string; descricao: string;
+  }[] = [];
+
+  if (!loading && gargalo) {
+    insights.push({
+      tipo: "Gargalo principal",
+      cor: "#f87171",
+      bgCor: "#dc262612",
+      icon: AlertTriangle,
+      titulo: gargalo.name,
+      descricao: `Conversão de ${gargalo.real.toFixed(1)}% (${Math.abs(gargalo.gap ?? 0).toFixed(1)} p.p. abaixo da meta de ${gargalo.meta}%).`,
+    });
+  }
+  if (!loading && critico && critico !== gargalo) {
+    insights.push({
+      tipo: "Ponto crítico",
+      cor: "#fb923c",
+      bgCor: "#ea580c12",
+      icon: TrendingDown,
+      titulo: critico.name,
+      descricao: `Taxa de ${critico.real.toFixed(1)}% representa ${((critico.real / critico.meta) * 100).toFixed(0)}% da meta de ${critico.meta}%.`,
+    });
+  }
+  if (!loading && oportunidade && oportunidade !== gargalo) {
+    insights.push({
+      tipo: "Oportunidade",
+      cor: "#fbbf24",
+      bgCor: "#d9770612",
+      icon: Lightbulb,
+      titulo: oportunidade.name,
+      descricao: `${oportunidade.real.toFixed(1)}% dos leads avançam. Estamos a ${(oportunidade.gap ?? 0).toFixed(1)} p.p. da meta de ${oportunidade.meta}%.`,
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-3 h-full">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          Principais Insights
+        </span>
+      </div>
+
+      {loading ? (
+        Array.from({ length: 3 }).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-xl border border-border/40 p-4 animate-pulse"
+            style={{ background: 'hsl(var(--card)/0.4)', height: 100 }}
+          />
+        ))
+      ) : insights.length === 0 ? (
+        <div className="rounded-xl border border-border/30 p-4 text-center" style={{ background: 'hsl(var(--card)/0.3)' }}>
+          <p className="text-xs text-muted-foreground">Sem dados suficientes para gerar insights.</p>
+        </div>
+      ) : (
+        insights.map((ins) => {
+          const Icon = ins.icon;
+          return (
+            <div
+              key={ins.tipo}
+              className="rounded-xl border p-4 flex flex-col gap-1.5"
+              style={{
+                background: ins.bgCor,
+                borderColor: `${ins.cor}40`,
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: `${ins.cor}20` }}
+                >
+                  <Icon style={{ width: 14, height: 14, color: ins.cor }} />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: ins.cor }}>
+                  {ins.tipo}
+                </span>
+              </div>
+              <p className="text-sm font-semibold text-foreground leading-tight">{ins.titulo}</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">{ins.descricao}</p>
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+}
+
+// ── KPI progress card ─────────────────────────────────────────────────────
+function KpiCard({
+  label, val, icon: Icon, metaText, ratePct, loading, animDelay,
+}: {
+  label: string; val: number; icon: React.ElementType;
+  metaText: string; ratePct: number; loading: boolean; animDelay: number;
+}) {
+  const barColor = getBarColor(ratePct, 100);
+  const displayPct = Math.min(Math.max(ratePct, 0), 100);
+
+  return (
+    <div
+      className="glass-card !p-4 flex flex-col gap-2"
+      style={{
+        animation: `funilKpiIn 0.35s ease both`,
+        animationDelay: `${animDelay}ms`,
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[9.5px] font-bold uppercase tracking-widest text-muted-foreground leading-tight">{label}</span>
+        <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: 'hsl(var(--primary)/0.5)' }} />
+      </div>
+      <p className="text-[28px] font-black leading-none text-foreground">
+        {loading ? <span className="text-muted-foreground/30">—</span> : val}
+      </p>
+      <p className="text-[10px] text-muted-foreground/60">{metaText}</p>
+      {/* Progress bar */}
+      <div className="h-1 rounded-full bg-muted/30 overflow-hidden">
+        <div
+          style={{
+            height: '100%',
+            width: loading ? '0%' : `${displayPct}%`,
+            background: barColor,
+            borderRadius: 9999,
+            transition: 'width 0.8s cubic-bezier(0.22,1,0.36,1)',
+            animation: loading ? undefined : `barGrow 0.8s cubic-bezier(0.22,1,0.36,1) both ${animDelay + 120}ms`,
+          }}
+        />
+      </div>
+      <p className="text-[10px] font-semibold" style={{ color: loading ? '#6b7280' : barColor }}>
+        {loading ? '—' : `${ratePct.toFixed(1)}%`}
+      </p>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────
 export default function FunilXPTO() {
   const [searchParams, setSearchParams] = useSearchParams();
   const aba: "funil" | "sdr" = searchParams.get("tab") === "sdr" ? "sdr" : "funil";
@@ -266,6 +508,7 @@ export default function FunilXPTO() {
       return next;
     }, { replace: true });
   }
+
   const [funisSel, setFunisSel] = useState<string[]>([]);
   const [periodo, setPeriodo] = useState<"hoje" | "semana" | "mes" | "personalizado">("mes");
   const [customStart, setCustomStart] = useState(getMesInicio());
@@ -323,6 +566,7 @@ export default function FunilXPTO() {
     setFunisSel(prev => prev.includes(funil) ? prev.filter(f => f !== funil) : [...prev, funil]);
   }
 
+  // ── Data fetching (unchanged from 9088d0b) ──────────────────────────────
   async function fetchData() {
     setLoading(true);
     let leadsQuery = supabase.from("leads_diarios_por_funil").select("total_leads, total_leads_pagos").gte("data", start).lte("data", end);
@@ -360,21 +604,22 @@ export default function FunilXPTO() {
 
   useEffect(() => { fetchData(); }, [funisSel, periodo, customStart, customEnd, campanhasSel, origensSel]);
 
+  // ── Derived state (formulas unchanged from 9088d0b) ─────────────────────
   const etapas = [
-    { label: "Leads recebidos",    val: data.leads,              pctDeTopo: 100 },
-    { label: "MQL qualificados",   val: data.mql,                pctDeTopo: pct(data.mql, data.leads) },
-    { label: "Reuniões agendadas", val: data.reunioesAgendadas,  pctDeTopo: pct(data.reunioesAgendadas, data.leads) },
-    { label: "Reuniões realizadas",val: data.reunioesRealizadas, pctDeTopo: pct(data.reunioesRealizadas, data.leads) },
-    { label: "Propostas enviadas", val: data.propostas,          pctDeTopo: pct(data.propostas, data.leads) },
-    { label: "Fechados",           val: data.fechados,           pctDeTopo: pct(data.fechados, data.leads) },
+    { label: "Leads recebidos",     val: data.leads,               pctDeTopo: 100 },
+    { label: "MQL qualificados",    val: data.mql,                 pctDeTopo: pct(data.mql, data.leads) },
+    { label: "Reuniões agendadas",  val: data.reunioesAgendadas,   pctDeTopo: pct(data.reunioesAgendadas, data.leads) },
+    { label: "Reuniões realizadas", val: data.reunioesRealizadas,  pctDeTopo: pct(data.reunioesRealizadas, data.leads) },
+    { label: "Propostas enviadas",  val: data.propostas,           pctDeTopo: pct(data.propostas, data.leads) },
+    { label: "Fechados",            val: data.fechados,            pctDeTopo: pct(data.fechados, data.leads) },
   ];
 
   const conversoes = [
-    { real: pct(data.mql, data.leads),                          meta: METAS.leads_para_mql,      label: "qualificados" },
-    { real: pct(data.reunioesAgendadas, data.mql),              meta: METAS.mql_para_reuniao,    label: "agendaram" },
-    { real: pct(data.reunioesRealizadas, data.reunioesAgendadas), meta: METAS.reuniao_para_show, label: "compareceram" },
-    { real: pct(data.propostas, data.reunioesRealizadas),       meta: METAS.show_para_proposta,  label: "receberam proposta" },
-    { real: pct(data.fechados, data.propostas),                 meta: METAS.proposta_para_fechado, label: "fecharam" },
+    { real: pct(data.mql, data.leads),                              meta: METAS.leads_para_mql,        label: "qualificados" },
+    { real: pct(data.reunioesAgendadas, data.mql),                  meta: METAS.mql_para_reuniao,      label: "agendaram" },
+    { real: pct(data.reunioesRealizadas, data.reunioesAgendadas),   meta: METAS.reuniao_para_show,     label: "compareceram" },
+    { real: pct(data.propostas, data.reunioesRealizadas),           meta: METAS.show_para_proposta,    label: "receberam proposta" },
+    { real: pct(data.fechados, data.propostas),                     meta: METAS.proposta_para_fechado, label: "fecharam" },
   ];
 
   const aiPayload = {
@@ -398,34 +643,92 @@ export default function FunilXPTO() {
 
   void corPrincipal;
 
+  // KPI cards — progress % relative to each stage's conversion meta
+  const kpiDefs = [
+    {
+      label: "Leads Recebidos",    val: data.leads,               icon: Users,
+      metaText: "Meta: 300/mês",
+      ratePct: Math.min(pct(data.leads, 300), 100),
+    },
+    {
+      label: "MQL Qualificados",   val: data.mql,                 icon: UserCheck,
+      metaText: `Meta: ${METAS.leads_para_mql}% leads`,
+      ratePct: Math.min(pct(data.mql, data.leads), 100),
+    },
+    {
+      label: "Reuniões Agendadas", val: data.reunioesAgendadas,   icon: CalendarCheck,
+      metaText: `Meta: ${METAS.mql_para_reuniao}% MQL`,
+      ratePct: Math.min(pct(data.reunioesAgendadas, data.mql), 100),
+    },
+    {
+      label: "Reuniões Realizadas",val: data.reunioesRealizadas,  icon: Users2,
+      metaText: `Meta: ${METAS.reuniao_para_show}% agend.`,
+      ratePct: Math.min(pct(data.reunioesRealizadas, data.reunioesAgendadas), 100),
+    },
+    {
+      label: "Propostas Enviadas", val: data.propostas,           icon: FileText,
+      metaText: `Meta: ${METAS.show_para_proposta}% reun.`,
+      ratePct: Math.min(pct(data.propostas, data.reunioesRealizadas), 100),
+    },
+    {
+      label: "Vendas Fechadas",    val: data.fechados,            icon: TrendingUp,
+      metaText: `Meta: ${METAS.proposta_para_fechado}% prop.`,
+      ratePct: Math.min(pct(data.fechados, data.propostas), 100),
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+    <div className="space-y-5">
+      {/* ── Page header ── */}
+      <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-display font-bold text-2xl uppercase tracking-wide">Funil XPTO</h1>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest mt-0.5">{periodoLabel} · {funilLabel}</p>
+          <h1 className="font-display font-bold text-2xl">Funil Comercial</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Acompanhe a evolução dos leads e identifique onde estão as maiores oportunidades.
+          </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="inline-flex bg-muted/30 border border-border rounded-full p-1 mr-1">
-            <button onClick={() => setAba("funil")} className={cn("text-xs font-semibold uppercase tracking-wide px-3.5 py-1.5 rounded-full transition-all", aba === "funil" ? "bg-primary text-white shadow-[0_0_14px_-2px_hsl(var(--primary)/0.5)]" : "text-muted-foreground")}>Funil</button>
-            <button onClick={() => setAba("sdr")} className={cn("text-xs font-semibold uppercase tracking-wide px-3.5 py-1.5 rounded-full transition-all", aba === "sdr" ? "bg-primary text-white shadow-[0_0_14px_-2px_hsl(var(--primary)/0.5)]" : "text-muted-foreground")}>SDR</button>
+          {/* Funil / SDR tab */}
+          <div className="inline-flex bg-muted/30 border border-border rounded-full p-1">
+            <button
+              onClick={() => setAba("funil")}
+              className={cn("text-xs font-semibold uppercase tracking-wide px-3.5 py-1.5 rounded-full transition-all", aba === "funil" ? "bg-primary text-white shadow-[0_0_14px_-2px_hsl(var(--primary)/0.5)]" : "text-muted-foreground")}
+            >Funil</button>
+            <button
+              onClick={() => setAba("sdr")}
+              className={cn("text-xs font-semibold uppercase tracking-wide px-3.5 py-1.5 rounded-full transition-all", aba === "sdr" ? "bg-primary text-white shadow-[0_0_14px_-2px_hsl(var(--primary)/0.5)]" : "text-muted-foreground")}
+            >SDR</button>
           </div>
-          <button onClick={() => setFunisSel([])} className={cn("text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border transition-all", todosSelecionados ? "text-white bg-primary border-primary" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40")}>Todos</button>
+          {/* Funil selector chips */}
+          <button
+            onClick={() => setFunisSel([])}
+            className={cn("text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border transition-all", todosSelecionados ? "text-white bg-primary border-primary" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40")}
+          >Todos</button>
           {FUNIS_XPTO.map((f) => {
-            const selecionado = funisSel.includes(f);
+            const sel = funisSel.includes(f);
             return (
-              <button key={f} onClick={() => toggleFunil(f)} className={cn("text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border transition-all", selecionado ? "text-white border-transparent" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40")} style={selecionado ? { background: FUNIL_CORES[f], borderColor: FUNIL_CORES[f] } : {}}>{f}</button>
+              <button
+                key={f}
+                onClick={() => toggleFunil(f)}
+                className={cn("text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border transition-all", sel ? "text-white border-transparent" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40")}
+                style={sel ? { background: FUNIL_CORES[f], borderColor: FUNIL_CORES[f] } : {}}
+              >{f}</button>
             );
           })}
+          {/* Filter drawer */}
           <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
             <SheetTrigger asChild>
               <button className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border border-border bg-muted/30 text-muted-foreground hover:border-primary/40 transition-all">
                 <Filter className="h-3 w-3" />Filtros
-                {activeFilters > 0 && <span className="bg-primary text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{activeFilters}</span>}
+                {activeFilters > 0 && (
+                  <span className="bg-primary text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{activeFilters}</span>
+                )}
               </button>
             </SheetTrigger>
             <SheetContent side="right" className="w-80 bg-background border-border">
-              <SheetHeader><SheetTitle className="font-display uppercase tracking-widest text-sm">Filtros</SheetTitle></SheetHeader>
+              <SheetHeader>
+                <SheetTitle className="font-display uppercase tracking-widest text-sm">Filtros</SheetTitle>
+              </SheetHeader>
               <div className="mt-6 space-y-6">
                 <div>
                   <label className="text-xs uppercase tracking-widest text-muted-foreground mb-2 block">Período</label>
@@ -467,64 +770,75 @@ export default function FunilXPTO() {
       </div>
 
       {aba === "sdr" ? (
-        <PerformanceSDR funil={todosSelecionados ? undefined : funisSel[0]} periodoStart={new Date(start + "T00:00:00")} periodoEnd={new Date(end + "T23:59:59")} />
+        <PerformanceSDR
+          funil={todosSelecionados ? undefined : funisSel[0]}
+          periodoStart={new Date(start + "T00:00:00")}
+          periodoEnd={new Date(end + "T23:59:59")}
+        />
       ) : (
         <>
-          {/* 6-column KPI row */}
+          {/* ── KPI row ── */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {[
-              { label: "Leads Recebidos",     val: data.leads,               icon: Users,         meta: "300/mês" },
-              { label: "MQL Qualificados",    val: data.mql,                 icon: UserCheck,     meta: `meta ${METAS.leads_para_mql}% leads` },
-              { label: "Reuniões Agendadas",  val: data.reunioesAgendadas,   icon: CalendarCheck, meta: `meta ${METAS.mql_para_reuniao}% MQL` },
-              { label: "Reuniões Realizadas", val: data.reunioesRealizadas,  icon: Users2,        meta: `meta ${METAS.reuniao_para_show}% agend.` },
-              { label: "Propostas Enviadas",  val: data.propostas,           icon: FileText,      meta: `meta ${METAS.show_para_proposta}% reun.` },
-              { label: "Vendas Fechadas",     val: data.fechados,            icon: TrendingUp,    meta: `meta ${METAS.proposta_para_fechado}% prop.` },
-            ].map((k) => (
-              <div key={k.label} className="glass-card !p-3.5 flex flex-col gap-1.5">
-                <div className="flex items-center justify-between gap-1">
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground leading-tight">{k.label}</span>
-                  <k.icon className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+            {kpiDefs.map((k, i) => (
+              <KpiCard
+                key={k.label}
+                label={k.label}
+                val={k.val}
+                icon={k.icon}
+                metaText={k.metaText}
+                ratePct={k.ratePct}
+                loading={loading}
+                animDelay={i * 50}
+              />
+            ))}
+          </div>
+
+          {/* ── CPL / CAC compact ── */}
+          {totalCustosAds > 0 && (
+            <div className="flex gap-3 flex-wrap">
+              {[
+                { label: "CPL", val: `R$ ${cpl.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`, sub: `${data.leadsPagos} leads via Ads` },
+                { label: "CAC", val: `R$ ${cac.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`, sub: "Custo por aquisição" },
+              ].map((k) => (
+                <div
+                  key={k.label}
+                  className="glass-card !px-4 !py-2.5 flex items-center gap-3"
+                >
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{k.label}</span>
+                  <span className="text-base font-bold text-amber-400">{loading ? "—" : k.val}</span>
+                  <span className="text-[10px] text-muted-foreground/50 hidden sm:inline">{k.sub}</span>
                 </div>
-                <p className="text-[22px] font-black leading-none text-foreground">
-                  {loading ? '—' : k.val}
-                </p>
-                <p className="text-[10px] text-muted-foreground/60">{k.meta}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* CPL / CAC row */}
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: "CPL", val: loading ? "—" : totalCustosAds === 0 ? "R$ —" : `R$ ${cpl.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`, sub: loading ? "" : totalCustosAds === 0 ? "Cadastre custos" : `${data.leadsPagos} leads via Ads`, color: "text-amber-400" },
-              { label: "CAC", val: loading ? "—" : totalCustosAds === 0 ? "R$ —" : `R$ ${cac.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`, sub: loading ? "" : totalCustosAds === 0 ? "Cadastre custos" : "Custo por Aquisição", color: "text-amber-400" },
-            ].map((k) => (
-              <div key={k.label} className="glass-card !p-3.5">
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">{k.label}</div>
-                <div className={cn("text-2xl font-bold leading-none", k.color)}>{k.val}</div>
-                <div className="text-[11px] text-muted-foreground/60 mt-1.5">{k.sub}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Trapezoid funnel card */}
-          <GlassCard>
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Funil de conversão — {funilLabel}
-              </h3>
+              ))}
             </div>
+          )}
 
-            <TrapezoidFunil
-              etapas={etapas}
-              conversoes={conversoes}
-              loading={loading}
-            />
+          {/* ── Main area: funil + insights ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_288px] gap-4">
+            {/* Funil card */}
+            <GlassCard>
+              <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Funil de Conversão — {funilLabel}
+                </h3>
+                <span className="text-[9px] text-muted-foreground/50 uppercase tracking-widest">{periodoLabel}</span>
+              </div>
 
-            <div className="mt-6 pt-5 border-t border-border/40">
-              <AIAnalysisButton section="Funil XPTO" dataPayload={aiPayload} />
+              <FunilHorizontal
+                etapas={etapas}
+                conversoes={conversoes}
+                loading={loading}
+              />
+
+              <div className="mt-6 pt-5 border-t border-border/30">
+                <AIAnalysisButton section="Funil Comercial" dataPayload={aiPayload} />
+              </div>
+            </GlassCard>
+
+            {/* Insights panel */}
+            <div className="glass-card !p-5">
+              <InsightsPanel conversoes={conversoes} loading={loading} />
             </div>
-          </GlassCard>
+          </div>
         </>
       )}
     </div>
