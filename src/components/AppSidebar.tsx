@@ -1,6 +1,6 @@
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
-  BarChart3, ShoppingCart, CalendarPlus, Layers,
+  BarChart3, ShoppingCart,
   DollarSign, Target, Settings, Users, Map,
   Radio, LogOut, Sun, Moon, Maximize, Minimize, TrendingUp,
   GitMerge, UserCheck, BarChart2, Instagram, MessageCircle, Mail,
@@ -148,29 +148,16 @@ export function AppSidebar() {
 
         {comercialOpen && (
           <div className="space-y-0.5 mt-0.5">
-            {/* Performance Comercial — funil tab (default) */}
-            <NavLink
-              to="/funil-xpto"
-              end
-              className={() => subItemClass(
-                location.pathname === "/funil-xpto" &&
-                (!new URLSearchParams(location.search).get("tab") || new URLSearchParams(location.search).get("tab") === "funil")
-              )}
-            >
-              <BarChart2 className="w-[13px] h-[13px] shrink-0" />
-              Performance Comercial
-            </NavLink>
-
-            {/* Funil — same page, funil tab */}
+            {/* Funil Comercial — funil tab */}
             <NavLink
               to="/funil-xpto?tab=funil"
               className={() => subItemClass(
                 location.pathname === "/funil-xpto" &&
-                (!new URLSearchParams(location.search).get("tab") || new URLSearchParams(location.search).get("tab") === "funil")
+                new URLSearchParams(location.search).get("tab") !== "sdr"
               )}
             >
               <GitMerge className="w-[13px] h-[13px] shrink-0" />
-              Funil
+              Funil Comercial
             </NavLink>
 
             {/* SDRs — funil page, sdr tab */}
@@ -272,8 +259,6 @@ export function AppSidebar() {
               Administração
             </p>
             {[
-              { title: "Input Diário",     url: "/admin/input-diario",  icon: CalendarPlus },
-              { title: "Gestão de Safras", url: "/admin/safras",        icon: Layers },
               { title: "Custos Marketing", url: "/admin/marketing",     icon: DollarSign },
               { title: "Metas",            url: "/admin/metas",         icon: Target },
               { title: "Configurações",    url: "/admin/configuracoes", icon: Settings },

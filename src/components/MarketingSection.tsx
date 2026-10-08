@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { EmailMarketingSection } from "@/components/EmailMarketingSection";
 import { GlassCard } from "@/components/GlassCard";
 import { KPICard } from "@/components/KPICard";
@@ -250,7 +251,8 @@ const P2 = "hsl(355 82% 51% / 0.5)";
 const MUTED = "hsl(0 0% 60%)";
 
 type Tab = "meta" | "wpp" | "instagram" | "email";
-interface Props { from: string; to: string; initialTab?: Tab; }
+const VALID_TABS: Tab[] = ["meta", "wpp", "instagram", "email"];
+interface Props { from: string; to: string; }
 
 function SubTitle({ children }: { children: React.ReactNode }) {
   return (
@@ -268,8 +270,18 @@ const ACCOUNT_LABEL: Record<string, string> = {
 type SortKey = "eng" | "like_count" | "comments_count" | "shares" | "saved" | "reach" | "views" | "taxaEng" | "posted_at";
 type SortDir = "asc" | "desc";
 
-export function MarketingSection({ from, to, initialTab }: Props) {
-  const [tab, setTab] = useState<Tab>(initialTab ?? "meta");
+export function MarketingSection({ from, to }: Props) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get("tab") as Tab | null;
+  const tab: Tab = rawTab && VALID_TABS.includes(rawTab) ? rawTab : "meta";
+
+  function setTab(value: Tab) {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", value);
+      return next;
+    }, { replace: true });
+  }
   const [igAccount, setIgAccount] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("eng");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
