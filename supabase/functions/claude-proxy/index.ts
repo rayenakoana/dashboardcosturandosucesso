@@ -5,6 +5,13 @@
  * e encaminha ao endpoint de mensagens da API Anthropic.
  * A chave Anthropic nunca chega ao browser.
  *
+ * Proteções de consumo:
+ *   - Apenas usuários com JWT válido e ativo são aceitos.
+ *   - Modelo fixado em lista segura; payloads que tentam usar outros modelos
+ *     são rejeitados (evita uso de modelos mais caros).
+ *   - max_tokens limitado a MAX_TOKENS_CAP (evita respostas longas não previstas).
+ *   - Corpo da requisição limitado a 64 KB.
+ *
  * Segredos necessários (supabase secrets set):
  *   ANTHROPIC_KEY  Chave da API Anthropic
  *
@@ -20,6 +27,14 @@ const CORS_HEADERS = {
 };
 
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
+
+// Modelos permitidos — ampliar conforme necessário após avaliação de custo.
+const ALLOWED_MODELS = new Set([
+  "claude-sonnet-4-6",
+  "claude-haiku-4-5",
+]);
+
+const MAX_TOKENS_CAP = 2048;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -45,6 +60,8 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
+  // getUser valida o token contra o servidor Supabase — não apenas decodifica
+  // localmente. Tokens revogados ou expirados são rejeitados aqui.
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
   if (authError || !user) {
@@ -73,6 +90,19 @@ Deno.serve(async (req) => {
     );
   }
 
+  // ── 3. Validar modelo e limitar max_tokens ────────────────────────────────
+  const requestedModel = String(body.model ?? "");
+  if (!ALLOWED_MODELS.has(requestedModel)) {
+    return new Response(
+      JSON.stringify({ error: "Modelo não permitido." }),
+      { status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
+    );
+  }
+
+  // Limita max_tokens mesmo que o frontend envie um valor maior.
+  const requestedTokens = Number(body.max_tokens ?? MAX_TOKENS_CAP);
+  const safeMaxTokens = Math.min(requestedTokens, MAX_TOKENS_CAP);
+
   const anthropicKey = Deno.env.get("ANTHROPIC_KEY");
   if (!anthropicKey) {
     console.error("[claude-proxy] ANTHROPIC_KEY não configurada.");
@@ -82,7 +112,9 @@ Deno.serve(async (req) => {
     );
   }
 
-  // ── 3. Encaminhar à Anthropic ─────────────────────────────────────────────
+  // ── 4. Encaminhar à Anthropic ─────────────────────────────────────────────
+  const anthropicBody = { ...body, max_tokens: safeMaxTokens };
+
   let anthropicRes: Response;
   try {
     anthropicRes = await fetch(ANTHROPIC_API, {
@@ -92,7 +124,7 @@ Deno.serve(async (req) => {
         "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(anthropicBody),
     });
   } catch (err) {
     console.error("[claude-proxy] Falha ao contatar Anthropic:", (err as Error).message);

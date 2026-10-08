@@ -27,8 +27,6 @@ export default function Usuarios() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Token Supabase encaminhado ao Nginx, que o repassa ao n8n.
-          // O Nginx exige sua presença; o n8n é responsável por validá-lo.
           "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ email, senha }),

@@ -7,6 +7,7 @@ import { Topbar } from "@/components/Topbar";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AdminRoute } from "@/components/AdminRoute";
 import Index from "./pages/Index";
 import Vendas from "./pages/Vendas";
 import InputDiario from "./pages/InputDiario";
@@ -67,7 +68,7 @@ function Shell() {
             <Route path="/admin/marketing"     element={<ProtectedRoute><CustosMarketing /></ProtectedRoute>} />
             <Route path="/admin/metas"         element={<ProtectedRoute><Metas /></ProtectedRoute>} />
             <Route path="/admin/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
-            <Route path="/admin/usuarios"      element={<ProtectedRoute><Usuarios /></ProtectedRoute>} />
+            <Route path="/admin/usuarios"      element={<AdminRoute><Usuarios /></AdminRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
