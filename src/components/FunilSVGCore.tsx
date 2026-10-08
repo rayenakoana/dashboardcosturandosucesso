@@ -161,7 +161,7 @@ export function FunilSVGCore({
         }}>
           <span>⚠</span>
           <span style={{ opacity: 0.8 }}>
-            Escala visual — etapa(s) com valor maior que a anterior. Funil alarga intencionalmente.
+            Etapas com volumes não sequenciais — verificar critérios de apuração.
           </span>
         </div>
       )}
@@ -343,7 +343,7 @@ export function FunilSVGCore({
                   style={{ fontFamily: "inherit" }}
                 >
                   {i === 0
-                    ? "100%"
+                    ? (vals[0] > 0 ? "100%" : "N/D")
                     : vMax > 0
                     ? `${stage.pctDeTopo.toFixed(1)}%`
                     : "N/D"}
@@ -418,7 +418,7 @@ export function FunilSVGCore({
                 </div>
                 <div style={{ fontSize: 7.5, color: "rgba(255,255,255,0.28)", marginTop: 1 }}>
                   {loading ? "" : (
-                    i === 0 ? "100%"
+                    i === 0 ? (vals[0] > 0 ? "100%" : "N/D")
                     : vMax > 0 ? `${stage.pctDeTopo.toFixed(1)}%`
                     : "N/D"
                   )}

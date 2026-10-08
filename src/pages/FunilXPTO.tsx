@@ -534,7 +534,7 @@ export default function FunilXPTO() {
 
   // ── Derived state (formulas unchanged from 9088d0b) ─────────────────────
   const etapas = [
-    { label: "Leads recebidos",     val: data.leads,               pctDeTopo: 100 },
+    { label: "Leads recebidos",     val: data.leads,               pctDeTopo: data.leads > 0 ? 100 : 0 },
     { label: "MQL qualificados",    val: data.mql,                 pctDeTopo: pct(data.mql, data.leads) },
     { label: "Reuniões agendadas",  val: data.reunioesAgendadas,   pctDeTopo: pct(data.reunioesAgendadas, data.leads) },
     { label: "Reuniões realizadas", val: data.reunioesRealizadas,  pctDeTopo: pct(data.reunioesRealizadas, data.leads) },
