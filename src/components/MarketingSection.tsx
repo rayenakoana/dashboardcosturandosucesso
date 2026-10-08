@@ -250,7 +250,7 @@ const P2 = "hsl(355 82% 51% / 0.5)";
 const MUTED = "hsl(0 0% 60%)";
 
 type Tab = "meta" | "wpp" | "instagram" | "email";
-interface Props { from: string; to: string; }
+interface Props { from: string; to: string; initialTab?: Tab; }
 
 function SubTitle({ children }: { children: React.ReactNode }) {
   return (
@@ -268,8 +268,8 @@ const ACCOUNT_LABEL: Record<string, string> = {
 type SortKey = "eng" | "like_count" | "comments_count" | "shares" | "saved" | "reach" | "views" | "taxaEng" | "posted_at";
 type SortDir = "asc" | "desc";
 
-export function MarketingSection({ from, to }: Props) {
-  const [tab, setTab] = useState<Tab>("meta");
+export function MarketingSection({ from, to, initialTab }: Props) {
+  const [tab, setTab] = useState<Tab>(initialTab ?? "meta");
   const [igAccount, setIgAccount] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("eng");
   const [sortDir, setSortDir] = useState<SortDir>("desc");

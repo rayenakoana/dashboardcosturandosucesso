@@ -5,6 +5,7 @@ import {
   Radio, Target, DollarSign, Settings, Users,
   ChevronDown, PanelLeftClose, PanelLeft,
   LogOut, Sun, Moon, Maximize, Minimize,
+  UserCheck, BarChart2, Instagram, MessageCircle, Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -23,6 +24,10 @@ interface NavItemDef {
   icon: React.ElementType;
   end?: boolean;
   protected?: boolean;
+  /** When set, active state also requires ?tab=<value> */
+  tab?: string;
+  /** When true, active when pathname matches and no tab param (or tab=meta) */
+  defaultTab?: boolean;
 }
 
 interface NavGroupDef {
@@ -40,7 +45,9 @@ const NAV_GROUPS: NavGroupDef[] = [
     key: "overview",
     label: "Visão Geral",
     items: [
-      { label: "Dashboard", url: "/", icon: BarChart3, end: true },
+      { label: "Dashboard",       url: "/",     icon: BarChart3, end: true },
+      { label: "Mapa Geográfico", url: "/mapa", icon: Map },
+      { label: "CS Live",         url: "/live", icon: Radio },
     ],
   },
   {
@@ -48,9 +55,9 @@ const NAV_GROUPS: NavGroupDef[] = [
     label: "Comercial",
     collapsible: true,
     items: [
-      { label: "Funil & Performance", url: "/funil-xpto", icon: GitMerge },
-      { label: "Mapa Geográfico",      url: "/mapa",        icon: Map },
-      { label: "Vendas",               url: "/admin/comercial", icon: ShoppingCart, protected: true },
+      { label: "Funil Comercial", url: "/funil-xpto?tab=funil", icon: GitMerge,    tab: "funil" },
+      { label: "SDRs",            url: "/funil-xpto?tab=sdr",   icon: UserCheck,   tab: "sdr"   },
+      { label: "Vendas",          url: "/admin/comercial",       icon: ShoppingCart, protected: true },
     ],
   },
   {
@@ -58,14 +65,10 @@ const NAV_GROUPS: NavGroupDef[] = [
     label: "Marketing",
     collapsible: true,
     items: [
-      { label: "Visão de Marketing", url: "/marketing", icon: TrendingUp },
-    ],
-  },
-  {
-    key: "live",
-    label: "Tempo Real",
-    items: [
-      { label: "CS Live", url: "/live", icon: Radio },
+      { label: "Instagram",        url: "/marketing?tab=instagram", icon: Instagram,     tab: "instagram" },
+      { label: "WPP Campanhas",    url: "/marketing?tab=wpp",       icon: MessageCircle, tab: "wpp"       },
+      { label: "Meta Ads",         url: "/marketing",               icon: BarChart2,     defaultTab: true },
+      { label: "E-mail Marketing", url: "/marketing?tab=email",     icon: Mail,          tab: "email"     },
     ],
   },
   {
@@ -73,8 +76,8 @@ const NAV_GROUPS: NavGroupDef[] = [
     label: "Gestão",
     protected: true,
     items: [
-      { label: "Metas",             url: "/admin/metas",     icon: Target },
-      { label: "Custos Marketing",  url: "/admin/marketing", icon: DollarSign },
+      { label: "Metas",            url: "/admin/metas",         icon: Target     },
+      { label: "Custos Marketing", url: "/admin/marketing",     icon: DollarSign },
     ],
   },
   {
@@ -83,40 +86,60 @@ const NAV_GROUPS: NavGroupDef[] = [
     protected: true,
     items: [
       { label: "Configurações", url: "/admin/configuracoes", icon: Settings },
-      { label: "Usuários",      url: "/admin/usuarios",      icon: Users },
+      { label: "Usuários",      url: "/admin/usuarios",      icon: Users    },
     ],
   },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function readLS(key: string, fallback: boolean): boolean {
-  try { return localStorage.getItem(key) === null ? fallback : localStorage.getItem(key) === "true"; }
-  catch { return fallback; }
+function readLS<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
 }
 
-function readLSObj(key: string, fallback: Record<string, boolean>): Record<string, boolean> {
+function readLSObj<T extends object>(key: string, fallback: T): T {
   try {
-    const v = localStorage.getItem(key);
-    return v ? JSON.parse(v) : fallback;
-  } catch { return fallback; }
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    return { ...fallback, ...JSON.parse(raw) } as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function useIsItemActive(item: NavItemDef): boolean {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const currentTab = params.get("tab");
+
+  const basePath = item.url.split("?")[0];
+  const pathMatches = item.end
+    ? location.pathname === basePath
+    : location.pathname === basePath;
+
+  if (!pathMatches) return false;
+  if (item.tab) return currentTab === item.tab;
+  if (item.defaultTab) return !currentTab || currentTab === "meta";
+  return true;
 }
 
 // ── NavItem ───────────────────────────────────────────────────────────────────
 
-interface NavItemProps {
-  item: NavItemDef;
-  collapsed: boolean;
-}
-
-function NavItem({ item, collapsed }: NavItemProps) {
-  const { url, icon: Icon, label, end } = item;
+function NavItem({ item, collapsed }: { item: NavItemDef; collapsed: boolean }) {
+  const isActive = useIsItemActive(item);
+  const Icon = item.icon;
 
   const link = (
     <NavLink
-      to={url}
-      end={end}
-      className={({ isActive }) =>
+      to={item.url}
+      end={item.end}
+      className={() =>
         cn(
           "relative flex items-center rounded-md transition-colors select-none outline-none",
           "focus-visible:ring-2 focus-visible:ring-primary/50",
@@ -133,7 +156,7 @@ function NavItem({ item, collapsed }: NavItemProps) {
       }
     >
       <Icon className="shrink-0 w-[15px] h-[15px]" />
-      {!collapsed && <span className="truncate text-[13px]">{label}</span>}
+      {!collapsed && <span className="truncate text-[13px]">{item.label}</span>}
     </NavLink>
   );
 
@@ -142,7 +165,7 @@ function NavItem({ item, collapsed }: NavItemProps) {
       <Tooltip>
         <TooltipTrigger asChild>{link}</TooltipTrigger>
         <TooltipContent side="right" sideOffset={10} className="text-xs font-medium">
-          {label}
+          {item.label}
         </TooltipContent>
       </Tooltip>
     );
@@ -215,7 +238,6 @@ export function AppSidebar() {
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [isCollapsed, setIsCollapsed] = useState(() => readLS("cs-dash-sidebar-collapsed", false));
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -339,7 +361,6 @@ export function AppSidebar() {
       <div className="border-t border-sidebar-border shrink-0 py-2 px-1.5 space-y-1">
         {/* Controls row */}
         <div className={cn("flex gap-1", isCollapsed ? "flex-col items-center" : "items-center flex-wrap px-1")}>
-          {/* Theme */}
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -355,7 +376,6 @@ export function AppSidebar() {
             </TooltipContent>
           </Tooltip>
 
-          {/* Fullscreen */}
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -371,7 +391,6 @@ export function AppSidebar() {
             </TooltipContent>
           </Tooltip>
 
-          {/* Expand (only when collapsed) */}
           {isCollapsed && (
             <Tooltip>
               <TooltipTrigger asChild>
