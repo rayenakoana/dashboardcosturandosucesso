@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar } from "@/components/AppSidebar";
+import { Topbar } from "@/components/Topbar";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -49,26 +50,29 @@ function Shell() {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <AppSidebar />
-      <main className="flex-1 overflow-y-auto px-4 md:px-6 py-6">
-        <Routes>
-          {/* Públicas */}
-          <Route path="/" element={<Index />} />
-          <Route path="/funil-xpto" element={<FunilXPTO />} />
-          <Route path="/mapa" element={<MapaGeografico />} />
-          <Route path="/marketing" element={<MarketingDashboard />} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Topbar />
+        <main className="flex-1 overflow-y-auto px-4 md:px-6 py-5">
+          <Routes>
+            {/* Públicas */}
+            <Route path="/" element={<Index />} />
+            <Route path="/funil-xpto" element={<FunilXPTO />} />
+            <Route path="/mapa" element={<MapaGeografico />} />
+            <Route path="/marketing" element={<MarketingDashboard />} />
 
-          {/* Admin (protegidas) */}
-          <Route path="/admin/comercial"     element={<ProtectedRoute><Vendas /></ProtectedRoute>} />
-          <Route path="/admin/input-diario"  element={<ProtectedRoute><InputDiario /></ProtectedRoute>} />
-          <Route path="/admin/safras"        element={<ProtectedRoute><GestaoSafras /></ProtectedRoute>} />
-          <Route path="/admin/marketing"     element={<ProtectedRoute><CustosMarketing /></ProtectedRoute>} />
-          <Route path="/admin/metas"         element={<ProtectedRoute><Metas /></ProtectedRoute>} />
-          <Route path="/admin/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
-          <Route path="/admin/usuarios"      element={<ProtectedRoute><Usuarios /></ProtectedRoute>} />
+            {/* Admin (protegidas) */}
+            <Route path="/admin/comercial"     element={<ProtectedRoute><Vendas /></ProtectedRoute>} />
+            <Route path="/admin/input-diario"  element={<ProtectedRoute><InputDiario /></ProtectedRoute>} />
+            <Route path="/admin/safras"        element={<ProtectedRoute><GestaoSafras /></ProtectedRoute>} />
+            <Route path="/admin/marketing"     element={<ProtectedRoute><CustosMarketing /></ProtectedRoute>} />
+            <Route path="/admin/metas"         element={<ProtectedRoute><Metas /></ProtectedRoute>} />
+            <Route path="/admin/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
+            <Route path="/admin/usuarios"      element={<ProtectedRoute><Usuarios /></ProtectedRoute>} />
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+      </div>
     </div>
   );
 }
