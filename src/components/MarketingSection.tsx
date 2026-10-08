@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
+import { authHeader } from "@/lib/apiClient";
 import { EmailMarketingSection } from "@/components/EmailMarketingSection";
 import { GlassCard } from "@/components/GlassCard";
 import { KPICard } from "@/components/KPICard";
@@ -50,9 +51,10 @@ function AIAnalysisPanel({
     setError("");
     try {
       const prompt = buildPrompt();
+      const auth = await authHeader();
       const res = await fetch("/api/claude", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...auth, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
           max_tokens: 900,
@@ -83,9 +85,10 @@ function AIAnalysisPanel({
       setLoading(true);
       try {
         const prompt = buildPrompt();
+        const auth = await authHeader();
         const res = await fetch("/api/claude", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { ...auth, "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "claude-sonnet-4-6",
             max_tokens: 900,

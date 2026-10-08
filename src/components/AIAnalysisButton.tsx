@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { authHeader } from "@/lib/apiClient";
 import { Sparkles, X, Loader2, ChevronDown, ChevronUp, RotateCcw, TrendingUp, AlertTriangle, Zap, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -86,9 +87,10 @@ DADOS REAIS:
 ${JSON.stringify(dataPayload, null, 2)}`;
 
     try {
+      const auth = await authHeader();
       const res = await fetch("/api/claude", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...auth, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
           max_tokens: 800,
@@ -144,16 +146,17 @@ ${JSON.stringify(dataPayload, null, 2)}`;
 DADOS REAIS:
 ${JSON.stringify(dataPayload, null, 2)}`;
 
-      fetch("/api/claude", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 800,
-          system: CS_SYSTEM_PROMPT,
-          messages: [{ role: "user", content: userMessage }],
-        }),
-      })
+      authHeader()
+        .then(auth => fetch("/api/claude", {
+          method: "POST",
+          headers: { ...auth, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-6",
+            max_tokens: 800,
+            system: CS_SYSTEM_PROMPT,
+            messages: [{ role: "user", content: userMessage }],
+          }),
+        }))
         .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
         .then(json => {
           const text = json?.content?.[0]?.text ?? "";

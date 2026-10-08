@@ -1,10 +1,12 @@
 #!/bin/sh
 set -e
 
-# Substitui apenas as variáveis de segredo conhecidas no template Nginx.
+# Substitui apenas SUPABASE_FUNCTIONS_URL no template Nginx.
 # As variáveis internas do Nginx ($uri, $host, $proxy_host, etc.) são
 # preservadas porque não constam na lista passada ao envsubst.
-envsubst '${ANTHROPIC_KEY} ${N8N_ADMIN_SECRET} ${N8N_ADMIN_URL}' \
+# Segredos de API (Anthropic, n8n) residem nos Supabase secrets — nunca no
+# container Docker.
+envsubst '${SUPABASE_FUNCTIONS_URL}' \
   < /etc/nginx/conf.d/default.conf.template \
   > /etc/nginx/conf.d/default.conf
 

@@ -13,17 +13,17 @@ export default defineConfig(({ mode }) => {
     hmr: {
       overlay: false,
     },
-    proxy: env.N8N_ADMIN_SECRET
+    proxy: env.SUPABASE_FUNCTIONS_URL
       ? {
-          "/api/admin/criar-usuario": {
-            target: env.N8N_ADMIN_CRIAR_USUARIO_URL,
+          "/api/claude": {
+            target: `${env.SUPABASE_FUNCTIONS_URL}/claude-proxy`,
             changeOrigin: true,
             rewrite: () => "",
-            configure: (proxy) => {
-              proxy.on("proxyReq", (proxyReq) => {
-                proxyReq.setHeader("X-Admin-Secret", env.N8N_ADMIN_SECRET);
-              });
-            },
+          },
+          "/api/admin/criar-usuario": {
+            target: `${env.SUPABASE_FUNCTIONS_URL}/admin-criar-usuario`,
+            changeOrigin: true,
+            rewrite: () => "",
           },
         }
       : {},
