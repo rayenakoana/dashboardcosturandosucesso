@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useConfiguracoes, useFunisVisiveis } from "@/hooks/useConfiguracoes";
@@ -6,11 +6,16 @@ import { useCustosMarketing } from "@/hooks/useCustosMarketing";
 import { GlassCard } from "@/components/GlassCard";
 import { AIAnalysisButton } from "@/components/AIAnalysisButton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Filter } from "lucide-react";
+import {
+  Filter, Users, UserCheck, CalendarCheck, Users2, FileText, TrendingUp,
+  AlertTriangle, TrendingDown, Lightbulb,
+} from "lucide-react";
+import { FunilSVGCore } from "@/components/FunilSVGCore";
 import { cn } from "@/lib/utils";
 import { PIPELINE_IDS, FUNIL_CORES } from "@/lib/funis";
 import { PerformanceSDR } from "@/components/PerformanceSDR";
 
+// ── Business constants (unchanged from 9088d0b) ───────────────────────────
 const METAS = {
   leads_para_mql: 35,
   mql_para_reuniao: 70,
@@ -33,22 +38,24 @@ interface FunilData {
 
 const pct = (a: number, b: number) => b > 0 ? (a / b) * 100 : 0;
 
+// Conversion >100% → gray: inter-stage rates can exceed 100% when the two tables
+// use different date reference fields (created_at vs data vs data_fechamento).
+// Gray signals a potentially inconsistent denominator without hiding the value.
 function getStatusColor(real: number, meta: number) {
-  if (real >= meta) return { bg: "#16a34a20", border: "#16a34a", text: "#4ade80" };
-  if (real >= meta * 0.7) return { bg: "#d9770620", border: "#d97706", text: "#fbbf24" };
-  return { bg: "#dc262620", border: "#dc2626", text: "#f87171" };
+  if (real > 100) return { bg: "#6b728018", border: "#6b7280", text: "#9ca3af" };
+  if (real >= meta) return { bg: "#16a34a18", border: "#16a34a", text: "#4ade80" };
+  if (real >= meta * 0.7) return { bg: "#d9770618", border: "#d97706", text: "#fbbf24" };
+  return { bg: "#dc262618", border: "#dc2626", text: "#f87171" };
 }
 
-// Cor dinâmica por etapa
-function getEtapaCor(index: number, data: FunilData): string {
-  const vals = [data.leads, data.mql, data.reunioesAgendadas, data.reunioesRealizadas, data.propostas, data.fechados];
-  if (index === 5) return data.fechados > 0 ? "#16a34a" : "#dc2626";
-  if (vals[index] === 0) return "#dc2626";
-  const cores = ["#b91c1c", "#C8102E", "#e02040", "#e8384f", "#f05a6e"];
-  return cores[index] ?? "#C8102E";
+function getBarColor(real: number, meta: number): string {
+  if (real > 100) return "#6b7280";
+  if (real >= meta) return "#16a34a";
+  if (real >= meta * 0.7) return "#d97706";
+  return "#dc2626";
 }
 
-// Hook para animar um número de 0 até o valor alvo
+// ── useCountUp ────────────────────────────────────────────────────────────
 function useCountUp(target: number, duration = 700, trigger: boolean) {
   const [display, setDisplay] = useState(0);
   const raf = useRef<number | null>(null);
@@ -57,12 +64,10 @@ function useCountUp(target: number, duration = 700, trigger: boolean) {
   useEffect(() => {
     if (!trigger) { setDisplay(0); return; }
     if (target === 0) { setDisplay(0); return; }
-
     start.current = null;
     const step = (ts: number) => {
       if (!start.current) start.current = ts;
       const progress = Math.min((ts - start.current) / duration, 1);
-      // ease-out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       setDisplay(Math.round(eased * target));
       if (progress < 1) raf.current = requestAnimationFrame(step);
@@ -74,133 +79,114 @@ function useCountUp(target: number, duration = 700, trigger: boolean) {
   return display;
 }
 
-// Injeta os keyframes de animação uma vez
-const STYLE_ID = "funil-anim-styles";
-function injectFunilStyles() {
-  if (document.getElementById(STYLE_ID)) return;
-  const style = document.createElement("style");
-  style.id = STYLE_ID;
-  style.textContent = `
-    @keyframes funilBarIn {
-      from { opacity: 0; transform: translateY(14px) scaleX(0.92); }
-      to   { opacity: 1; transform: translateY(0)   scaleX(1); }
-    }
+// ── CSS animations ────────────────────────────────────────────────────────
+const ANIM_ID = "funil-premium-styles";
+function injectStyles() {
+  if (document.getElementById(ANIM_ID)) return;
+  const s = document.createElement("style");
+  s.id = ANIM_ID;
+  s.textContent = `
     @keyframes funilBadgeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from { opacity:0; transform:translateY(10px); }
+      to   { opacity:1; transform:translateY(0); }
     }
-    @keyframes funilHoverPulse {
-      0%   { filter: brightness(1.25) drop-shadow(0 0 8px rgba(255,255,255,0.25)); }
-      50%  { filter: brightness(1.38) drop-shadow(0 0 14px rgba(255,255,255,0.35)); }
-      100% { filter: brightness(1.25) drop-shadow(0 0 8px rgba(255,255,255,0.25)); }
+    @keyframes funilKpiIn {
+      from { opacity:0; transform:translateY(4px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @keyframes barGrow {
+      from { width:0; }
     }
   `;
-  document.head.appendChild(style);
+  document.head.appendChild(s);
 }
 
-// Subcomponente individual de cada barra — label acima, retângulo com número dentro
-function FunilBar({
-  etapa,
-  conv,
-  index,
-  widthPct,
-  nextWidthPct,
-  loading,
-  animated,
-  data,
+// ── Conversion badge ──────────────────────────────────────────────────────
+function ConvBadge({
+  conv, animated, delay,
 }: {
-  etapa: { label: string; val: number; pctDeTopo: number };
-  conv?: { real: number; meta: number; label: string };
-  index: number;
-  widthPct: number;
-  nextWidthPct: number;
-  loading: boolean;
-  animated: boolean;
-  data: FunilData;
+  conv: { real: number; meta: number; label: string };
+  animated: boolean; delay: number;
 }) {
-  const [hovered, setHovered] = useState(false);
-  const i = index;
-  const cor = getEtapaCor(i, data);
-  const barDelay   = `${i * 80}ms`;
-  const badgeDelay = `${i * 80 + 30}ms`;
-  const displayVal = useCountUp(etapa.val, 650, animated);
-
+  const sc = getStatusColor(conv.real, conv.meta);
+  const hasData = conv.real > 0 || conv.meta > 0;
   return (
-    <div>
-      {/* Badge de conversão entre etapas */}
-      {i > 0 && conv && (
-        <div
-          className="flex items-center justify-center my-1"
-          style={animated ? {
-            animation: `funilBadgeIn 0.35s ease both`,
-            animationDelay: badgeDelay,
-          } : { opacity: 0 }}
-        >
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full border text-[11px] font-semibold"
-            style={{
-              background: getStatusColor(conv.real, conv.meta).bg,
-              borderColor: getStatusColor(conv.real, conv.meta).border,
-              color: getStatusColor(conv.real, conv.meta).text,
-            }}>
-            <span>{conv.real.toFixed(1)}%</span>
-            <span className="text-[10px] opacity-70">{conv.label}</span>
-            <span className="opacity-50">·</span>
-            <span className="opacity-60">meta {conv.meta}%</span>
-          </div>
+    <div
+      className="flex flex-col items-center"
+      style={{
+        opacity: animated ? undefined : 0,
+        ...(animated ? {
+          animation: `funilBadgeIn 0.38s ease both`,
+          animationDelay: `${delay}ms`,
+        } : {}),
+      }}
+    >
+      {/* Connector vertical tick */}
+      <div style={{
+        width: 1, height: 8,
+        background: `${sc.border}80`,
+        flexShrink: 0, marginBottom: 4,
+      }} />
+      {/* Connector dot */}
+      <div style={{
+        width: 6, height: 6, borderRadius: '50%',
+        background: sc.border, flexShrink: 0, marginBottom: 6,
+        boxShadow: `0 0 5px ${sc.border}50`,
+      }} />
+      <div
+        style={{
+          background: sc.bg,
+          border: `1px solid ${sc.border}`,
+          borderRadius: 8,
+          minWidth: 82,
+          padding: '7px 9px',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ fontSize: 14, fontWeight: 900, lineHeight: 1, color: sc.text }}>
+          {hasData ? `${conv.real.toFixed(1)}%` : 'N/D'}
         </div>
-      )}
-
-      {/* Label acima da barra — sempre legível, largura total */}
-      <div
-        className="text-center mb-1"
-        style={animated ? {
-          animation: `funilBadgeIn 0.35s ease both`,
-          animationDelay: barDelay,
-        } : { opacity: 0 }}
-      >
-        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-          {etapa.label}
-        </span>
-      </div>
-
-      {/* Trapézio SVG */}
-      <div
-        style={animated ? { animation: `funilBarIn 0.45s cubic-bezier(0.22,1,0.36,1) both`, animationDelay: barDelay } : { opacity: 0 }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        <svg width="100%" height="44" viewBox="0 0 1000 44" preserveAspectRatio="none"
-          style={{ display: "block", filter: hovered && !loading ? "brightness(1.28) drop-shadow(0 0 10px rgba(255,255,255,0.25))" : undefined, transition: "filter 0.2s ease" }}>
-          <polygon
-            points={`${(1000-widthPct*10)/2},0 ${1000-(1000-widthPct*10)/2},0 ${1000-(1000-nextWidthPct*10)/2},44 ${(1000-nextWidthPct*10)/2},44`}
-            fill={loading ? "#ffffff10" : cor}
-          />
-          <text x="500" y="23" dominantBaseline="middle" textAnchor="middle" fill="white" fontWeight="bold" fontSize="22"
-            style={{ fontFamily: "inherit", pointerEvents: "none" }}>
-            {loading ? "—" : displayVal}
-          </text>
-        </svg>
+        <div style={{ fontSize: 8.5, lineHeight: 1.3, marginTop: 3, color: sc.text, opacity: 0.75 }}>
+          {conv.label}
+        </div>
+        <div style={{ fontSize: 7.5, lineHeight: 1.3, marginTop: 2, color: 'rgba(255,255,255,0.28)' }}>
+          meta {conv.meta}%
+        </div>
       </div>
     </div>
   );
 }
 
-function TrapezioFunil({
-  etapas,
-  conversoes,
-  loading,
-  data,
+// ── Horizontal funnel + badges ────────────────────────────────────────────
+const SHORT_LABELS = ["Leads", "MQL", "Agend.", "Reuniões", "Propostas", "Vendas"];
+
+function FunilHorizontal({
+  etapas, conversoes, loading,
 }: {
   etapas: { label: string; val: number; pctDeTopo: number }[];
   conversoes: { real: number; meta: number; label: string }[];
   loading: boolean;
-  corBase: string;
-  data: FunilData;
 }) {
   const [animated, setAnimated] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const n = etapas.length;
 
-  useEffect(() => { injectFunilStyles(); }, []);
-
+  useEffect(() => { injectStyles(); }, []);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const check = () => {
+      setShowHint(el.scrollWidth > el.clientWidth + 4 && el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+    };
+    check();
+    el.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check);
+    return () => {
+      el.removeEventListener("scroll", check);
+      window.removeEventListener("resize", check);
+    };
+  }, [loading]);
   useEffect(() => {
     if (!loading) {
       setAnimated(false);
@@ -211,39 +197,269 @@ function TrapezioFunil({
     }
   }, [loading]);
 
-  const maxW = 100;
-  const minW = 18;
-  const topVal = etapas[0]?.val ?? 0;
+  const stages = etapas.map((e, i) => ({
+    label: e.label,
+    shortLabel: SHORT_LABELS[i] ?? e.label,
+    val: e.val,
+    pctDeTopo: e.pctDeTopo,
+  }));
 
-  // Larguras brutas proporcionais ao valor real
-  const rawWidths = etapas.map((e, i) => {
-    const ratio = topVal > 0 ? e.val / topVal : (i === 0 ? 1 : 0);
-    return Math.max(minW, ratio * maxW);
-  });
-
-  // Smooth-drop: funil NUNCA pode alargar, e cada etapa cai no máximo 56% da etapa anterior
-  // Largura proporcional ao valor real, sem forçar monotonia
-  const widths = rawWidths.map(w => Math.max(minW, w));
+  const prefersReduced =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      {etapas.map((etapa, i) => (
-        <FunilBar
-          key={etapa.label}
-          etapa={etapa}
-          conv={conversoes[i - 1]}
-          index={i}
-          widthPct={widths[i]}
-          nextWidthPct={i < etapas.length - 1 ? widths[i + 1] : widths[i] * 0.75}
-          loading={loading}
-          animated={animated}
-          data={data}
-        />
-      ))}
+    <div>
+      {/* Scrollable wrapper — SVG + badges share a min-width so badges never overlap */}
+      <div style={{ position: 'relative' }}>
+      <div ref={scrollRef} style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <div style={{ minWidth: 560 }}>
+          {/* True SVG dynamic funnel */}
+          <FunilSVGCore
+            stages={stages}
+            loading={loading}
+            reduceMotion={prefersReduced || !animated}
+          />
+
+          {/* Conversion badges — positioned at each stage boundary */}
+          <div style={{ position: 'relative', marginTop: 16 }}>
+            {/* Dotted connector line */}
+            <div style={{
+              position: 'absolute',
+              top: 3,
+              left: `${(1 / n) * 100}%`,
+              right: `${(1 / n) * 100}%`,
+              borderTop: '1px dashed rgba(120,130,150,0.25)',
+              pointerEvents: 'none',
+            }} />
+
+            <div style={{ position: 'relative', height: 78 }}>
+              {conversoes.map((conv, i) => {
+                const leftPct = ((i + 1) / n) * 100;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      position: 'absolute',
+                      left: `${leftPct}%`,
+                      top: 0,
+                      transform: 'translateX(-50%)',
+                    }}
+                  >
+                    <ConvBadge
+                      conv={conv}
+                      animated={animated}
+                      delay={i * 60 + 280}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+      {showHint && (
+        <div aria-hidden="true" style={{
+          position: 'absolute', right: 0, top: 0, bottom: 0,
+          display: 'flex', alignItems: 'center', paddingRight: 10,
+          background: 'linear-gradient(to right, transparent, rgba(17,23,32,0.92) 30%)',
+          pointerEvents: 'none',
+          fontSize: 9.5, fontWeight: 600, color: 'rgba(255,255,255,0.45)',
+          letterSpacing: '0.02em', whiteSpace: 'nowrap', minWidth: 140,
+        }}>
+          Deslize para ver →
+        </div>
+      )}
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-5 mt-3 justify-center flex-wrap">
+        {[
+          { color: '#16a34a', label: 'acima da meta' },
+          { color: '#d97706', label: 'próximo da meta' },
+          { color: '#dc2626', label: 'abaixo da meta' },
+          { color: '#6b7280', label: 'taxa inconsistente' },
+        ].map(({ color, label }) => (
+          <div key={label} className="flex items-center gap-1.5" style={{ fontSize: 10, color: '#6b7280' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
+            {label}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
+// ── Insights panel ────────────────────────────────────────────────────────
+// Derives insights purely from existing conversoes data — no new queries.
+function InsightsPanel({
+  conversoes, loading,
+}: {
+  conversoes: { real: number; meta: number; label: string }[];
+  loading: boolean;
+}) {
+  const NAMES = [
+    "Leads → MQL",
+    "MQL → Agendamento",
+    "Agendamento → Reunião",
+    "Reunião → Proposta",
+    "Proposta → Venda",
+  ];
+
+  const items = conversoes.map((c, i) => ({
+    name: NAMES[i],
+    real: c.real,
+    meta: c.meta,
+    label: c.label,
+    gap: c.real <= 100 ? c.meta - c.real : null,
+  }));
+
+  const valid = items.filter(i => i.gap !== null && i.real <= 100);
+  const belowMeta = valid.filter(i => i.real < i.meta);
+
+  // Gargalo: biggest absolute gap below meta
+  const gargalo = [...belowMeta].sort((a, b) => (b.gap ?? 0) - (a.gap ?? 0))[0];
+  // Ponto crítico: lowest ratio real/meta (most critical proportionally)
+  const critico = [...valid].sort((a, b) => (a.real / a.meta) - (b.real / b.meta))[0];
+  // Oportunidade: closest to meta from below (smallest positive gap)
+  const oportunidade = [...belowMeta].sort((a, b) => (a.gap ?? 99) - (b.gap ?? 99))[0];
+
+  const insights: {
+    tipo: string; cor: string; bgCor: string; icon: React.ElementType;
+    titulo: string; descricao: string;
+  }[] = [];
+
+  if (!loading && gargalo) {
+    insights.push({
+      tipo: "Gargalo principal",
+      cor: "#f87171",
+      bgCor: "#dc262612",
+      icon: AlertTriangle,
+      titulo: gargalo.name,
+      descricao: `Conversão de ${gargalo.real.toFixed(1)}% (${Math.abs(gargalo.gap ?? 0).toFixed(1)} p.p. abaixo da meta de ${gargalo.meta}%).`,
+    });
+  }
+  if (!loading && critico && critico !== gargalo) {
+    insights.push({
+      tipo: "Ponto crítico",
+      cor: "#fb923c",
+      bgCor: "#ea580c12",
+      icon: TrendingDown,
+      titulo: critico.name,
+      descricao: `Taxa de ${critico.real.toFixed(1)}% representa ${((critico.real / critico.meta) * 100).toFixed(0)}% da meta de ${critico.meta}%.`,
+    });
+  }
+  if (!loading && oportunidade && oportunidade !== gargalo) {
+    insights.push({
+      tipo: "Oportunidade",
+      cor: "#fbbf24",
+      bgCor: "#d9770612",
+      icon: Lightbulb,
+      titulo: oportunidade.name,
+      descricao: `${oportunidade.real.toFixed(1)}% dos leads avançam. Estamos a ${(oportunidade.gap ?? 0).toFixed(1)} p.p. da meta de ${oportunidade.meta}%.`,
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-3 h-full">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          Principais Insights
+        </span>
+      </div>
+
+      {loading ? (
+        Array.from({ length: 3 }).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-xl border border-border/40 p-4 animate-pulse"
+            style={{ background: 'hsl(var(--card)/0.4)', height: 100 }}
+          />
+        ))
+      ) : insights.length === 0 ? (
+        <div className="rounded-xl border border-border/30 p-4 text-center" style={{ background: 'hsl(var(--card)/0.3)' }}>
+          <p className="text-xs text-muted-foreground">Sem dados suficientes para gerar insights.</p>
+        </div>
+      ) : (
+        insights.map((ins) => {
+          const Icon = ins.icon;
+          return (
+            <div
+              key={ins.tipo}
+              className="rounded-xl border p-4 flex flex-col gap-1.5"
+              style={{
+                background: ins.bgCor,
+                borderColor: `${ins.cor}40`,
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: `${ins.cor}20` }}
+                >
+                  <Icon style={{ width: 14, height: 14, color: ins.cor }} />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: ins.cor }}>
+                  {ins.tipo}
+                </span>
+              </div>
+              <p className="text-sm font-semibold text-foreground leading-tight">{ins.titulo}</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">{ins.descricao}</p>
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+}
+
+// ── KPI progress card ─────────────────────────────────────────────────────
+function KpiCard({
+  label, val, icon: Icon, metaText, ratePct, loading, animDelay,
+}: {
+  label: string; val: number; icon: React.ElementType;
+  metaText: string; ratePct: number; loading: boolean; animDelay: number;
+}) {
+  const barColor = getBarColor(ratePct, 100);
+  const displayPct = Math.min(Math.max(ratePct, 0), 100);
+
+  return (
+    <div
+      className="glass-card !p-4 flex flex-col gap-2"
+      style={{
+        animation: `funilKpiIn 0.35s ease both`,
+        animationDelay: `${animDelay}ms`,
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[9.5px] font-bold uppercase tracking-widest text-muted-foreground leading-tight">{label}</span>
+        <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: 'hsl(var(--primary)/0.5)' }} />
+      </div>
+      <p className="text-[28px] font-black leading-none text-foreground">
+        {loading ? <span className="text-muted-foreground/30">—</span> : val}
+      </p>
+      <p className="text-[10px] text-muted-foreground/60">{metaText}</p>
+      {/* Progress bar */}
+      <div className="h-1 rounded-full bg-muted/30 overflow-hidden">
+        <div
+          style={{
+            height: '100%',
+            width: loading ? '0%' : `${displayPct}%`,
+            background: barColor,
+            borderRadius: 9999,
+            transition: 'width 0.8s cubic-bezier(0.22,1,0.36,1)',
+            animation: loading ? undefined : `barGrow 0.8s cubic-bezier(0.22,1,0.36,1) both ${animDelay + 120}ms`,
+          }}
+        />
+      </div>
+      <p className="text-[10px] font-semibold" style={{ color: loading ? '#6b7280' : barColor }}>
+        {loading ? '—' : `${ratePct.toFixed(1)}%`}
+      </p>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────
 export default function FunilXPTO() {
   const [searchParams, setSearchParams] = useSearchParams();
   const aba: "funil" | "sdr" = searchParams.get("tab") === "sdr" ? "sdr" : "funil";
@@ -255,6 +471,7 @@ export default function FunilXPTO() {
       return next;
     }, { replace: true });
   }
+
   const [funisSel, setFunisSel] = useState<string[]>([]);
   const [periodo, setPeriodo] = useState<"hoje" | "semana" | "mes" | "personalizado">("mes");
   const [customStart, setCustomStart] = useState(getMesInicio());
@@ -312,6 +529,7 @@ export default function FunilXPTO() {
     setFunisSel(prev => prev.includes(funil) ? prev.filter(f => f !== funil) : [...prev, funil]);
   }
 
+  // ── Data fetching (unchanged from 9088d0b) ──────────────────────────────
   async function fetchData() {
     setLoading(true);
     let leadsQuery = supabase.from("leads_diarios_por_funil").select("total_leads, total_leads_pagos").gte("data", start).lte("data", end);
@@ -349,21 +567,22 @@ export default function FunilXPTO() {
 
   useEffect(() => { fetchData(); }, [funisSel, periodo, customStart, customEnd, campanhasSel, origensSel]);
 
+  // ── Derived state (formulas unchanged from 9088d0b) ─────────────────────
   const etapas = [
-    { label: "Leads recebidos", val: data.leads, pctDeTopo: 100 },
-    { label: "MQL — qualificados", val: data.mql, pctDeTopo: pct(data.mql, data.leads) },
-    { label: "Reuniões agendadas", val: data.reunioesAgendadas, pctDeTopo: pct(data.reunioesAgendadas, data.leads) },
-    { label: "Reuniões realizadas", val: data.reunioesRealizadas, pctDeTopo: pct(data.reunioesRealizadas, data.leads) },
-    { label: "Propostas enviadas", val: data.propostas, pctDeTopo: pct(data.propostas, data.leads) },
-    { label: "Fechados", val: data.fechados, pctDeTopo: pct(data.fechados, data.leads) },
+    { label: "Leads recebidos",     val: data.leads,               pctDeTopo: data.leads > 0 ? 100 : 0 },
+    { label: "MQL qualificados",    val: data.mql,                 pctDeTopo: pct(data.mql, data.leads) },
+    { label: "Reuniões agendadas",  val: data.reunioesAgendadas,   pctDeTopo: pct(data.reunioesAgendadas, data.leads) },
+    { label: "Reuniões realizadas", val: data.reunioesRealizadas,  pctDeTopo: pct(data.reunioesRealizadas, data.leads) },
+    { label: "Propostas enviadas",  val: data.propostas,           pctDeTopo: pct(data.propostas, data.leads) },
+    { label: "Fechados",            val: data.fechados,            pctDeTopo: pct(data.fechados, data.leads) },
   ];
 
   const conversoes = [
-    { real: pct(data.mql, data.leads), meta: METAS.leads_para_mql, label: "qualificados" },
-    { real: pct(data.reunioesAgendadas, data.mql), meta: METAS.mql_para_reuniao, label: "agendaram" },
-    { real: pct(data.reunioesRealizadas, data.reunioesAgendadas), meta: METAS.reuniao_para_show, label: "compareceram" },
-    { real: pct(data.propostas, data.reunioesRealizadas), meta: METAS.show_para_proposta, label: "receberam proposta" },
-    { real: pct(data.fechados, data.propostas), meta: METAS.proposta_para_fechado, label: "fecharam" },
+    { real: pct(data.mql, data.leads),                              meta: METAS.leads_para_mql,        label: "qualificados" },
+    { real: pct(data.reunioesAgendadas, data.mql),                  meta: METAS.mql_para_reuniao,      label: "agendaram" },
+    { real: pct(data.reunioesRealizadas, data.reunioesAgendadas),   meta: METAS.reuniao_para_show,     label: "compareceram" },
+    { real: pct(data.propostas, data.reunioesRealizadas),           meta: METAS.show_para_proposta,    label: "receberam proposta" },
+    { real: pct(data.fechados, data.propostas),                     meta: METAS.proposta_para_fechado, label: "fecharam" },
   ];
 
   const aiPayload = {
@@ -385,34 +604,94 @@ export default function FunilXPTO() {
     cac: totalCustosAds > 0 ? `R$ ${cac.toFixed(0)}` : "sem dados de custo",
   };
 
+  void corPrincipal;
+
+  // KPI cards — progress % relative to each stage's conversion meta
+  const kpiDefs = [
+    {
+      label: "Leads Recebidos",    val: data.leads,               icon: Users,
+      metaText: "Meta: 300/mês",
+      ratePct: Math.min(pct(data.leads, 300), 100),
+    },
+    {
+      label: "MQL Qualificados",   val: data.mql,                 icon: UserCheck,
+      metaText: `Meta: ${METAS.leads_para_mql}% leads`,
+      ratePct: Math.min(pct(data.mql, data.leads), 100),
+    },
+    {
+      label: "Reuniões Agendadas", val: data.reunioesAgendadas,   icon: CalendarCheck,
+      metaText: `Meta: ${METAS.mql_para_reuniao}% MQL`,
+      ratePct: Math.min(pct(data.reunioesAgendadas, data.mql), 100),
+    },
+    {
+      label: "Reuniões Realizadas",val: data.reunioesRealizadas,  icon: Users2,
+      metaText: `Meta: ${METAS.reuniao_para_show}% agend.`,
+      ratePct: Math.min(pct(data.reunioesRealizadas, data.reunioesAgendadas), 100),
+    },
+    {
+      label: "Propostas Enviadas", val: data.propostas,           icon: FileText,
+      metaText: `Meta: ${METAS.show_para_proposta}% reun.`,
+      ratePct: Math.min(pct(data.propostas, data.reunioesRealizadas), 100),
+    },
+    {
+      label: "Vendas Fechadas",    val: data.fechados,            icon: TrendingUp,
+      metaText: `Meta: ${METAS.proposta_para_fechado}% prop.`,
+      ratePct: Math.min(pct(data.fechados, data.propostas), 100),
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+    <div className="space-y-5">
+      {/* ── Page header ── */}
+      <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-display font-bold text-2xl uppercase tracking-wide">Funil XPTO</h1>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest mt-0.5">{periodoLabel} · {funilLabel}</p>
+          <h1 className="font-display font-bold text-2xl">Funil Comercial</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Acompanhe a evolução dos leads e identifique onde estão as maiores oportunidades.
+          </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="inline-flex bg-muted/30 border border-border rounded-full p-1 mr-1">
-            <button onClick={() => setAba("funil")} className={cn("text-xs font-semibold uppercase tracking-wide px-3.5 py-1.5 rounded-full transition-all", aba === "funil" ? "bg-primary text-white shadow-[0_0_14px_-2px_hsl(var(--primary)/0.5)]" : "text-muted-foreground")}>Funil</button>
-            <button onClick={() => setAba("sdr")} className={cn("text-xs font-semibold uppercase tracking-wide px-3.5 py-1.5 rounded-full transition-all", aba === "sdr" ? "bg-primary text-white shadow-[0_0_14px_-2px_hsl(var(--primary)/0.5)]" : "text-muted-foreground")}>SDR</button>
+          {/* Funil / SDR tab */}
+          <div className="inline-flex bg-muted/30 border border-border rounded-full p-1">
+            <button
+              onClick={() => setAba("funil")}
+              className={cn("text-xs font-semibold uppercase tracking-wide px-3.5 py-1.5 rounded-full transition-all", aba === "funil" ? "bg-primary text-white shadow-[0_0_14px_-2px_hsl(var(--primary)/0.5)]" : "text-muted-foreground")}
+            >Funil</button>
+            <button
+              onClick={() => setAba("sdr")}
+              className={cn("text-xs font-semibold uppercase tracking-wide px-3.5 py-1.5 rounded-full transition-all", aba === "sdr" ? "bg-primary text-white shadow-[0_0_14px_-2px_hsl(var(--primary)/0.5)]" : "text-muted-foreground")}
+            >SDR</button>
           </div>
-          <button onClick={() => setFunisSel([])} className={cn("text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border transition-all", todosSelecionados ? "text-white bg-primary border-primary" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40")}>Todos</button>
+          {/* Funil selector chips */}
+          <button
+            onClick={() => setFunisSel([])}
+            className={cn("text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border transition-all", todosSelecionados ? "text-white bg-primary border-primary" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40")}
+          >Todos</button>
           {FUNIS_XPTO.map((f) => {
-            const selecionado = funisSel.includes(f);
+            const sel = funisSel.includes(f);
             return (
-              <button key={f} onClick={() => toggleFunil(f)} className={cn("text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border transition-all", selecionado ? "text-white border-transparent" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40")} style={selecionado ? { background: FUNIL_CORES[f], borderColor: FUNIL_CORES[f] } : {}}>{f}</button>
+              <button
+                key={f}
+                onClick={() => toggleFunil(f)}
+                className={cn("text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border transition-all", sel ? "text-white border-transparent" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40")}
+                style={sel ? { background: FUNIL_CORES[f], borderColor: FUNIL_CORES[f] } : {}}
+              >{f}</button>
             );
           })}
+          {/* Filter drawer */}
           <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
             <SheetTrigger asChild>
               <button className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border border-border bg-muted/30 text-muted-foreground hover:border-primary/40 transition-all">
                 <Filter className="h-3 w-3" />Filtros
-                {activeFilters > 0 && <span className="bg-primary text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{activeFilters}</span>}
+                {activeFilters > 0 && (
+                  <span className="bg-primary text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{activeFilters}</span>
+                )}
               </button>
             </SheetTrigger>
             <SheetContent side="right" className="w-80 bg-background border-border">
-              <SheetHeader><SheetTitle className="font-display uppercase tracking-widest text-sm">Filtros</SheetTitle></SheetHeader>
+              <SheetHeader>
+                <SheetTitle className="font-display uppercase tracking-widest text-sm">Filtros</SheetTitle>
+              </SheetHeader>
               <div className="mt-6 space-y-6">
                 <div>
                   <label className="text-xs uppercase tracking-widest text-muted-foreground mb-2 block">Período</label>
@@ -454,58 +733,75 @@ export default function FunilXPTO() {
       </div>
 
       {aba === "sdr" ? (
-        <PerformanceSDR funil={todosSelecionados ? undefined : funisSel[0]} periodoStart={new Date(start + "T00:00:00")} periodoEnd={new Date(end + "T23:59:59")} />
+        <PerformanceSDR
+          funil={todosSelecionados ? undefined : funisSel[0]}
+          periodoStart={new Date(start + "T00:00:00")}
+          periodoEnd={new Date(end + "T23:59:59")}
+        />
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: "Total de leads", val: loading ? "—" : String(data.leads), sub: "Meta: 300/mês", color: "text-primary" },
-              { label: "Taxa de fechamento", val: loading ? "—" : `${pct(data.fechados, data.leads).toFixed(1)}%`, sub: "Meta: 10%", color: "text-foreground" },
-              { label: "CPL", val: loading ? "—" : totalCustosAds === 0 ? "R$ —" : `R$ ${cpl.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`, sub: loading ? "" : totalCustosAds === 0 ? "Cadastre custos" : `${data.leadsPagos} leads via Ads`, color: "text-amber-400" },
-              { label: "CAC", val: loading ? "—" : totalCustosAds === 0 ? "R$ —" : `R$ ${cac.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`, sub: loading ? "" : totalCustosAds === 0 ? "Cadastre custos" : "Custo por Aquisição", color: "text-amber-400" },
-            ].map((k) => (
-              <GlassCard key={k.label}>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">{k.label}</div>
-                <div className={cn("text-2xl font-bold leading-none", k.color)}>{k.val}</div>
-                <div className="text-[11px] text-emerald-500/80 mt-1.5 font-medium">{k.sub}</div>
-              </GlassCard>
+          {/* ── KPI row ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {kpiDefs.map((k, i) => (
+              <KpiCard
+                key={k.label}
+                label={k.label}
+                val={k.val}
+                icon={k.icon}
+                metaText={k.metaText}
+                ratePct={k.ratePct}
+                loading={loading}
+                animDelay={i * 50}
+              />
             ))}
           </div>
 
-          <GlassCard>
-            {/* Header do card — só título, sem o botão IA aqui */}
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Funil de conversão — {funilLabel}
-              </h3>
+          {/* ── CPL / CAC compact ── */}
+          {totalCustosAds > 0 && (
+            <div className="flex gap-3 flex-wrap">
+              {[
+                { label: "CPL", val: `R$ ${cpl.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`, sub: `${data.leadsPagos} leads via Ads` },
+                { label: "CAC", val: `R$ ${cac.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`, sub: "Custo por aquisição" },
+              ].map((k) => (
+                <div
+                  key={k.label}
+                  className="glass-card !px-4 !py-2.5 flex items-center gap-3"
+                >
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{k.label}</span>
+                  <span className="text-base font-bold text-amber-400">{loading ? "—" : k.val}</span>
+                  <span className="text-[10px] text-muted-foreground/50 hidden sm:inline">{k.sub}</span>
+                </div>
+              ))}
             </div>
+          )}
 
-            <TrapezioFunil
-              etapas={etapas}
-              conversoes={conversoes}
-              loading={loading}
-              corBase={corPrincipal}
-              data={data}
-            />
+          {/* ── Main area: funil + insights ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_288px] gap-4">
+            {/* Funil card */}
+            <GlassCard>
+              <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Funil de Conversão — {funilLabel}
+                </h3>
+                <span className="text-[9px] text-muted-foreground/50 uppercase tracking-widest">{periodoLabel}</span>
+              </div>
 
-            {/* Legenda de status */}
-            <div className="flex items-center gap-4 mt-6 justify-center flex-wrap">
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />acima da meta
+              <FunilHorizontal
+                etapas={etapas}
+                conversoes={conversoes}
+                loading={loading}
+              />
+
+              <div className="mt-6 pt-5 border-t border-border/30">
+                <AIAnalysisButton section="Funil Comercial" dataPayload={aiPayload} />
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />próximo da meta
-              </div>
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-500" />abaixo da meta
-              </div>
+            </GlassCard>
+
+            {/* Insights panel */}
+            <div className="glass-card !p-5">
+              <InsightsPanel conversoes={conversoes} loading={loading} />
             </div>
-
-            {/* Botão IA fora do flex header — expande corretamente */}
-            <div className="mt-6 pt-5 border-t border-border/40">
-              <AIAnalysisButton section="Funil XPTO" dataPayload={aiPayload} />
-            </div>
-          </GlassCard>
+          </div>
         </>
       )}
     </div>

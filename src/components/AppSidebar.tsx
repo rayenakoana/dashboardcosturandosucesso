@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import {
   BarChart3, GitMerge, Map, ShoppingCart, TrendingUp,
   Radio, Target, DollarSign, Settings, Users,
@@ -238,12 +238,52 @@ export function AppSidebar() {
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [isCollapsed, setIsCollapsed] = useState(() => readLS("cs-dash-sidebar-collapsed", false));
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     readLSObj("cs-dash-nav-groups", { comercial: true, marketing: true, gestao: true, sistema: true })
   );
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" && window.innerWidth < 768
+  );
+
+  // Mobile detection — auto-collapse on mount and on resize
+  useEffect(() => {
+    const update = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) setIsCollapsed(true);
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  // Auto-close sidebar on navigation when mobile
+  useEffect(() => {
+    if (isMobile) setIsCollapsed(true);
+  }, [location.pathname, location.search]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Listen for open event fired by Topbar hamburger
+  const handleOpenEvent = useCallback(() => {
+    if (window.innerWidth < 768) setIsCollapsed(false);
+  }, []);
+  useEffect(() => {
+    window.addEventListener("cs-sidebar:open", handleOpenEvent);
+    return () => window.removeEventListener("cs-sidebar:open", handleOpenEvent);
+  }, [handleOpenEvent]);
+
+  // Escape key closes sidebar on mobile
+  useEffect(() => {
+    if (!isMobile) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isCollapsed) setIsCollapsed(true);
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [isMobile, isCollapsed]);
 
   useEffect(() => {
     const handler = () => setIsFullscreen(!!document.fullscreenElement);
@@ -284,13 +324,30 @@ export function AppSidebar() {
   })).filter((g) => g.items.length > 0);
 
   const userInitials = user?.email?.slice(0, 2).toUpperCase() ?? "??";
+  const userAvatarUrl: string | null =
+    user
+      ? (() => { try { return localStorage.getItem("avatar_" + user.id); } catch { return null; } })()
+        ?? user.user_metadata?.avatar_url
+        ?? null
+      : null;
 
   return (
+    <>
+    {/* Mobile backdrop */}
+    {isMobile && !isCollapsed && (
+      <div
+        className="fixed inset-0 z-40 bg-black/60"
+        onClick={() => setIsCollapsed(true)}
+        aria-hidden="true"
+      />
+    )}
     <aside
       className={cn(
-        "flex flex-col shrink-0 border-r border-sidebar-border bg-sidebar h-screen sticky top-0 overflow-hidden z-30",
+        "flex flex-col shrink-0 border-r border-sidebar-border bg-sidebar h-screen overflow-hidden",
         "sidebar-transition",
-        isCollapsed ? "w-[52px]" : "w-[220px]"
+        isMobile
+          ? cn("fixed top-0 left-0 z-50 w-[220px]", isCollapsed ? "-translate-x-full" : "translate-x-0")
+          : cn("sticky top-0 z-30", isCollapsed ? "w-[52px]" : "w-[220px]")
       )}
     >
       {/* ── Header ── */}
@@ -412,24 +469,40 @@ export function AppSidebar() {
           <div className={cn("flex items-center rounded-md px-1.5 py-1.5 gap-2", isCollapsed && "justify-center px-0")}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary shrink-0 cursor-default select-none">
-                  {userInitials}
-                </div>
+                <Link
+                  to="/admin/perfil"
+                  className="shrink-0"
+                  aria-label="Meu perfil"
+                >
+                  {userAvatarUrl ? (
+                    <img
+                      src={userAvatarUrl}
+                      alt="Avatar"
+                      className="w-6 h-6 rounded-full object-cover border border-border"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary cursor-pointer select-none">
+                      {userInitials}
+                    </div>
+                  )}
+                </Link>
               </TooltipTrigger>
               {isCollapsed && (
                 <TooltipContent side="right" sideOffset={10}>
-                  {user.email}
+                  {user.user_metadata?.full_name || user.email}
                 </TooltipContent>
               )}
             </Tooltip>
 
             {!isCollapsed && (
               <>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[11px] font-medium text-sidebar-foreground truncate">{user.email}</div>
-                </div>
+                <Link to="/admin/perfil" className="flex-1 min-w-0 hover:opacity-80 transition-opacity">
+                  <div className="text-[11px] font-medium text-sidebar-foreground truncate">
+                    {user.user_metadata?.full_name || user.email}
+                  </div>
+                </Link>
                 <button
-                  onClick={handleSignOut}
+                  onClick={(e) => { e.stopPropagation(); void handleSignOut(); }}
                   aria-label="Sair"
                   className="p-1 rounded-md text-muted-foreground/50 hover:text-destructive transition-colors shrink-0"
                 >
@@ -452,5 +525,6 @@ export function AppSidebar() {
         )}
       </div>
     </aside>
+    </>
   );
 }

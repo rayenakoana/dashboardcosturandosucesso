@@ -1,5 +1,5 @@
 import { useLocation } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ── Route metadata ────────────────────────────────────────────────────────────
@@ -39,6 +39,14 @@ export function Topbar() {
         "bg-background/80 backdrop-blur-sm sticky top-0 z-20"
       )}
     >
+      {/* Hamburger — mobile only */}
+      <button
+        className="md:hidden mr-2 p-1.5 rounded-md text-muted-foreground hover:bg-muted/30 transition-colors shrink-0"
+        aria-label="Abrir menu de navegação"
+        onClick={() => window.dispatchEvent(new CustomEvent("cs-sidebar:open"))}
+      >
+        <Menu className="h-4 w-4" />
+      </button>
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1 text-xs text-muted-foreground/70 min-w-0" aria-label="Breadcrumb">
         <span className="shrink-0 font-medium text-muted-foreground/40 hidden sm:block">CS Dash</span>
