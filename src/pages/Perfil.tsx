@@ -44,14 +44,20 @@ export default function Perfil() {
       setAvatarFeedback({ ok: false, msg: "Arquivo muito grande. Máximo 2 MB." });
       return;
     }
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    const SAFE_EXT: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png":  "png",
+      "image/webp": "webp",
+    };
+    if (!SAFE_EXT[file.type]) {
       setAvatarFeedback({ ok: false, msg: "Formato inválido. Use JPG, PNG ou WebP." });
       return;
     }
 
     setUploadingAvatar(true);
     setAvatarFeedback(null);
-    const ext = file.name.split(".").pop();
+    // Extension derived from MIME type (not filename) to prevent path manipulation
+    const ext = SAFE_EXT[file.type];
     const path = `avatars/${user.id}.${ext}`;
     const { error: uploadError } = await supabase.storage
       .from("profiles")
