@@ -10,6 +10,7 @@ import {
   Filter, Users, UserCheck, CalendarCheck, Users2, FileText, TrendingUp,
   AlertTriangle, TrendingDown, Lightbulb,
 } from "lucide-react";
+import { FunilSVGCore } from "@/components/FunilSVGCore";
 import { cn } from "@/lib/utils";
 import { PIPELINE_IDS, FUNIL_CORES } from "@/lib/funis";
 import { PerformanceSDR } from "@/components/PerformanceSDR";
@@ -85,10 +86,6 @@ function injectStyles() {
   const s = document.createElement("style");
   s.id = ANIM_ID;
   s.textContent = `
-    @keyframes funilStageIn {
-      from { opacity:0; clip-path: inset(0 8% 0 0); }
-      to   { opacity:1; clip-path: inset(0 0 0 0); }
-    }
     @keyframes funilBadgeIn {
       from { opacity:0; transform:translateY(10px); }
       to   { opacity:1; transform:translateY(0); }
@@ -102,89 +99,6 @@ function injectStyles() {
     }
   `;
   document.head.appendChild(s);
-}
-
-// ── Funnel stage icons ────────────────────────────────────────────────────
-const STAGE_ICONS = [Users, UserCheck, CalendarCheck, Users2, FileText, TrendingUp];
-
-// Diagonal notch: 22px — clearly visible chevron connection without harsh cuts
-const D = 22;
-
-// Premium color progression: bright crimson → deep maroon
-const STAGE_BG = [
-  "linear-gradient(150deg, hsl(351 88% 46%) 0%, hsl(351 86% 39%) 100%)",
-  "linear-gradient(150deg, hsl(351 85% 35%) 0%, hsl(351 82% 28%) 100%)",
-  "linear-gradient(150deg, hsl(351 82% 24%) 0%, hsl(351 80% 19%) 100%)",
-  "linear-gradient(150deg, hsl(351 80% 18%) 0%, hsl(351 78% 14%) 100%)",
-  "linear-gradient(150deg, hsl(351 78% 13%) 0%, hsl(351 75% 10%) 100%)",
-  "linear-gradient(150deg, hsl(351 76% 10%) 0%, hsl(351 72%  7%) 100%)",
-];
-
-// One chevron/parallelogram stage — extracted so useCountUp runs at component top level
-function ChevronStage({
-  etapa, index, total, animated, loading,
-}: {
-  etapa: { label: string; val: number; pctDeTopo: number };
-  index: number; total: number; animated: boolean; loading: boolean;
-}) {
-  const displayVal = useCountUp(etapa.val, 650, animated);
-  const Icon = STAGE_ICONS[index];
-  const isFirst = index === 0;
-  const isLast  = index === total - 1;
-
-  // Chevron clip-path: subtle 13px diagonal notch
-  const clipPath = isFirst
-    ? `polygon(0 0, calc(100% - ${D}px) 0, 100% 50%, calc(100% - ${D}px) 100%, 0 100%)`
-    : isLast
-    ? `polygon(${D}px 0, 100% 0, 100% 100%, ${D}px 100%, 0 50%)`
-    : `polygon(${D}px 0, calc(100% - ${D}px) 0, 100% 50%, calc(100% - ${D}px) 100%, ${D}px 100%, 0 50%)`;
-
-  return (
-    <div
-      className="flex-1 flex flex-col items-center justify-center text-white select-none"
-      style={{
-        clipPath,
-        marginLeft: index > 0 ? -D : 0,
-        zIndex: total - index,
-        background: STAGE_BG[index] ?? STAGE_BG[STAGE_BG.length - 1],
-        paddingLeft:  isFirst ? 16 : D + 10,
-        paddingRight: isLast  ? 16 : D + 10,
-        minHeight: 188,
-        position: 'relative',
-        ...(animated ? {
-          animation: `funilStageIn 0.48s cubic-bezier(0.22,1,0.36,1) both`,
-          animationDelay: `${index * 60}ms`,
-        } : { opacity: 0 }),
-      }}
-    >
-      {/* Subtle highlight edge at top */}
-      <div style={{
-        position: 'absolute', top: 0,
-        left: isFirst ? 0 : D + 2,
-        right: isLast ? 0 : D + 2,
-        height: 1,
-        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
-      }} />
-
-      <Icon className="w-5 h-5 mb-2 shrink-0" style={{ opacity: 0.5 }} />
-
-      <div style={{ fontSize: 38, fontWeight: 900, lineHeight: 1, textAlign: 'center' }}>
-        {loading ? <span style={{ opacity: 0.25 }}>—</span> : displayVal}
-      </div>
-
-      <div style={{
-        fontSize: 10, fontWeight: 600, textAlign: 'center',
-        marginTop: 6, opacity: 0.65, lineHeight: 1.3,
-        maxWidth: 100, paddingLeft: 4, paddingRight: 4,
-      }}>
-        {etapa.label}
-      </div>
-
-      <div style={{ fontSize: 13, fontWeight: 700, marginTop: 8, opacity: 0.85 }}>
-        {index === 0 ? '100%' : `${etapa.pctDeTopo.toFixed(1)}%`}
-      </div>
-    </div>
-  );
 }
 
 // ── Conversion badge ──────────────────────────────────────────────────────
@@ -234,6 +148,8 @@ function ConvBadge({
 }
 
 // ── Horizontal funnel + badges ────────────────────────────────────────────
+const SHORT_LABELS = ["Leads", "MQL", "Agend.", "Reuniões", "Propostas", "Vendas"];
+
 function FunilHorizontal({
   etapas, conversoes, loading,
 }: {
@@ -255,37 +171,39 @@ function FunilHorizontal({
     }
   }, [loading]);
 
+  const stages = etapas.map((e, i) => ({
+    label: e.label,
+    shortLabel: SHORT_LABELS[i] ?? e.label,
+    val: e.val,
+    pctDeTopo: e.pctDeTopo,
+  }));
+
+  const prefersReduced =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   return (
     <div>
-      {/* Chevron stages */}
-      <div className="overflow-x-auto">
-        <div className="flex items-stretch" style={{ minWidth: 580 }}>
-          {etapas.map((etapa, i) => (
-            <ChevronStage
-              key={i}
-              etapa={etapa}
-              index={i}
-              total={n}
-              animated={animated}
-              loading={loading}
-            />
-          ))}
-        </div>
-      </div>
+      {/* True SVG dynamic funnel */}
+      <FunilSVGCore
+        stages={stages}
+        loading={loading}
+        reduceMotion={prefersReduced || !animated}
+      />
 
       {/* Conversion badges — positioned at each stage boundary */}
-      <div className="overflow-x-hidden relative" style={{ minWidth: 580, marginTop: 16 }}>
+      <div className="overflow-x-hidden relative" style={{ marginTop: 16 }}>
         {/* Dotted connector line */}
         <div style={{
           position: 'absolute',
-          top: 3, // aligns with badge dot center
+          top: 3,
           left: `${(1 / n) * 100}%`,
           right: `${(1 / n) * 100}%`,
           borderTop: '1px dashed rgba(120,130,150,0.25)',
           pointerEvents: 'none',
         }} />
 
-        <div style={{ position: 'relative', height: 78, minWidth: 580 }}>
+        <div style={{ position: 'relative', height: 78 }}>
           {conversoes.map((conv, i) => {
             const leftPct = ((i + 1) / n) * 100;
             return (

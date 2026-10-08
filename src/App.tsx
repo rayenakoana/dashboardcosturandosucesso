@@ -24,6 +24,7 @@ import Usuarios from "./pages/admin/Usuarios";
 import NotFound from "./pages/NotFound";
 import MarketingDashboard from "./pages/MarketingDashboard";
 import Perfil from "./pages/Perfil";
+import FunilDemo from "./pages/FunilDemo";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ function Shell() {
             {/* Públicas */}
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/funil-xpto" element={<FunilXPTO />} />
+            <Route path="/funil-demo" element={<FunilDemo />} />
             <Route path="/mapa" element={<MapaGeografico />} />
             <Route path="/marketing" element={<MarketingDashboard />} />
 
