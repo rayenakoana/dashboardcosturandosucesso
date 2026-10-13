@@ -15,7 +15,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createHandler } from "./handler.ts";
 
-const N8N_TIMEOUT_MS = parseInt(Deno.env.get("N8N_TIMEOUT_MS") ?? "10000", 10);
+function getValidTimeout(raw: string | undefined, fallback = 10_000): number {
+  const parsed = parseInt(raw ?? "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+const N8N_TIMEOUT_MS = getValidTimeout(Deno.env.get("N8N_TIMEOUT_MS"));
 
 const handler = createHandler({
   getEnv: (key) => Deno.env.get(key),

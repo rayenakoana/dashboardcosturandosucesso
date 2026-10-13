@@ -19,6 +19,8 @@ const CORS_HEADERS = {
 };
 
 const BODY_LIMIT_BYTES = 4 * 1024;
+// 1 KB é suficiente para {"sucesso":true} — limita materialização da resposta do n8n.
+const N8N_RESPONSE_LIMIT_BYTES = 1024;
 const SENHA_MIN_LENGTH = 8;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -29,10 +31,17 @@ function errResp(msg: string, status: number): Response {
   );
 }
 
-async function readBodyWithLimit(req: Request, limit: number): Promise<ArrayBuffer | null> {
-  const reader = req.body?.getReader();
-  if (!reader) return new ArrayBuffer(0);
+// Lê um ReadableStream byte a byte até `limit`. Retorna:
+//   ArrayBuffer  — leitura completa dentro do limite
+//   null         — stream excedeu o limite (cancelado)
+//   "error"      — stream lançou exceção durante a leitura
+async function readStreamWithLimit(
+  stream: ReadableStream<Uint8Array> | null | undefined,
+  limit: number,
+): Promise<ArrayBuffer | null | "error"> {
+  if (!stream) return new ArrayBuffer(0);
 
+  const reader = stream.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
 
@@ -42,11 +51,13 @@ async function readBodyWithLimit(req: Request, limit: number): Promise<ArrayBuff
       if (done) break;
       total += value.byteLength;
       if (total > limit) {
-        await reader.cancel();
+        reader.cancel().catch(() => {});
         return null;
       }
       chunks.push(value);
     }
+  } catch {
+    return "error";
   } finally {
     reader.releaseLock();
   }
@@ -76,7 +87,16 @@ export function createHandler(deps: HandlerDeps) {
     }
     const token = authHeader.slice(7);
 
-    const { user, error: authError } = await deps.getUser(token);
+    let getUserResult: { user: { id: string; app_metadata?: Record<string, unknown> } | null; error: Error | null };
+    try {
+      getUserResult = await deps.getUser(token);
+    } catch {
+      // Falha de infraestrutura (rede, TLS, timeout do cliente Supabase) —
+      // distinta de token inválido: não é culpa do chamador.
+      console.error("[admin-criar-usuario] deps.getUser lançou exceção");
+      return errResp("Serviço de autenticação indisponível.", 503);
+    }
+    const { user, error: authError } = getUserResult;
     if (authError || !user) {
       return errResp("Token inválido ou expirado.", 401);
     }
@@ -87,9 +107,12 @@ export function createHandler(deps: HandlerDeps) {
     }
 
     // ── 3. Corpo — limite imposto durante a leitura do stream ─────────────────
-    const bodyBytes = await readBodyWithLimit(req, BODY_LIMIT_BYTES);
+    const bodyBytes = await readStreamWithLimit(req.body, BODY_LIMIT_BYTES);
     if (bodyBytes === null) {
       return errResp("Requisição muito grande.", 413);
+    }
+    if (bodyBytes === "error") {
+      return errResp("Erro ao ler corpo da requisição.", 400);
     }
 
     let body: Record<string, unknown>;
@@ -139,19 +162,45 @@ export function createHandler(deps: HandlerDeps) {
       return errResp(msg, 502);
     }
 
-    // Descarta o corpo do n8n — frontend nunca recebe dados internos do n8n.
-    n8nRes.body?.cancel();
+    // ── 7. Validação da resposta do n8n ───────────────────────────────────────
+    // Erros HTTP do n8n (4xx/5xx): descarta o corpo e normaliza para 422 —
+    // nunca vazamos o status interno (ex: 401 = secret errado).
+    if (!n8nRes.ok) {
+      n8nRes.body?.cancel().catch(() => {});
+      return errResp("Falha ao criar usuário.", 422);
+    }
 
-    const sucesso = n8nRes.ok;
+    // n8n retornou 2xx: lê o corpo com limite e valida o contrato JSON.
+    // Corpo vazio, JSON inválido, sucesso !== true ou body excessivamente grande
+    // são tratados como falha controlada — o frontend nunca recebe dados internos.
+    const n8nBodyBytes = await readStreamWithLimit(n8nRes.body, N8N_RESPONSE_LIMIT_BYTES);
+
+    if (n8nBodyBytes === null || n8nBodyBytes === "error") {
+      console.error("[admin-criar-usuario] corpo da resposta n8n inválido ou excessivamente grande");
+      return errResp("Falha ao criar usuário.", 422);
+    }
+
+    let n8nJson: unknown;
+    try {
+      n8nJson = JSON.parse(new TextDecoder().decode(n8nBodyBytes));
+    } catch {
+      console.error("[admin-criar-usuario] resposta n8n não é JSON válido");
+      return errResp("Falha ao criar usuário.", 422);
+    }
+
+    if (
+      typeof n8nJson !== "object" ||
+      n8nJson === null ||
+      Array.isArray(n8nJson) ||
+      (n8nJson as Record<string, unknown>).sucesso !== true
+    ) {
+      return errResp("Falha ao criar usuário.", 422);
+    }
+
+    // Contrato confirmado — retorna apenas mensagem hardcoded, zero campos do n8n.
     return new Response(
-      JSON.stringify({
-        sucesso,
-        mensagem: sucesso ? "Usuário criado com sucesso." : "Falha ao criar usuário.",
-      }),
-      {
-        status: sucesso ? 200 : (n8nRes.status >= 400 ? n8nRes.status : 500),
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      },
+      JSON.stringify({ sucesso: true, mensagem: "Usuário criado com sucesso." }),
+      { status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
     );
   };
 }

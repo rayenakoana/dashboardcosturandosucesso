@@ -17,13 +17,13 @@ type MockUser = { id: string; app_metadata?: Record<string, unknown> } | null;
 let _mockUser: MockUser = null;
 let _mockAuthError: Error | null = null;
 let _mockN8nUrl: string | null = "https://n8n.default/webhook";
-let _mockN8nResponse: { status: number } | null = null;
+let _mockN8nResponse: { status: number; body?: unknown } | null = null;
 
 function resetMocks(): void {
   _mockUser = { id: "user-1", app_metadata: { role: "admin" } };
   _mockAuthError = null;
   _mockN8nUrl = "https://n8n.default/webhook";
-  _mockN8nResponse = { status: 200 };
+  _mockN8nResponse = { status: 200, body: { sucesso: true } };
 }
 
 // ── Factory do handler com deps mockadas ──────────────────────────────────────
@@ -41,7 +41,10 @@ function makeHandler(): (req: Request) => Promise<Response> {
     }),
     fetchN8n: async (_url, _secret, _email, _senha) => {
       if (!_mockN8nResponse) throw new Error("fetchN8n não configurado");
-      return new Response(null, { status: _mockN8nResponse.status });
+      const bodyStr = _mockN8nResponse.body !== undefined
+        ? JSON.stringify(_mockN8nResponse.body)
+        : null;
+      return new Response(bodyStr, { status: _mockN8nResponse.status });
     },
   };
   return createHandler(deps);
@@ -170,7 +173,7 @@ Deno.test("POST com N8N_ADMIN_URL http:// retorna 503", async () => {
 
 Deno.test("POST válido com n8n OK retorna sucesso", async () => {
   resetMocks();
-  _mockN8nResponse = { status: 200 };
+  _mockN8nResponse = { status: 200, body: { sucesso: true } };
   const handler = makeHandler();
   const req = makeRequest({ body: VALID_BODY });
   const resp = await handler(req);
@@ -182,7 +185,7 @@ Deno.test("POST válido com n8n OK retorna sucesso", async () => {
 
 Deno.test("Resposta de sucesso nunca inclui mensagem interna do n8n", async () => {
   resetMocks();
-  _mockN8nResponse = { status: 200 };
+  _mockN8nResponse = { status: 200, body: { sucesso: true, _internal: "segredo" } };
   const handler = makeHandler();
   const req = makeRequest({ body: VALID_BODY });
   const resp = await handler(req);
@@ -227,7 +230,7 @@ Deno.test("Resposta não expõe N8N_ADMIN_URL", async () => {
 
 Deno.test("Resposta não contém campos extras além de sucesso e mensagem", async () => {
   resetMocks();
-  _mockN8nResponse = { status: 200 };
+  _mockN8nResponse = { status: 200, body: { sucesso: true, extra: "leak", id: 42 } };
   const handler = makeHandler();
   const req = makeRequest({ body: VALID_BODY });
   const resp = await handler(req);
@@ -238,13 +241,130 @@ Deno.test("Resposta não contém campos extras além de sucesso e mensagem", asy
   }
 });
 
-Deno.test("n8n retornando 422 propaga o status", async () => {
+Deno.test("n8n retornando qualquer 4xx/5xx normaliza para 422 ao frontend", async () => {
   resetMocks();
-  _mockN8nResponse = { status: 422 };
+  for (const status of [400, 401, 403, 404, 422, 500, 503]) {
+    _mockN8nResponse = { status };
+    const handler = makeHandler();
+    const req = makeRequest({ body: VALID_BODY });
+    const resp = await handler(req);
+    if (resp.status !== 422) throw new Error(`n8n ${status} → esperava 422, got ${resp.status}`);
+    const data = await resp.json();
+    if (data.sucesso !== false) throw new Error(`n8n ${status}: sucesso deveria ser false`);
+  }
+});
+
+// ── Novos testes para correções pós-revisão ────────────────────────────────────
+
+Deno.test("getUser lançando exceção de infra retorna 503 sem vazar o erro", async () => {
+  resetMocks();
+  const deps: HandlerDeps = {
+    getEnv: (key) => key === "N8N_ADMIN_URL" ? "https://n8n.default/webhook" : key === "N8N_ADMIN_SECRET" ? "secret" : undefined,
+    getUser: async (_token) => { throw new Error("Supabase connection refused"); },
+    fetchN8n: async () => new Response(JSON.stringify({ sucesso: true }), { status: 200 }),
+  };
+  const handler = createHandler(deps);
+  const req = makeRequest({ body: VALID_BODY });
+  const resp = await handler(req);
+  if (resp.status !== 503) throw new Error(`Expected 503, got ${resp.status}`);
+  const text = await resp.text();
+  if (text.includes("Supabase connection refused")) throw new Error("Mensagem interna vazou");
+  if (text.includes("connection")) throw new Error("Detalhe técnico vazou");
+});
+
+Deno.test("fetchN8n lançando AbortError retorna 502 com mensagem de timeout", async () => {
+  resetMocks();
+  const deps: HandlerDeps = {
+    getEnv: (key) => key === "N8N_ADMIN_URL" ? "https://n8n.default/webhook" : key === "N8N_ADMIN_SECRET" ? "secret" : undefined,
+    getUser: async () => ({ user: { id: "u1", app_metadata: { role: "admin" } }, error: null }),
+    fetchN8n: async () => { const e = new Error("aborted"); e.name = "AbortError"; throw e; },
+  };
+  const handler = createHandler(deps);
+  const req = makeRequest({ body: VALID_BODY });
+  const resp = await handler(req);
+  if (resp.status !== 502) throw new Error(`Expected 502, got ${resp.status}`);
+  const data = await resp.json();
+  if (!data.mensagem.includes("Timeout")) throw new Error("Mensagem de timeout ausente");
+});
+
+Deno.test("n8n retornando 204 sem body é falha controlada (contrato JSON obrigatório)", async () => {
+  resetMocks();
+  _mockN8nResponse = { status: 204 }; // sem body — JSON.parse("") lança
   const handler = makeHandler();
   const req = makeRequest({ body: VALID_BODY });
   const resp = await handler(req);
   if (resp.status !== 422) throw new Error(`Expected 422, got ${resp.status}`);
   const data = await resp.json();
   if (data.sucesso !== false) throw new Error("sucesso deveria ser false");
+});
+
+// ── Novos testes — contrato JSON do n8n ──────────────────────────────────────
+
+Deno.test("n8n retorna 200 com sucesso:false → 422 ao frontend", async () => {
+  resetMocks();
+  _mockN8nResponse = { status: 200, body: { sucesso: false, mensagem: "email já existe" } };
+  const handler = makeHandler();
+  const req = makeRequest({ body: VALID_BODY });
+  const resp = await handler(req);
+  if (resp.status !== 422) throw new Error(`Expected 422, got ${resp.status}`);
+  const data = await resp.json();
+  if (data.sucesso !== false) throw new Error("sucesso deveria ser false");
+  if (data.mensagem !== "Falha ao criar usuário.") throw new Error("mensagem interna do n8n vazou");
+});
+
+Deno.test("n8n retorna 200 com body vazio → 422 ao frontend", async () => {
+  resetMocks();
+  _mockN8nResponse = { status: 200 }; // body undefined → Response(null) → stream vazio → JSON.parse("") lança
+  const handler = makeHandler();
+  const req = makeRequest({ body: VALID_BODY });
+  const resp = await handler(req);
+  if (resp.status !== 422) throw new Error(`Expected 422, got ${resp.status}`);
+  const data = await resp.json();
+  if (data.sucesso !== false) throw new Error("sucesso deveria ser false");
+});
+
+Deno.test("n8n retorna 200 com JSON inválido → 422 ao frontend", async () => {
+  resetMocks();
+  const deps: HandlerDeps = {
+    getEnv: (key) => key === "N8N_ADMIN_URL" ? "https://n8n.default/webhook" : key === "N8N_ADMIN_SECRET" ? "secret" : undefined,
+    getUser: async () => ({ user: { id: "u1", app_metadata: { role: "admin" } }, error: null }),
+    fetchN8n: async () => new Response("não é json {{", { status: 200 }),
+  };
+  const handler = createHandler(deps);
+  const req = makeRequest({ body: VALID_BODY });
+  const resp = await handler(req);
+  if (resp.status !== 422) throw new Error(`Expected 422, got ${resp.status}`);
+  const text = await resp.text();
+  if (text.includes("não é json")) throw new Error("corpo bruto do n8n vazou");
+});
+
+Deno.test("n8n retorna 200 com body > 1 KB → 422 ao frontend", async () => {
+  resetMocks();
+  const largeBody = JSON.stringify({ sucesso: true, data: "x".repeat(1100) });
+  const deps: HandlerDeps = {
+    getEnv: (key) => key === "N8N_ADMIN_URL" ? "https://n8n.default/webhook" : key === "N8N_ADMIN_SECRET" ? "secret" : undefined,
+    getUser: async () => ({ user: { id: "u1", app_metadata: { role: "admin" } }, error: null }),
+    fetchN8n: async () => new Response(largeBody, { status: 200 }),
+  };
+  const handler = createHandler(deps);
+  const req = makeRequest({ body: VALID_BODY });
+  const resp = await handler(req);
+  if (resp.status !== 422) throw new Error(`Expected 422, got ${resp.status}`);
+});
+
+Deno.test("n8n retorna 200 com sucesso:true e campos extras → frontend recebe só sucesso e mensagem", async () => {
+  resetMocks();
+  _mockN8nResponse = { status: 200, body: { sucesso: true, userId: "abc", token: "xyz", role: "admin" } };
+  const handler = makeHandler();
+  const req = makeRequest({ body: VALID_BODY });
+  const resp = await handler(req);
+  if (resp.status !== 200) throw new Error(`Expected 200, got ${resp.status}`);
+  const data = await resp.json();
+  const keys = Object.keys(data);
+  for (const k of ["userId", "token", "role"]) {
+    if (keys.includes(k)) throw new Error(`campo interno "${k}" vazou ao frontend`);
+  }
+  if (keys.some((k) => k !== "sucesso" && k !== "mensagem")) {
+    throw new Error(`campos extras na resposta: ${keys.join(", ")}`);
+  }
 });
