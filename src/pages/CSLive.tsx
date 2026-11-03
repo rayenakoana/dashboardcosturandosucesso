@@ -27,10 +27,25 @@ export default function CSLive() {
   };
 
   const now = new Date();
-  const mesRef = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+  // Filtro de período
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
+
+  const mesesDisponiveis = useMemo(() => {
+    const result: { year: number; month: number }[] = [];
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      result.push({ year: d.getFullYear(), month: d.getMonth() + 1 });
+    }
+    return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const mesRef = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}`;
   const monthStart = `${mesRef}-01`;
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-    .toISOString().split("T")[0]; // último dia do mês atual
+  const monthEnd = new Date(selectedYear, selectedMonth, 0)
+    .toISOString().split("T")[0];
 
   const vendasDoMes = useMemo(
     () => vendas.filter(v =>
@@ -86,11 +101,20 @@ export default function CSLive() {
   const [metaHit, setMetaHit] = useState(false);
   const [dinheiro, setDinheiro] = useState<{ id: number; left: number; delay: number; emoji: string }[]>([]);
   const metaJaComemorada = useRef(false);
+  const lastMesRefTracked = useRef<string>("");
 
   useEffect(() => {
-    if (!initialized.current) {
+    const monthChanged = lastMesRefTracked.current !== "" && lastMesRefTracked.current !== mesRef;
+    lastMesRefTracked.current = mesRef;
+
+    if (!initialized.current || monthChanged) {
+      knownIds.current.clear();
       vendasDoMes.forEach(v => knownIds.current.add(v.id));
       initialized.current = true;
+      // Ao trocar de mês, suprime comemoração automática de meta já batida
+      if (monthChanged) {
+        primeiraChecagemMeta.current = true;
+      }
       return;
     }
     const newOnes = vendasDoMes.filter(v => !knownIds.current.has(v.id));
@@ -99,7 +123,7 @@ export default function CSLive() {
       knownIds.current.add(v.id);
       celebrate(Number(v.valor));
     });
-  }, [vendasDoMes]);
+  }, [vendasDoMes, mesRef]);
 
   // Realtime: avisa esta tela sempre que uma venda for inserida/atualizada
   // em QUALQUER dispositivo (não só na aba que fez a alteração).
@@ -323,6 +347,30 @@ export default function CSLive() {
         <ArrowLeft className="h-4 w-4" /> Sair do modo Live
       </Link>
 
+      {/* Seletor de período */}
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
+        <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60">Período</span>
+        <select
+          value={mesRef}
+          onChange={(e) => {
+            const [y, m] = e.target.value.split("-");
+            setSelectedYear(Number(y));
+            setSelectedMonth(Number(m));
+          }}
+          className="bg-card/80 border border-border text-sm rounded-lg px-3 py-1.5 text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          {mesesDisponiveis.map(({ year, month }) => {
+            const val = `${year}-${String(month).padStart(2, "0")}`;
+            const label = new Date(year, month - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+            return (
+              <option key={val} value={val}>
+                {label.charAt(0).toUpperCase() + label.slice(1)}
+              </option>
+            );
+          })}
+        </select>
+      </div>
+
       <button
         onClick={demoTrigger}
         className="absolute top-6 right-6 text-xs px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground z-10"
@@ -375,7 +423,11 @@ export default function CSLive() {
           <div className="flex items-center gap-2">
             <Trophy className="h-5 w-5 text-gold" />
             <span className="font-display text-2xl text-foreground">{totalVendas}</span>
-            <span className="text-sm">vendas no mês</span>
+            <span className="text-sm">
+              {selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1
+                ? "vendas no mês"
+                : `vendas em ${new Date(selectedYear, selectedMonth - 1, 1).toLocaleDateString("pt-BR", { month: "short" })}/${selectedYear}`}
+            </span>
           </div>
           <div className="w-px h-6 bg-border" />
           <div className="flex items-center gap-2">
@@ -389,7 +441,11 @@ export default function CSLive() {
       {/* Meta gauge (bar) */}
       <div className="w-full max-w-4xl z-10">
         <div className="flex justify-between items-baseline mb-3">
-          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Meta do mês</span>
+          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+            {selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1
+              ? "Meta do mês"
+              : `Meta de ${new Date(selectedYear, selectedMonth - 1, 1).toLocaleDateString("pt-BR", { month: "long" })}`}
+          </span>
           <span className="font-display text-lg text-gold">{formatBRL(meta)}</span>
         </div>
         <div className="relative h-6 rounded-full bg-muted/40 border border-border overflow-hidden">
