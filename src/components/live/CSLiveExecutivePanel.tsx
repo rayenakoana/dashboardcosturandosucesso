@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useMetricasDiarias } from "@/hooks/useMetricasDiarias";
 import { FUNIL_CORES, PIPELINE_IDS } from "@/lib/funis";
+import { distribuirOrigens } from "@/lib/origensLeads";
 import "@/styles/csLiveExecutiveV2.css";
 import "@/styles/csLiveHeaderFeedExecutiveV6.css";
 import "@/styles/csLivePrototipoExecutivoV7.css";
@@ -271,44 +272,40 @@ export default function CSLiveExecutivePanel({
   ).size;
   const showupCrmHoje = reunioesCrmHoje.filter(r => r.compareceu === true).length;
 
-  // Fonte existente na aba Origem dos Leads do Funil XPTO: leads_origens.
+  // Base da distribuicao = negocios do CRM ja contados acima; a view so informa a origem de cada deal_id.
+  // Negocio sem registro na view (ou com origem vazia/Desconhecido) conta como origem nao identificada.
+  const dealIdsHoje = useMemo(
+    () => leadsCrmDataOriginalHoje.map(r => r.deal_id ?? "").filter(Boolean).sort(),
+    [leadsCrmDataOriginalHoje]
+  );
   const { data: origensDados = [], isSuccess: origensReady, isError: origensError } = useQuery<CsLiveOrigem[]>({
-    queryKey: ["cs-live-origens-diarias-v8", hoje],
+    queryKey: ["cs-live-origens-por-deal-v9", hoje, dealIdsHoje.join(",")],
+    enabled: crmReady,
     queryFn: async () => {
-      const inicio = new Date(`${hoje}T00:00:00`);
-      const fim = new Date(inicio.getTime() + 24 * 60 * 60 * 1000);
-      // Tabela existente no Supabase, ainda nao declarada no types.ts gerado.
-      const { data, error } = await (supabase as any).from("csdash_origens_resolvidas")
-        .select("deal_id,origem,pipeline_id,lead_created_at")
-        .gte("lead_created_at", inicio.toISOString())
-        .lt("lead_created_at", fim.toISOString())
-        .order("deal_id")
-        .limit(1500);
-      if (error) throw error;
-      return (data ?? []) as CsLiveOrigem[];
+      // View ainda nao declarada no types.ts gerado; consulta em blocos para nao estourar a URL.
+      const blocos: string[][] = [];
+      for (let i = 0; i < dealIdsHoje.length; i += 100) blocos.push(dealIdsHoje.slice(i, i + 100));
+      const respostas = await Promise.all(blocos.map(async ids => {
+        const { data, error } = await (supabase as any).from("csdash_origens_resolvidas")
+          .select("deal_id,origem,pipeline_id,lead_created_at")
+          .in("deal_id", ids);
+        if (error) throw error;
+        return (data ?? []) as CsLiveOrigem[];
+      }));
+      return respostas.flat();
     },
     staleTime: 20_000,
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
   });
-  const origensAtuais = origensDados.filter(r => pipelineSelected(r.pipeline_id));
-  const normalizarOrigem = (valor: string | null) => (valor || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-  const classificarOrigem = (valor: string | null): "meta" | "instagram" | "whatsapp" | "email" | "outros" => {
-    const s = normalizarOrigem(valor);
-    // "Meta (Facebook/Instagram)" e "Meta Ads (WhatsApp)" citam outros canais no texto: Meta vem primeiro.
-    if (/(^|[^a-z])meta([^a-z]|$)/.test(s) || s.includes("facebook")) return "meta";
-    if (s.includes("instagram")) return "instagram";
-    if (s.includes("whatsapp") || s.includes("wpp") || s.includes("wa.me")) return "whatsapp";
-    if (s.includes("e-mail") || s.includes("email")) return "email";
-    return "outros";
-  };
-  const contagemOrigem = origensAtuais.reduce((acumulado, registro) => {
-    const canal = classificarOrigem(registro.origem);
-    acumulado[canal] += 1;
-    return acumulado;
-  }, { meta: 0, instagram: 0, whatsapp: 0, email: 0, outros: 0 });
-  const origemTotal = origensAtuais.length;
-  const origemNumero = (nome: "meta" | "instagram" | "whatsapp" | "email") => origensReady ? inteiro(contagemOrigem[nome]) : "—";
+  const origensPronto = crmReady && origensReady;
+  const origemPorDeal = new Map<string, string | null>();
+  for (const r of origensDados) {
+    if (!origemPorDeal.has(r.deal_id) || (!origemPorDeal.get(r.deal_id) && r.origem)) origemPorDeal.set(r.deal_id, r.origem);
+  }
+  const contagemOrigem = distribuirOrigens(leadsCrmHoje.map(r => r.deal_id ?? ""), origemPorDeal);
+  const origemTotal = contagemOrigem.total;
+  const origemNumero = (nome: "meta" | "instagram" | "whatsapp" | "email") => origensPronto ? inteiro(contagemOrigem[nome]) : "—";
   const origemPct = (nome: "meta" | "instagram" | "whatsapp" | "email") => origemTotal > 0 ? `${(contagemOrigem[nome] / origemTotal * 100).toFixed(0)}%` : "sem base";
 
   const vendasMes = useMemo(
@@ -516,7 +513,7 @@ export default function CSLiveExecutivePanel({
                 <div className="cs-live-v2__origin-channel"><span className="cs-live-v2__origin-logo cs-live-v2__origin-logo--whatsapp"><MessageCircle size={18} /></span><strong>{origemNumero("whatsapp")}{origemTotal > 0 && <em>{origemPct("whatsapp")}</em>}</strong><small>WhatsApp</small></div>
                 <div className="cs-live-v2__origin-channel"><span className="cs-live-v2__origin-logo cs-live-v2__origin-logo--email"><Mail size={18} /></span><strong>{origemNumero("email")}{origemTotal > 0 && <em>{origemPct("email")}</em>}</strong><small>E-mail</small></div>
               </div>
-              <small className="cs-live-v2__origin-unavailable">{origensReady ? `Base: ${inteiro(origemTotal)} origens sincronizadas · outras/não identificadas: ${inteiro(contagemOrigem.outros)}.` : origensError ? "Falha ao consultar leads_origens." : "Carregando origem real dos leads..."}</small>
+              <small className="cs-live-v2__origin-unavailable">{origensPronto ? `Base: ${inteiro(origemTotal)} leads do CRM · outros canais identificados: ${inteiro(contagemOrigem.outros)} · origem não identificada: ${inteiro(contagemOrigem.naoIdentificada)}${origemTotal > 0 ? ` (${(contagemOrigem.naoIdentificada / origemTotal * 100).toFixed(0)}%)` : ""}.` : (origensError || crmError) ? "Falha ao consultar as origens dos leads; valores indisponíveis." : "Carregando origem real dos leads..."}</small>
             </section>
             <section className="cs-live-v2__panel cs-live-v2__now">
               <h2><Zap size={17} /> AGORA</h2>
