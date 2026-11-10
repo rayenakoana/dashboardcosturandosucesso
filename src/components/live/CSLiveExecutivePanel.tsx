@@ -295,9 +295,10 @@ export default function CSLiveExecutivePanel({
   const normalizarOrigem = (valor: string | null) => (valor || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const classificarOrigem = (valor: string | null): "meta" | "instagram" | "whatsapp" | "email" | "outros" => {
     const s = normalizarOrigem(valor);
+    // "Meta (Facebook/Instagram)" e "Meta Ads (WhatsApp)" citam outros canais no texto: Meta vem primeiro.
+    if (/(^|[^a-z])meta([^a-z]|$)/.test(s) || s.includes("facebook")) return "meta";
     if (s.includes("instagram")) return "instagram";
     if (s.includes("whatsapp") || s.includes("wpp") || s.includes("wa.me")) return "whatsapp";
-    if (s.includes("facebook") || s.includes("meta ads") || s.includes("meta_ads")) return "meta";
     if (s.includes("e-mail") || s.includes("email")) return "email";
     return "outros";
   };
