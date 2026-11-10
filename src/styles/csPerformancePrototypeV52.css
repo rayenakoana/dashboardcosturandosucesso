@@ -1,0 +1,364 @@
+
+/* cs-performance-prototype-v52
+   CS Dash — Executivo CS / Glass Sutil.
+   Layout visual da Performance Comercial.
+   Dados, filtros e cores do funil preservados.
+*/
+
+/* Painel executivo unificado */
+.cs-overview-v29-performance {
+  padding: 10px 14px 10px !important;
+  border: 1px solid rgba(105,130,160,.22) !important;
+  border-left: 4px solid #F7304E !important;
+  border-radius: 12px !important;
+
+  background:
+    radial-gradient(
+      ellipse 58% 125% at 0% 0%,
+      rgba(107,32,56,.14),
+      transparent 77%
+    ),
+    radial-gradient(
+      ellipse 55% 110% at 90% 0%,
+      rgba(17,51,81,.11),
+      transparent 78%
+    ),
+    linear-gradient(
+      112deg,
+      #1B1D27 0%,
+      #121A26 55%,
+      #0C1723 100%
+    ) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.035),
+    0 6px 20px rgba(0,0,0,.09);
+}
+
+/* Cabecalho conforme o prototipo */
+.cs-overview-v29-performance h2 {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px !important;
+  font-weight: 750 !important;
+  line-height: 1.35;
+  letter-spacing: .01em;
+  color: #F5F7FB;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v52-inline {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: .015em;
+  color: #AEBFD2;
+}
+
+.cs-overview-v29-performance
+h2 + p {
+  color: #AEBFD2;
+}
+
+/* Icone e acao principal */
+.cs-overview-v29-performance
+h2 ~ svg,
+.cs-overview-v29-performance
+h2 + svg {
+  color: #F68B24;
+}
+
+.cs-overview-v29-performance
+a[href*="/funil-xpto"] {
+  min-height: 31px;
+  border-color: rgba(247,48,78,.52);
+  border-radius: 8px;
+  color: #F7304E;
+  background: rgba(10,17,27,.32);
+}
+
+/* Funil + KPIs lado a lado no desktop */
+@media (min-width: 1280px) {
+  .cs-overview-v29-performance
+  .cs-overview-v29-performance-grid {
+    display: grid !important;
+    grid-template-columns:
+      minmax(0, 1.02fr)
+      minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+  }
+
+  .cs-overview-v29-performance
+  .cs-overview-v29-performance-grid
+  > div:first-child {
+    min-width: 0 !important;
+    overflow-x: visible !important;
+    padding-bottom: 0 !important;
+  }
+
+  .cs-overview-v29-performance
+  .cs-overview-v29-ribbon {
+    display: grid !important;
+    grid-template-columns:
+      repeat(6, minmax(0,1fr)) !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+}
+
+
+
+/* cs-performance-funil-v54
+   Seis chevrons encaixados — prototipo executivo.
+*/
+
+/* Faixa continua */
+.cs-overview-v29-performance
+.cs-overview-v29-ribbon {
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: 0 !important;
+  width: 100% !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  overflow: hidden !important;
+  isolation: isolate;
+}
+
+/* Cada etapa avanca 13px sobre a seguinte */
+.cs-overview-v29-performance
+.cs-overview-v29-ribbon
+> .cs-overview-v29-stage.cs-performance-v54-stage {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+
+  box-sizing: border-box !important;
+  width: calc(100% + 13px) !important;
+  min-width: 0 !important;
+  height: 116px !important;
+  min-height: 116px !important;
+
+  padding: 12px 13px 11px !important;
+  margin: 0 !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  transform: none !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - 13px) 0,
+    100% 50%,
+    calc(100% - 13px) 100%,
+    0 100%
+  ) !important;
+}
+
+/* A ponta anterior fica sobre a proxima cor */
+.cs-overview-v29-ribbon > .cs-performance-v54-stage:nth-child(1) {
+  z-index: 6;
+}
+
+.cs-overview-v29-ribbon > .cs-performance-v54-stage:nth-child(2) {
+  z-index: 5;
+}
+
+.cs-overview-v29-ribbon > .cs-performance-v54-stage:nth-child(3) {
+  z-index: 4;
+}
+
+.cs-overview-v29-ribbon > .cs-performance-v54-stage:nth-child(4) {
+  z-index: 3;
+}
+
+.cs-overview-v29-ribbon > .cs-performance-v54-stage:nth-child(5) {
+  z-index: 2;
+}
+
+.cs-overview-v29-ribbon > .cs-performance-v54-stage:nth-child(6) {
+  z-index: 1;
+}
+
+/* Espaco para o encaixe anterior */
+.cs-overview-v29-performance
+.cs-overview-v29-ribbon
+> .cs-performance-v54-stage:not(:first-child) {
+  padding-left: 20px !important;
+}
+
+/* Ultima etapa termina em ponta dentro do painel */
+.cs-overview-v29-performance
+.cs-overview-v29-ribbon
+> .cs-performance-v54-stage:last-child {
+  width: 100% !important;
+}
+
+/* Nenhum marcador antigo nas divisoes */
+.cs-overview-v29-performance
+.cs-overview-v29-ribbon
+> .cs-performance-v54-stage::before,
+.cs-overview-v29-performance
+.cs-overview-v29-ribbon
+> .cs-performance-v54-stage::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Nome da etapa */
+.cs-overview-v29-performance
+.cs-performance-v54-name {
+  display: flex;
+  align-items: flex-end;
+  min-height: 29px;
+  max-width: 100%;
+
+  color: #FFFFFF !important;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.25;
+
+  overflow-wrap: break-word;
+}
+
+/* Valor principal */
+.cs-overview-v29-performance
+.cs-performance-v54-value {
+  display: block;
+  margin-top: 10px;
+
+  color: #FFFFFF !important;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 25px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -.035em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Percentual */
+.cs-overview-v29-performance
+.cs-performance-v54-percent {
+  display: block;
+  margin-top: 8px;
+
+  color: #FFFFFF !important;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Preservar a rolagem em telas estreitas */
+@media (max-width: 1279px) {
+  .cs-overview-v29-performance
+  .cs-overview-v29-ribbon {
+    min-width: 680px !important;
+  }
+}
+
+/* Indicadores no mesmo padrao dos demais cards */
+.cs-overview-v29-performance
+.cs-overview-v29-indicators {
+  min-width: 0;
+  height: 100%;
+  padding: 11px 13px !important;
+
+  border: 1px solid rgba(112,139,171,.19);
+  border-radius: 10px;
+
+  background:
+    radial-gradient(
+      ellipse at 100% 0%,
+      rgba(24,61,99,.09),
+      transparent 75%
+    ),
+    linear-gradient(
+      130deg,
+      rgba(25,33,45,.90),
+      rgba(13,23,35,.94)
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.03);
+}
+
+/* Identificacao do bloco de KPIs */
+.cs-overview-v29-performance
+.cs-overview-v29-indicators h3 {
+  margin: 0 0 10px;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+  color: #AAB9CA;
+}
+
+/* Numeros legiveis e consistentes */
+.cs-overview-v29-performance
+.cs-overview-v29-indicators {
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-overview-v29-performance
+.cs-overview-v29-indicators strong {
+  color: #F6F8FC;
+  letter-spacing: -.025em;
+}
+
+/* Periodo e filtros continuam visiveis */
+.cs-overview-v29-performance
+.cs-overview-v29-ribbon + * {
+  min-width: 0;
+}
+
+/* Tablet: empilhar sem comprimir as seis etapas */
+@media (max-width: 1279px) {
+  .cs-overview-v29-performance
+  .cs-overview-v29-performance-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0,1fr) !important;
+    gap: 14px !important;
+  }
+
+  .cs-overview-v29-performance
+  .cs-overview-v29-performance-grid
+  > div:first-child {
+    min-width: 0;
+    overflow-x: auto;
+  }
+
+  .cs-overview-v29-performance
+  .cs-overview-v29-ribbon {
+    min-width: 680px !important;
+    grid-template-columns:
+      repeat(6, minmax(0,1fr)) !important;
+  }
+}
+
+/* Telas pequenas */
+@media (max-width: 699px) {
+  .cs-overview-v29-performance {
+    padding: 12px !important;
+  }
+
+  .cs-overview-v29-performance
+  .cs-overview-v29-indicators {
+    padding: 12px !important;
+  }
+
+  .cs-overview-v29-performance
+  .cs-performance-v52-inline {
+    display: block;
+    margin-top: 3px;
+    font-size: 10px;
+  }
+}

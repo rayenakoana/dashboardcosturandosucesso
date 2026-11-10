@@ -1,0 +1,297 @@
+/* cs-live-header-feed-executive-v6 | /live apenas | 2026-11-06 */
+
+/* Cabeçalho: imagem preservada, leitura e alinhamento de TV. */
+.cs-live-v2 .cs-live-v2__topbar {
+  min-height: 76px;
+  padding: 10px clamp(18px, 1.85vw, 38px);
+  background-color: #0d141d;
+  border-bottom: 1px solid rgba(131,153,188,.20);
+  box-shadow: 0 3px 22px rgba(0,0,0,.12);
+}
+.cs-live-v2 .cs-live-v2__topbar::before {
+  background:
+    linear-gradient(90deg,
+      rgba(9,14,22,.97) 0%,
+      rgba(10,15,24,.76) 13%,
+      rgba(10,15,24,.30) 29%,
+      rgba(9,15,24,.50) 49%,
+      rgba(9,15,24,.93) 73%,
+      #0d141d 100%),
+    url("/images/cs-live-fotos/cabecalho.jpg") 49% 44% / cover no-repeat;
+  opacity: .95;
+  filter: none;
+}
+.cs-live-v2 .cs-live-v2__topbar::after {
+  height: 1px;
+  background: linear-gradient(90deg,
+    rgba(247,48,78,.55), rgba(247,48,78,.20) 38%,
+    rgba(112,146,184,.21) 70%, transparent);
+}
+.cs-live-v2 .cs-live-v2__brand { gap: 12px; }
+.cs-live-v2 .cs-live-v2__monogram {
+  font-size: clamp(35px,2.4vw,44px);
+  filter: drop-shadow(0 0 10px rgba(247,48,78,.15));
+}
+.cs-live-v2 .cs-live-v2__brand-stack strong {
+  font-size: clamp(19px,1.30vw,24px);
+  font-weight: 830;
+  letter-spacing: -.035em;
+}
+.cs-live-v2 .cs-live-v2__brand-stack small {
+  font-size: 9px;
+  letter-spacing: .135em;
+  color: #b8c8df;
+}
+.cs-live-v2 .cs-live-v2__top-actions { gap: clamp(10px,1.15vw,22px); }
+.cs-live-v2 .cs-live-v2__datetime { font-size: 11px; color: #b6c6de; letter-spacing: .085em; }
+.cs-live-v2 .cs-live-v2__clock {
+  font-size: clamp(21px,1.55vw,29px);
+  letter-spacing: -.035em;
+  color: #ff3657;
+  text-shadow: 0 0 18px rgba(247,48,78,.18);
+}
+.cs-live-v2 .cs-live-v2__tv,
+.cs-live-v2 .cs-live-v2__exit {
+  min-height: 39px;
+  padding: 9px 14px;
+  border-radius: 9px;
+  border-color: rgba(141,164,195,.30);
+  background: rgba(11,20,32,.77);
+  font-size: 12px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+}
+.cs-live-v2 .cs-live-v2__tv:hover,
+.cs-live-v2 .cs-live-v2__exit:hover {
+  border-color: rgba(247,48,78,.60);
+  box-shadow: 0 0 15px rgba(247,48,78,.13);
+}
+
+/* Feed: estrutura de informação mais nítida, sem eventos simulados. */
+.cs-live-v2 .cs-live-v2__activity {
+  position: relative;
+  background: #0e1723;
+  border-color: rgba(118,147,185,.23);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025), 0 12px 32px rgba(0,0,0,.12);
+  padding: 17px 16px 0;
+}
+.cs-live-v2 .cs-live-v2__activity::before {
+  background:
+    radial-gradient(ellipse 75% 42% at 92% 98%, rgba(247,48,78,.095), transparent 78%),
+    linear-gradient(180deg,
+      rgba(12,20,32,.99) 0%,
+      rgba(12,20,32,.98) 32%,
+      rgba(12,20,32,.95) 65%,
+      rgba(12,20,32,.80) 100%),
+    url("/images/cs-live-fotos/feed.jpg") 64% bottom / cover no-repeat;
+  opacity: .98;
+}
+.cs-live-v2 .cs-live-v2__activity-head {
+  padding: 0 1px 12px;
+  min-height: 42px;
+}
+.cs-live-v2 .cs-live-v2__activity-head h2 {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: .045em;
+  color: #eff4fb;
+}
+.cs-live-v2 .cs-live-v2__activity-head select {
+  min-height: 33px;
+  min-width: 96px;
+  border: 1px solid rgba(121,151,190,.32);
+  border-radius: 8px;
+  background: rgba(16,28,43,.9);
+  color: #dfe7f5;
+  padding: 7px 9px;
+  font-size: 12px;
+  font-weight: 650;
+}
+.cs-live-v2 .cs-live-v2__activity-caption {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  row-gap: 5px;
+  padding: 11px 1px 14px;
+  font-size: 11px;
+  color: #a9bad0;
+}
+.cs-live-v2 .cs-live-v2__activity-source {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-width: 0;
+}
+.cs-live-v2 .cs-live-v2__activity-source .cs-live-v2__status-dot {
+  margin: 0; flex: none;
+}
+.cs-live-v2 .cs-live-v2__activity-count {
+  margin-left: auto;
+  padding: 3px 7px;
+  border: 1px solid rgba(131,154,188,.18);
+  border-radius: 6px;
+  background: rgba(16,27,41,.65);
+  color: #c7d5e8;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.cs-live-v2 .cs-live-v2__feed {
+  padding-right: 5px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(118,146,181,.40) transparent;
+}
+.cs-live-v2 .cs-live-v2__feed-item {
+  grid-template-columns: 38px minmax(0,1fr) auto;
+  gap: 11px;
+  min-height: 79px;
+  padding: 12px 10px;
+  margin: 0 0 7px;
+  border: 1px solid transparent;
+  border-bottom-color: rgba(129,151,180,.14);
+  border-radius: 9px;
+  background: rgba(13,22,34,.42);
+  transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+.cs-live-v2 .cs-live-v2__feed-item:hover {
+  border-color: rgba(247,48,78,.32);
+  background: rgba(39,23,37,.48);
+}
+.cs-live-v2 .cs-live-v2__feed-item:first-child {
+  border: 1px solid rgba(247,48,78,.55);
+  border-radius: 9px;
+  background: linear-gradient(95deg, rgba(102,20,39,.40), rgba(33,18,34,.43) 70%, rgba(20,23,34,.18));
+  box-shadow: inset 3px 0 0 #f7304e, 0 0 18px rgba(247,48,78,.12);
+}
+.cs-live-v2 .cs-live-v2__feed-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: rgba(247,48,78,.09);
+  border-color: rgba(247,48,78,.25);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+}
+.cs-live-v2 .cs-live-v2__feed-main { gap: 4px; }
+.cs-live-v2 .cs-live-v2__feed-main strong {
+  color: #ff4561;
+  font-size: clamp(15px,1vw,18px);
+  font-weight: 830;
+  letter-spacing: -.015em;
+}
+.cs-live-v2 .cs-live-v2__feed-main span {
+  color: #f4f7ff;
+  font-size: clamp(12px,.79vw,14px);
+  font-weight: 750;
+  line-height: 1.25;
+}
+.cs-live-v2 .cs-live-v2__feed-main small {
+  color: #98aec9;
+  font-size: 11px;
+}
+.cs-live-v2 .cs-live-v2__feed-type {
+  align-self: center;
+  color: #ff9cb0;
+  background: rgba(247,48,78,.13);
+  border: 1px solid rgba(247,48,78,.13);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .03em;
+  padding: 4px 7px;
+}
+/* Resumo exibido apenas para feeds curtos, calculado dos itens reais da lista. */
+.cs-live-v2 .cs-live-v2__feed-summary {
+  margin: 18px 0 6px;
+  padding: 17px 16px;
+  border: 1px solid rgba(120,151,190,.20);
+  border-radius: 11px;
+  background:
+    radial-gradient(ellipse 100% 90% at 8% 5%, rgba(247,48,78,.075), transparent 72%),
+    linear-gradient(120deg, rgba(25,29,41,.85), rgba(13,25,39,.82));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+}
+.cs-live-v2 .cs-live-v2__feed-summary-label {
+  color: #aabed6;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .095em;
+}
+.cs-live-v2 .cs-live-v2__feed-summary-metrics {
+  display: grid;
+  grid-template-columns: .75fr 1.25fr;
+  gap: 14px;
+  margin-top: 13px;
+}
+.cs-live-v2 .cs-live-v2__feed-summary-metrics > div + div {
+  padding-left: 16px;
+  border-left: 1px solid rgba(127,150,179,.2);
+}
+.cs-live-v2 .cs-live-v2__feed-summary-metrics strong {
+  display: block;
+  color: #f5f7fb;
+  font-size: clamp(20px,1.55vw,28px);
+  line-height: 1.12;
+  font-weight: 820;
+  letter-spacing: -.035em;
+}
+.cs-live-v2 .cs-live-v2__feed-summary-metrics small {
+  display: block;
+  color: #9cacc3;
+  font-size: 11px;
+  margin-top: 6px;
+}
+.cs-live-v2 .cs-live-v2__feed-summary-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(126,151,183,.12);
+  color: #a8bdd6;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.cs-live-v2 .cs-live-v2__feed-summary-status svg { color: #0fd39b; flex: none; }
+.cs-live-v2 .cs-live-v2__activity-foot {
+  border-top-color: rgba(124,150,186,.17);
+  background: linear-gradient(180deg, rgba(11,19,30,.05), rgba(11,19,30,.48));
+  color: #a6b9cf;
+  font-size: 10px;
+  line-height: 1.45;
+  padding: 12px 2px 13px;
+}
+
+/* Monitor 1366x768 e 1600x900: preservar densidade sem reduzir demais os textos. */
+@media (min-width: 1180px) and (max-height: 850px) {
+  .cs-live-v2--tv .cs-live-v2__topbar { min-height: 62px; padding-top: 7px; padding-bottom: 7px; }
+  .cs-live-v2--tv .cs-live-v2__activity { padding: 12px 12px 0; }
+  .cs-live-v2--tv .cs-live-v2__activity-head { padding-bottom: 7px; }
+  .cs-live-v2--tv .cs-live-v2__activity-caption { padding: 9px 0 10px; }
+  .cs-live-v2--tv .cs-live-v2__feed-item { min-height: 68px; padding: 8px 8px; margin-bottom: 5px; }
+  .cs-live-v2--tv .cs-live-v2__feed-summary { padding: 12px; margin-top: 12px; }
+  .cs-live-v2--tv .cs-live-v2__feed-summary-metrics { margin-top: 9px; }
+  .cs-live-v2--tv .cs-live-v2__feed-summary-status { margin-top: 10px; padding-top: 9px; }
+}
+@media (min-width: 1750px) and (min-height: 960px) {
+  .cs-live-v2--tv .cs-live-v2__activity { padding: 19px 19px 0; }
+  .cs-live-v2--tv .cs-live-v2__feed-item { min-height: 88px; }
+  .cs-live-v2--tv .cs-live-v2__feed-main strong { font-size: 18px; }
+  .cs-live-v2--tv .cs-live-v2__feed-summary { margin-top: 20px; }
+}
+@media (max-width: 1179px) {
+  .cs-live-v2 .cs-live-v2__activity { min-height: 310px; }
+  .cs-live-v2 .cs-live-v2__feed { max-height: 380px; }
+  .cs-live-v2 .cs-live-v2__activity::before { opacity: .90; }
+}
+@media (max-width: 760px) {
+  .cs-live-v2 .cs-live-v2__topbar { min-height: 70px; }
+  .cs-live-v2 .cs-live-v2__brand-stack strong { font-size: 19px; }
+  .cs-live-v2 .cs-live-v2__top-actions { gap: 8px; }
+  .cs-live-v2 .cs-live-v2__clock { font-size: 21px; }
+  .cs-live-v2 .cs-live-v2__tv,
+  .cs-live-v2 .cs-live-v2__exit { min-height: 36px; font-size: 11px; padding: 8px 10px; }
+  .cs-live-v2 .cs-live-v2__activity { padding: 13px 12px 0; }
+  .cs-live-v2 .cs-live-v2__activity-head h2 { font-size: 13px; }
+  .cs-live-v2 .cs-live-v2__feed-summary { padding: 14px 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cs-live-v2 .cs-live-v2__feed-item { transition: none; }
+}
+/* /cs-live-header-feed-executive-v6 */

@@ -1,0 +1,76 @@
+
+/* cs-performance-funil-xpto-v55
+   Mesma implementacao grafica do Funil XPTO.
+   Sem chevrons CSS ou segmentos duplicados.
+*/
+
+.cs-overview-v29-performance
+.cs-performance-v55-svg {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v55-svg > div {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Preservar as proporcoes nativas do SVG.
+   Nao comprimir texto nem distorcer geometria. */
+.cs-overview-v29-performance
+.cs-performance-v55-svg svg[role="img"] {
+  display: block;
+  width: 100% !important;
+
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Mantem a composicao funil + indicadores. */
+@media (min-width: 1280px) {
+  .cs-overview-v29-performance
+  .cs-overview-v29-performance-grid {
+    display: grid !important;
+    grid-template-columns:
+      minmax(0, 1.02fr)
+      minmax(0, 1fr) !important;
+    gap: 16px !important;
+    align-items: center !important;
+  }
+}
+
+@media (max-width: 1279px) {
+  .cs-overview-v29-performance
+  .cs-performance-v55-svg {
+    min-width: 580px;
+  }
+}
+
+/* cs-performance-fit-v56
+   Contencao da geometria na Visao Geral.
+*/
+.cs-overview-v29-performance
+.cs-performance-v55-svg {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v55-svg svg[role="img"] {
+  display: block;
+  width: 100% !important;
+  max-width: 100%;
+
+  overflow: hidden !important;
+}
+
+/* cs-performance-height-fix-v63
+   Altura do SVG controlada exclusivamente
+   pela versao compacta V6.2.
+   Nao altera o Funil XPTO original.
+*/

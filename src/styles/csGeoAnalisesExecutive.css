@@ -1,0 +1,369 @@
+/*
+  CS DASH / Geografico dentro de Analises e Detalhes
+  Identidade: Executivo CS - Glass Sutil
+  Fonte visual: Funil XPTO consolidado em csAnalisesFunilPremiumV1.css
+  Uma entrada de estilos, com seletor-raiz EXCLUSIVO da aba.
+  Nao afeta a rota independente /mapa; nao altera SVG ou valores.
+*/
+
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1 {
+  min-width: 0;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+/* Cabecalho de modulo: mesma hierarquia de Funil Comercial. */
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-layout-v3 > div:first-child {
+  min-width: 0;
+  padding: 2px 0 13px;
+  border-bottom: 1px solid rgba(135,158,190,.12);
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-layout-v3 > div:first-child h1 {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  letter-spacing: -.02em !important;
+  text-transform: none !important;
+  color: var(--cs-analises-titulo) !important;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-layout-v3 > div:first-child p {
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 18px !important;
+  letter-spacing: 0 !important;
+  color: var(--cs-analises-subtitulo) !important;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-layout-v3 > div:first-child button {
+  min-height: 34px;
+  border-color: rgba(122,140,165,.24);
+  color: var(--cs-analises-titulo);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 9px;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-layout-v3 > div:first-child button:hover {
+  border-color: rgba(247,48,78,.40);
+}
+
+/* Filtros de funil: replica a gramática de chips de Funil XPTO. */
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1 .fchip {
+  min-height: 30px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  background: rgba(17,27,41,.50);
+  color: #B5C5D9;
+  border-color: rgba(116,144,177,.30);
+  box-shadow: none;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1 .fchip:hover {
+  color: #F0F5FB;
+  border-color: rgba(247,48,78,.48);
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1 .fchip.active {
+  background: #F7304E;
+  border-color: #F7304E;
+  color: #FFFFFF;
+}
+
+/* A barra de período é uma faixa de controles, não um card de destaque. */
+html:not(.light) .cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-periodo-v16-1 {
+  background: rgba(16,25,37,.72) !important;
+  border: 1px solid rgba(122,140,165,.19) !important;
+  border-radius: 12px;
+  box-shadow: none !important;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-periodo-v16-1 button {
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-periodo-v16-1 p {
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+/* KPIs geográficos: cartões de contagem neutros, sem status inventados. */
+html:not(.light) .cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-kpi-v3 {
+  min-height: 104px;
+  padding: 17px 18px !important;
+  border-radius: 12px;
+  background: var(--cs-analises-card) !important;
+  border-color: var(--cs-analises-borda-card) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-kpi-v3 > p:first-child {
+  margin-bottom: 7px;
+  font-family: "Inter", sans-serif;
+  font-size: 11px !important;
+  font-weight: 650;
+  line-height: 16px;
+  text-transform: uppercase;
+  letter-spacing: .035em;
+  color: var(--cs-analises-legenda);
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-kpi-v3 > p:nth-child(2) {
+  font-family: "Inter", sans-serif;
+  font-size: clamp(26px, 2vw, 30px) !important;
+  font-weight: 750 !important;
+  line-height: 1.12;
+  letter-spacing: -.035em;
+  color: var(--cs-analises-titulo);
+}
+
+/* Mapa e matriz: painel de seção; rankings: cards internos. */
+html:not(.light) .cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-brasil-panel,
+html:not(.light) .cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-matriz-light-v18 {
+  background: var(--cs-analises-painel) !important;
+  border: 1px solid var(--cs-analises-borda-painel) !important;
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 6px 22px rgba(0,0,0,.10) !important;
+}
+html:not(.light) .cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-brasil-panel + div > .glass-card {
+  background: var(--cs-analises-card) !important;
+  border: 1px solid var(--cs-analises-borda-card) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important;
+}
+/* Suprime a película branca do GlassCard legado somente nesta aba. */
+html:not(.light) .cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.glass-card::before {
+  content: none !important;
+  display: none !important;
+}
+
+/* Títulos de módulos (16px) e cards laterais (13px). */
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-matriz-light-v18 h3 {
+  font-family: "Inter", sans-serif !important;
+  font-size: 16px !important;
+  line-height: 22px !important;
+  font-weight: 700 !important;
+  letter-spacing: -.012em !important;
+  text-transform: none !important;
+  color: var(--cs-analises-titulo);
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-brasil-panel + div > .glass-card > p:first-child {
+  font-family: "Inter", sans-serif;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  line-height: 18px;
+  letter-spacing: -.01em;
+  color: var(--cs-analises-titulo);
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-brasil-panel > div:first-child > p {
+  font-family: "Inter", sans-serif;
+  font-size: 12px !important;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: .015em;
+  color: var(--cs-analises-legenda);
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-matriz-light-v18 > div:first-child p,
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-brasil-panel + div .text-muted-foreground {
+  line-height: 1.5;
+}
+
+/* Matriz regional: sem trocar cores calculadas por célula nem colunas de dados. */
+html:not(.light) .cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-matriz-light-v18 tbody td:not(:has(> div[title])) {
+  background-color: rgba(17,27,41,.40);
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-matriz-light-v18 thead th {
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.4;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(132, 156, 185, .16);
+  color: var(--cs-analises-legenda);
+}
+/* Seletor de região realmente usado no JSX: cs-geo-matriz-light-v18. */
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-matriz-light-v18 tbody tr.cs-geo-row-focused td {
+  background-color: rgba(247,48,78,.07);
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-matriz-light-v18 .cs-geo-funil-trigger {
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--cs-analises-legenda);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 6px 8px;
+  min-height: 34px;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-matriz-light-v18 .cs-geo-funil-trigger:hover {
+  color: var(--cs-analises-titulo);
+  background: rgba(247,48,78,.07);
+  border-color: rgba(247,48,78,.20);
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-matriz-light-v18 .cs-geo-funil-trigger[aria-pressed="true"] {
+  color: #F7304E;
+  background: rgba(247,48,78,.10);
+  border-color: rgba(247,48,78,.32);
+}
+
+/* cs-geo-kpis-matriz-refino-v2
+   Escopo: Análises > Geográfico. Não altera intensidade dos mapas ou células. */
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-kpi-v3 > p:nth-child(2) {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-matriz-light-v18 table {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-matriz-light-v18 tbody td:first-child {
+  font-weight: 650;
+  color: var(--cs-analises-titulo);
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-matriz-light-v18 tbody td:nth-child(2) {
+  font-weight: 750;
+  color: var(--cs-analises-titulo);
+  white-space: nowrap;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-matriz-light-v18 tbody td:nth-child(3) {
+  font-weight: 550;
+  white-space: nowrap;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-matriz-light-v18 tbody tr:hover > td:first-child {
+  box-shadow: inset 2px 0 0 rgba(247,48,78,.34);
+}
+/* Feedback de seleção apenas nas três células descritivas,
+   sem tocar nos valores e nas cores de concentração por funil. */
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-matriz-light-v18 tbody tr.cs-geo-row-focused > td:nth-child(-n+3) {
+  background-color: rgba(247,48,78,.10) !important;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-matriz-light-v18 tbody tr.cs-geo-row-focused > td:first-child {
+  box-shadow: inset 3px 0 0 #F7304E;
+}
+/* /cs-geo-kpis-matriz-refino-v2 */
+
+/* cs-geo-mapa-ranking-legibilidade-v3
+   Apenas Análises e Detalhes > Geográfico: tipografia e controles.
+   As cores térmicas, SVG, tamanhos de colunas e painéis são preservados. */
+
+/* Controle de reenquadramento: tamanho clicável e legível. */
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-brasil-panel button[aria-label="Restaurar enquadramento do mapa"] {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 11px !important;
+  font-weight: 600;
+  line-height: 16px;
+  min-height: 30px;
+  padding: 5px 10px;
+}
+
+/* Navegação de volta sem ampliar SVG nem modificar seus eventos. */
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-brasil-panel > div:first-child > button {
+  font-size: 12px !important;
+  line-height: 18px;
+  font-weight: 550;
+}
+
+/* Instrução e escala de concentração do mapa do Brasil. */
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-brasil-panel .cs-geo-brasil-svg ~ div.mt-3 > p,
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-brasil-panel .cs-geo-brasil-svg ~ div.mt-3 > div {
+  font-size: 12px !important;
+  line-height: 1.5;
+}
+
+/* Ranking: nome em destaque moderado, percentual discreto e total tabular. */
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-ranking-v3 > p:first-child {
+  font-weight: 700 !important;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-ranking-v3 button > div:first-child {
+  font-size: 12px !important;
+  line-height: 18px;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-ranking-v3 button > div:first-child > span:first-child {
+  font-weight: 550;
+  min-width: 0;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-ranking-v3 button > div:first-child > span:last-child {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-ranking-v3 button > div:first-child > span:last-child > span:first-child {
+  font-size: 11.5px !important;
+}
+.cs-analises-premium-v1 .cs-geo-analises-exec-v1
+.cs-geo-ranking-v3 button:focus-visible {
+  outline: 2px solid #F7304E;
+  outline-offset: 3px;
+  border-radius: 5px;
+}
+/* /cs-geo-mapa-ranking-legibilidade-v3 */
+
+@media (max-width: 767px) {
+  .cs-analises-premium-v1 .cs-geo-analises-exec-v1
+  .cs-geo-kpi-v3 {
+    min-height: 95px;
+    padding: 14px 15px !important;
+  }
+  .cs-analises-premium-v1 .cs-geo-analises-exec-v1
+  .cs-geo-brasil-panel {
+    padding: 16px !important;
+  }
+  .cs-analises-premium-v1 .cs-geo-analises-exec-v1
+  .cs-geo-matriz-light-v18 {
+    padding: 16px !important;
+  }
+}
+
+/* Tema claro: manter superfícies originais da Geografia; apenas tipografia. */
+html.light .cs-analises-premium-v1 .cs-geo-analises-exec-v1 {
+  --cs-analises-titulo: #182B42;
+  --cs-analises-subtitulo: #53677E;
+  --cs-analises-legenda: #53677E;
+}
+html.light .cs-analises-premium-v1 .cs-geo-analises-exec-v1 .fchip {
+  background: rgba(255,255,255,.85);
+  color: #475569;
+  border-color: rgba(88,103,126,.25);
+}
+html.light .cs-analises-premium-v1 .cs-geo-analises-exec-v1 .fchip.active {
+  background: #BD2141;
+  border-color: #BD2141;
+  color: #FFFFFF;
+}

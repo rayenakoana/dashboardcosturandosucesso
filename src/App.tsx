@@ -9,6 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
 import Index from "./pages/Index";
+import AnalisesDetalhes from "./pages/AnalisesDetalhes";
 import Vendas from "./pages/Vendas";
 import InputDiario from "./pages/InputDiario";
 import GestaoSafras from "./pages/GestaoSafras";
@@ -59,6 +60,7 @@ function Shell() {
           <Routes>
             {/* Públicas */}
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/analises" element={<ProtectedRoute><AnalisesDetalhes /></ProtectedRoute>} />
             <Route path="/funil-xpto" element={<FunilXPTO />} />
             {import.meta.env.DEV && <Route path="/funil-demo" element={<FunilDemo />} />}
             <Route path="/mapa" element={<MapaGeografico />} />

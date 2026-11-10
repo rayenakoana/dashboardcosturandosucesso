@@ -7,10 +7,10 @@
 @layer base {
   :root {
     /* ── Core palette ── */
-    --background: 220 18% 7%;
+    --background: 220 18% 12%;
     --foreground: 210 14% 93%;
 
-    --card: 220 16% 10%;
+    --card: 220 15% 16%;
     --card-foreground: 210 14% 93%;
 
     --popover: 220 16% 11%;
@@ -20,10 +20,10 @@
     --primary-foreground: 0 0% 100%;
     --primary-dark: 351 80% 35%;
 
-    --secondary: 220 16% 13%;
+    --secondary: 220 14% 19%;
     --secondary-foreground: 210 14% 93%;
 
-    --muted: 220 15% 12%;
+    --muted: 220 14% 18%;
     --muted-foreground: 215 10% 55%;
 
     --accent: 351 90% 56%;
@@ -32,8 +32,8 @@
     --destructive: 0 82% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 14% 15%;
-    --input: 220 14% 15%;
+    --border: 220 12% 25%;
+    --input: 220 12% 25%;
     --ring: 351 90% 56%;
 
     --radius: 0.6rem;
@@ -49,10 +49,10 @@
     --sidebar-ring: 351 90% 56%;
 
     /* ── Surface scale ── */
-    --surface-0: hsl(220 18% 7%);
-    --surface-1: hsl(220 16% 10%);
-    --surface-2: hsl(220 15% 13%);
-    --surface-raised: hsl(220 14% 16%);
+    --surface-0: hsl(220 18% 12%);
+    --surface-1: hsl(220 15% 16%);
+    --surface-2: hsl(220 14% 19%);
+    --surface-raised: hsl(220 13% 23%);
 
     /* ── Semantic colors ── */
     --success: 155 60% 40%;
@@ -323,3 +323,2386 @@ html.light ::-webkit-scrollbar-thumb:hover { background: hsl(355 74% 45% / 0.4);
     transition-duration: 0.01ms !important;
   }
 }
+
+/* =========================================================
+   CS DASH — DESIGN SYSTEM EXECUTIVO CS
+   Superfícies compartilhadas | Glass Sutil V2
+   ========================================================= */
+
+:root {
+  --cs-glass-surface: hsl(var(--card) / 0.82);
+  --cs-glass-border: rgba(190, 202, 222, 0.14);
+  --cs-glass-highlight: rgba(255, 255, 255, 0.095);
+  --cs-glass-accent: rgba(247, 48, 78, 0.075);
+  --cs-glass-shadow: rgba(0, 0, 0, 0.25);
+  --cs-glass-blur: 12px;
+}
+
+html.light {
+  --cs-glass-surface: hsl(var(--card) / 0.88);
+  --cs-glass-border: rgba(25, 35, 55, 0.13);
+  --cs-glass-highlight: rgba(255, 255, 255, 0.8);
+  --cs-glass-accent: rgba(247, 48, 78, 0.025);
+  --cs-glass-shadow: rgba(18, 25, 40, 0.09);
+}
+
+/* Regra única: aplicada fora de @layer para evitar
+   conflitos de precedência com os estilos antigos. */
+.glass-card,
+.glass-card-hover,
+.glass-card.cs-executive-panel,
+.glass-card.cs-executive-panel-insights,
+.glass-card.cs-chart-executive {
+  background:
+    radial-gradient(
+      ellipse 95% 65% at 0% 0%,
+      var(--cs-glass-accent),
+      transparent 72%
+    ),
+    linear-gradient(
+      165deg,
+      rgba(255, 255, 255, 0.055) 0%,
+      rgba(255, 255, 255, 0.012) 38%,
+      transparent 76%
+    ),
+    var(--cs-glass-surface);
+
+  border: 1px solid var(--cs-glass-border);
+
+  backdrop-filter: blur(var(--cs-glass-blur));
+  -webkit-backdrop-filter: blur(var(--cs-glass-blur));
+
+  box-shadow:
+    inset 0 1px 0 var(--cs-glass-highlight),
+    inset 0 0 24px rgba(255, 255, 255, 0.012),
+    0 10px 28px var(--cs-glass-shadow);
+}
+
+/* Reflexo controlado, sem efeito neon excessivo. */
+.glass-card::before,
+.glass-card-hover::before,
+.glass-card.cs-executive-panel::before,
+.glass-card.cs-executive-panel-insights::before,
+.glass-card.cs-chart-executive::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.065),
+      transparent 30%
+    );
+  opacity: 0.65;
+}
+
+html.light .glass-card::before,
+html.light .glass-card-hover::before,
+html.light .glass-card.cs-executive-panel::before,
+html.light .glass-card.cs-executive-panel-insights::before,
+html.light .glass-card.cs-chart-executive::before {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.55),
+    transparent 38%
+  );
+}
+
+.glass-card-hover {
+  transition:
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.glass-card-hover:hover {
+  border-color: hsl(var(--primary) / 0.28);
+  box-shadow:
+    inset 0 1px 0 var(--cs-glass-highlight),
+    0 14px 34px var(--cs-glass-shadow),
+    0 0 18px hsl(var(--primary) / 0.055);
+}
+
+/* Desfoque mais leve em dispositivos pequenos. */
+@media (max-width: 767px) {
+  :root {
+    --cs-glass-blur: 8px;
+  }
+}
+
+/* CS DASH — PALETA GRAFITE EXECUTIVO V1 */
+
+
+/* CS DASH — SDR REFINAMENTO EXECUTIVO V1 */
+/*
+  Identidade Executivo CS — Glass Sutil.
+  Escopo exclusivo da Performance por SDR.
+  Sem alterações nas consultas ou na estrutura funcional.
+*/
+
+/* Cabeçalho principal */
+.cs-sdr-executive-unified h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  line-height: 1.2;
+}
+
+/* Hierarquia dos painéis complementares */
+.cs-sdr-executive-unified section h3 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  line-height: 1.3;
+}
+
+/* Identidade mais editorial na tabela */
+.cs-sdr-executive-unified table {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-sdr-executive-unified thead {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.cs-sdr-executive-unified thead th {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.045em;
+  color: #AEB8C6;
+  line-height: 1.4;
+}
+
+.cs-sdr-executive-unified tbody td {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.cs-sdr-executive-unified tbody tr {
+  transition: background-color 180ms ease;
+}
+
+.cs-sdr-executive-unified tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.028);
+}
+
+/* Leitura executiva: transição suave, não um novo card */
+.cs-sdr-executive-unified > div:nth-of-type(2) {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(247, 48, 78, 0.028),
+      transparent 54%
+    );
+  border-color: rgba(180, 194, 212, 0.10);
+}
+
+.cs-sdr-executive-unified > div:nth-of-type(2) p {
+  line-height: 1.6;
+}
+
+/* Três áreas integradas: divisões delicadas */
+.cs-sdr-executive-unified > div:nth-of-type(3) {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.014),
+      transparent 80%
+    );
+  border-color: rgba(180, 194, 212, 0.085);
+  box-shadow: none;
+}
+
+.cs-sdr-executive-unified > div:nth-of-type(3) > section {
+  border-color: rgba(180, 194, 212, 0.075);
+  background: transparent;
+  box-shadow: none;
+  min-width: 0;
+}
+
+/* Descrições secundárias mais confortáveis */
+.cs-sdr-executive-unified section p {
+  line-height: 1.55;
+}
+
+/* Destaque dos valores, mantendo suas cores existentes */
+.cs-sdr-executive-unified section .tabular-nums {
+  letter-spacing: -0.015em;
+}
+
+/* Botões dos quatro modos */
+.cs-sdr-executive-unified button[aria-pressed] {
+  min-height: 34px;
+  font-size: 12px;
+  padding-inline: 12px;
+}
+
+/* Responsividade: preservar hierarquia sem comprimir a leitura */
+@media (max-width: 1023px) {
+  .cs-sdr-executive-unified > div:nth-of-type(3) > section {
+    border-right: 0;
+  }
+}
+
+@media (max-width: 639px) {
+  .cs-sdr-executive-unified h2 {
+    font-size: 17px;
+  }
+
+  .cs-sdr-executive-unified section h3 {
+    font-size: 15px;
+  }
+
+  .cs-sdr-executive-unified button[aria-pressed] {
+    min-height: 36px;
+    font-size: 12px;
+  }
+}
+
+
+/* cs-kpi-glass-dual-v4
+   Tema claro: superficie mais leve.
+   Tema escuro: opacidade original preservada. */
+:root {
+  --cs-kpi-glass-alpha: 0.74;
+}
+
+.dark {
+  --cs-kpi-glass-alpha: 0.92;
+}
+
+
+/* cs-kpi-light-priority-v7
+   Destaques exclusivos do tema claro.
+   No escuro, manter as cores e sombras originais. */
+
+:root:not(.dark) .cs-kpi-light-critical {
+  border-color: rgba(220,38,38,0.29) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(220,38,38,0.10),
+    0 7px 20px rgba(175,30,45,0.09) !important;
+}
+
+:root:not(.dark) .cs-kpi-light-attention {
+  border-color: rgba(217,119,6,0.24) !important;
+  box-shadow:
+    0 5px 14px rgba(15,23,42,0.04) !important;
+}
+
+:root:not(.dark) .cs-kpi-light-neutral {
+  border-color: hsl(var(--border)) !important;
+  box-shadow:
+    0 4px 12px rgba(15,23,42,0.035) !important;
+}
+
+
+/* cs-funil-tema-real-v3 — tema claro identificado por html.light */
+/* CS DASH — Indicadores do funil, tema claro.
+   O tema escuro conserva as cores existentes. */
+
+html.light .cs-conv-badge-dual-v1[data-status="good"]
+.cs-conv-colored {
+  color: #15803d !important;
+}
+
+html.light .cs-conv-badge-dual-v1[data-status="near"]
+.cs-conv-colored {
+  color: #995600 !important;
+}
+
+html.light .cs-conv-badge-dual-v1[data-status="bad"]
+.cs-conv-colored {
+  color: #b42330 !important;
+}
+
+html.light .cs-conv-badge-dual-v1[data-status="invalid"]
+.cs-conv-colored {
+  color: #475569 !important;
+}
+
+html.light .cs-conv-meta,
+html.light .cs-conv-legend {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+
+/* cs-funil-dual-correcao-v2
+   Contraste da escala exclusivo do tema claro.
+   Tema escuro conserva os estilos originais. */
+
+html.light .cs-conv-scale-line {
+  border-top-color:
+    hsl(var(--muted-foreground) / 0.45) !important;
+}
+
+html.light .cs-funil-scale-label {
+  fill: hsl(var(--muted-foreground) / 0.85) !important;
+  font-size: 7px;
+  font-weight: 600;
+}
+
+
+/* CS DASH — Insights Dark/Light V1
+   Regras exclusivas do tema claro.
+   A aparência aprovada do tema escuro é preservada. */
+
+html.light .cs-insights-dual-theme-v1 {
+  background: hsl(var(--card) / 0.76) !important;
+  border-color: hsl(var(--border) / 0.82) !important;
+  border-left-width: 2px !important;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.025);
+}
+
+html.light .cs-insights-dual-theme-v1[data-insight="Gargalo principal"] {
+  --cs-insight-accent: #b42338;
+  border-left-color: #b42338 !important;
+}
+
+html.light .cs-insights-dual-theme-v1[data-insight="Ponto crítico"] {
+  --cs-insight-accent: #a5570a;
+  border-left-color: #a5570a !important;
+}
+
+html.light .cs-insights-dual-theme-v1[data-insight="Oportunidade"] {
+  --cs-insight-accent: #947000;
+  border-left-color: #b08a13 !important;
+}
+
+html.light .cs-insights-dual-theme-v1 .cs-insight-label-v1,
+html.light .cs-insights-dual-theme-v1 .cs-insight-icon-v1 {
+  color: var(--cs-insight-accent) !important;
+}
+
+html.light .cs-insights-dual-theme-v1 .cs-insight-description-v1 {
+  color: hsl(var(--foreground) / 0.76) !important;
+}
+
+html.light .cs-insights-dual-theme-v1 .cs-insight-action-v1 {
+  color: var(--cs-insight-accent) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+html.light .cs-insights-dual-theme-v1 .cs-insight-action-v1:hover {
+  background: hsl(var(--muted) / 0.65) !important;
+}
+
+
+/* cs-conversao-light-v3
+   Acabamento do modo Conversao exclusivo do tema claro.
+   Tema escuro preservado. */
+
+html.light .cs-conversao-titulo-v3 {
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+
+html.light .cs-conversao-subtitulo-v3 {
+  color: hsl(var(--foreground) / 0.70);
+}
+
+html.light .cs-conversao-leitura-v3 {
+  background: hsl(var(--muted) / 0.52) !important;
+  border-top: 1px solid hsl(var(--border) / 0.52);
+  border-right: 1px solid hsl(var(--border) / 0.52);
+  border-bottom: 1px solid hsl(var(--border) / 0.52);
+  border-left-color: hsl(var(--primary) / 0.75);
+}
+
+html.light .cs-conversao-leitura-v3 h4 {
+  color: hsl(var(--foreground));
+}
+
+html.light .cs-conversao-leitura-v3 p {
+  color: hsl(var(--foreground) / 0.73) !important;
+}
+
+html.light .cs-conversao-leitura-v3 p:last-child {
+  color: hsl(var(--foreground) / 0.66) !important;
+}
+
+
+/* cs-glass-perola-executivo-v3
+   CS DASH — Glass Pérola Executivo
+
+   Refinamento exclusivo do tema claro.
+   Aplicado aos painéis comerciais e gráficos.
+   KPIs, componentes internos e tema escuro preservados.
+*/
+
+html.light {
+  --cs-pearl-reflection: rgba(247, 48, 78, 0.13);
+  --cs-pearl-depth: rgba(104, 119, 145, 0.16);
+  --cs-pearl-shadow: rgba(31, 41, 55, 0.105);
+}
+
+/* Superfícies executivas principais */
+
+html.light .cs-executive-panel,
+html.light .cs-chart-executive {
+
+  background:
+    radial-gradient(
+      ellipse at 0% 0%,
+      var(--cs-pearl-reflection) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 100% 0%,
+      var(--cs-pearl-depth) 0%,
+      transparent 58%
+    ),
+    linear-gradient(
+      155deg,
+      rgba(255, 255, 255, 0.76) 0%,
+      rgba(247, 246, 250, 0.73) 58%,
+      rgba(237, 240, 246, 0.80) 100%
+    ) !important;
+
+  border-color:
+    hsl(var(--border) / 0.82) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    0 12px 30px var(--cs-pearl-shadow),
+    0 3px 8px rgba(31, 41, 55, 0.025) !important;
+
+}
+
+/* Manter a composição delicada dos painéis.
+   Sem adicionar contornos ou efeitos decorativos extras. */
+
+/* CS DASH — Receita Glass Pérola V1
+   Superfície financeira integrada, exclusivamente no tema claro.
+   O tema escuro conserva sua composição atual. */
+
+html.light .cs-receita-perola-v1 {
+  gap: 0 !important;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border) / 0.82) !important;
+  border-radius: 12px;
+  background: hsl(var(--card) / 0.27) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.46),
+    0 2px 10px rgba(31, 41, 55, 0.018);
+}
+
+html.light .cs-receita-perola-v1 > div {
+  min-width: 0;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+@media (min-width: 640px) {
+  html.light .cs-receita-perola-v1 > div + div {
+    border-left: 1px solid
+      hsl(var(--border) / 0.82) !important;
+  }
+}
+
+@media (max-width: 639px) {
+  html.light .cs-receita-perola-v1 > div + div {
+    border-top: 1px solid
+      hsl(var(--border) / 0.82) !important;
+  }
+}
+
+/* cs-evolucao-dual-v1
+   Evolucao do Funil — contraste exclusivo do tema claro.
+   Tema escuro e cores das series preservados.
+*/
+
+/* Datas e valores dos eixos */
+html.light .cs-evolucao-dual-v1
+.recharts-cartesian-axis-tick text {
+  fill: #64748b !important;
+}
+
+/* Linhas principais dos eixos */
+html.light .cs-evolucao-dual-v1
+.recharts-cartesian-axis-line {
+  stroke: rgba(100, 116, 139, 0.55) !important;
+}
+
+/* Pequenas marcas dos eixos */
+html.light .cs-evolucao-dual-v1
+.recharts-cartesian-axis-tick-line {
+  stroke: rgba(100, 116, 139, 0.38) !important;
+}
+
+/* Grade horizontal */
+html.light .cs-evolucao-dual-v1
+.recharts-cartesian-grid line {
+  stroke: rgba(100, 116, 139, 0.22) !important;
+}
+
+/* Tooltip adaptado ao Glass Perola */
+html.light .cs-evolucao-dual-v1
+.recharts-default-tooltip {
+  background: hsl(var(--popover) / 0.97) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 10px !important;
+  box-shadow:
+    0 10px 30px rgba(31, 41, 55, 0.12),
+    0 2px 8px rgba(31, 41, 55, 0.04) !important;
+}
+
+/* Data dentro do tooltip */
+html.light .cs-evolucao-dual-v1
+.recharts-tooltip-label {
+  color: hsl(var(--foreground)) !important;
+  font-weight: 600;
+}
+
+/* cs-conversao-etapas-dual-v1
+   Contraste exclusivo do tema claro.
+   Tema escuro e cores de desempenho preservados.
+*/
+
+/* Trilhos das cinco barras de conversão */
+html.light .cs-conversao-ux-v2 [role="img"] {
+  background-color: rgba(100, 116, 139, 0.17) !important;
+}
+
+/* Traço vertical que representa a meta */
+html.light .cs-conversao-ux-v2 [role="img"] > div.absolute {
+  background-color: #64748b !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+
+/* Bordas superior e inferior da lista */
+html.light .cs-conversao-ux-v2 .divide-y {
+  border-color: rgba(100, 116, 139, 0.17) !important;
+}
+
+/* Separação entre as cinco etapas */
+html.light .cs-conversao-ux-v2 .divide-y > div + div {
+  border-top-color: rgba(100, 116, 139, 0.17) !important;
+}
+
+/* Marcador de meta na legenda inferior */
+html.light .cs-conversao-ux-v2 .inline-block.h-3 {
+  background-color: #64748b !important;
+}
+
+/* Realce sutil da etapa ao passar o cursor */
+html.light .cs-conversao-ux-v2 .divide-y > div:hover {
+  background-color: rgba(100, 116, 139, 0.045);
+}
+
+/* cs-origem-dual-v1
+   Origem dos Leads — acabamento exclusivo do tema claro.
+   Glass Perola V3 e tema escuro preservados.
+*/
+
+/* Percentual principal: vermelho institucional mais legivel. */
+html.light .cs-origem-dual-v1 .cs-origem-percentual-v1 {
+  color: #c52d49 !important;
+}
+
+/* Identificacao da origem com contraste executivo. */
+html.light .cs-origem-dual-v1 .cs-origem-titulo-v1 {
+  color: hsl(var(--foreground) / 0.75) !important;
+}
+
+/* Divisoria ao lado da rosca. */
+html.light .cs-origem-dual-v1 .cs-origem-ux-v3 {
+  border-color: hsl(var(--border) / 0.88) !important;
+}
+
+/* Area de detalhamento: substituir o fundo escuro fixo
+   por uma superficie neutra e translucida. */
+html.light .cs-origem-dual-v1 .cs-mobile-ux-v5 {
+  background: hsl(var(--card) / 0.48) !important;
+  border-color: hsl(var(--border) / 0.85) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.40);
+}
+
+/* Orientacao inicial da interacao. */
+html.light .cs-origem-dual-v1 .cs-mobile-ux-v5 > span {
+  color: hsl(var(--foreground) / 0.65) !important;
+}
+
+/* CS DASH — Leitura Executiva SDR V9
+   Refinamento exclusivo do Glass Perola.
+   O tema escuro permanece inalterado. */
+
+/* Leitura Executiva: superficie integrada e discreta. */
+html.light .cs-sdr-reading-v9 {
+  padding: 14px 16px;
+  border: 1px solid rgba(115, 128, 148, 0.18) !important;
+  border-left: 2px solid rgba(247, 48, 78, 0.78) !important;
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      110deg,
+      rgba(247, 48, 78, 0.035),
+      rgba(247, 247, 250, 0.48) 50%,
+      rgba(237, 241, 247, 0.55)
+    ) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.50);
+}
+
+/* SDR destacado na analise. */
+html.light .cs-sdr-reading-v9 p.text-foreground {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Texto interpretativo mais legivel. */
+html.light .cs-sdr-reading-v9 p.text-muted-foreground {
+  color: hsl(var(--foreground) / 0.73) !important;
+}
+
+/* Divisoria interna entre destaque e interpretacao. */
+html.light .cs-sdr-reading-v9 > div:nth-child(2) {
+  border-color: rgba(115, 128, 148, 0.18) !important;
+}
+
+/* Cabecalhos da tabela com contraste adequado. */
+html.light .cs-sdr-executive-unified thead th {
+  color: #687386 !important;
+}
+
+/* Leve diferenciacao da linha de cabecalho. */
+html.light .cs-sdr-executive-unified thead {
+  background-color: rgba(100, 116, 139, 0.035);
+}
+
+/* CS DASH — Glass Executivo Geografico V2
+   O vermelho representa CONCENTRACAO de leads,
+   nao a classificacao de desempenho comercial. */
+
+.cs-geo-brasil-panel {
+  position: relative;
+  min-width: 0;
+  background:
+    radial-gradient(
+      ellipse at 0% 0%,
+      rgba(247, 48, 78, 0.09),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse at 100% 100%,
+      rgba(98, 116, 145, 0.055),
+      transparent 65%
+    ),
+    hsl(var(--card) / 0.91) !important;
+
+  border-color: rgba(175, 190, 210, 0.16) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.035),
+    0 10px 26px rgba(0,0,0,0.10) !important;
+}
+
+/* Mapa no tema escuro */
+.cs-geo-brasil-svg {
+  --cs-geo-concentracao: 355 84% 62%;
+  --cs-geo-sem-dados: 220 12% 29%;
+  --cs-geo-contorno: 218 16% 43%;
+}
+
+/* Legenda */
+.cs-geo-escala-cor {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(247,48,78,0.34),
+      rgba(247,48,78,0.95)
+    );
+}
+
+/* Mapa no tema claro — Glass Perola */
+html.light .cs-geo-brasil-panel {
+  background:
+    radial-gradient(
+      ellipse at 0% 0%,
+      rgba(247,48,78,0.13),
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse at 100% 0%,
+      rgba(104,119,145,0.15),
+      transparent 65%
+    ),
+    linear-gradient(
+      155deg,
+      rgba(255,255,255,0.84),
+      rgba(240,243,248,0.84)
+    ) !important;
+
+  border-color: rgba(125,140,160,0.24) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.80),
+    0 10px 26px rgba(31,41,55,0.07) !important;
+}
+
+html.light .cs-geo-brasil-svg {
+  --cs-geo-concentracao: 355 80% 49%;
+  --cs-geo-sem-dados: 217 13% 79%;
+  --cs-geo-contorno: 216 18% 59%;
+}
+
+/* Geografia Executiva V3 — layout e indicadores */
+
+.cs-geo-layout-v3 {
+  min-width: 0;
+}
+
+/* Glass Grafite */
+.cs-geo-layout-v3 .cs-geo-kpi-v3 {
+  position: relative;
+  overflow: hidden;
+  min-height: 112px;
+  background:
+    radial-gradient(
+      ellipse 110% 80% at 0% 0%,
+      rgba(247, 48, 78, 0.045),
+      transparent 70%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,0.045),
+      rgba(255,255,255,0.008) 65%
+    ),
+    hsl(var(--card) / 0.93) !important;
+  border-color: rgba(175,190,210,0.16) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.045),
+    0 8px 24px rgba(0,0,0,0.07) !important;
+}
+
+.cs-geo-layout-v3 .cs-geo-ranking-v3 {
+  background:
+    linear-gradient(
+      155deg,
+      rgba(255,255,255,0.035),
+      transparent 55%
+    ),
+    hsl(var(--card) / 0.94) !important;
+}
+
+.cs-geo-layout-v3 .cs-geo-ranking-track {
+  background-color: hsl(var(--muted) / 0.38);
+}
+
+/* Glass Pérola */
+html.light .cs-geo-layout-v3 .cs-geo-kpi-v3 {
+  background:
+    radial-gradient(
+      ellipse at 0% 0%,
+      rgba(247,48,78,0.045),
+      transparent 70%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,0.90),
+      rgba(242,244,248,0.87)
+    ) !important;
+  border-color: rgba(135,149,170,0.19) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.90),
+    0 8px 25px rgba(31,41,55,0.055) !important;
+}
+
+html.light .cs-geo-layout-v3 .cs-geo-ranking-v3 {
+  background:
+    linear-gradient(
+      155deg,
+      rgba(255,255,255,0.93),
+      rgba(242,244,248,0.85)
+    ) !important;
+}
+
+@media (max-width: 767px) {
+  .cs-geo-layout-v3 .cs-geo-kpi-v3 {
+    min-height: 100px;
+    padding: 14px;
+  }
+}
+
+/* cs-geo-fullscreen-v8
+   Ajuste responsivo da proporção do mapa brasileiro.
+   Preserva projeção, navegação e dados reais. */
+
+@media (min-width: 1024px) {
+  .cs-geo-brasil-panel .cs-geo-brasil-svg {
+    display: block;
+    width: 100%;
+    height: clamp(420px, 58vh, 590px);
+    margin-inline: auto;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .cs-geo-brasil-panel .cs-geo-brasil-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 520px;
+  }
+}
+
+@media (max-width: 767px) {
+  .cs-geo-brasil-panel .cs-geo-brasil-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: none;
+  }
+}
+
+/* Geografia V11 — feedback da selecao regional */
+
+.cs-geo-matriz-v9 tbody tr.cs-geo-row-focused td {
+  background-color: hsl(var(--primary) / 0.075);
+}
+
+.cs-geo-matriz-v9 tbody tr.cs-geo-row-focused td > div {
+  border-color: hsl(var(--primary) / 0.42);
+  box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.08);
+}
+
+.cs-geo-matriz-v9 tbody tr.cs-geo-row-focused td:first-child {
+  border-left: 2px solid hsl(var(--primary));
+}
+
+html.light .cs-geo-matriz-v9 tbody tr.cs-geo-row-focused td {
+  background-color: hsl(var(--primary) / 0.065);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-geo-matriz-v9 tbody tr.cs-geo-row-focused td > div {
+    transition: none;
+  }
+}
+
+/* cs-geo-funil-matriz-v12
+   Integração visual dos filtros da matriz com
+   os filtros comerciais existentes na Geografia. */
+
+.cs-geo-matriz-v9 .cs-geo-funil-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: hsl(var(--muted-foreground));
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.cs-geo-matriz-v9 .cs-geo-funil-trigger:hover {
+  color: hsl(var(--foreground));
+  background: hsl(var(--primary) / 0.075);
+  border-color: hsl(var(--primary) / 0.20);
+}
+
+.cs-geo-matriz-v9
+.cs-geo-funil-trigger[aria-pressed="true"] {
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.10);
+  border-color: hsl(var(--primary) / 0.32);
+}
+
+.cs-geo-matriz-v9
+.cs-geo-funil-trigger:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .cs-geo-matriz-v9 .cs-geo-funil-trigger {
+    font-size: 11px;
+    min-height: 34px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-geo-matriz-v9 .cs-geo-funil-trigger {
+    transition: none;
+  }
+}
+
+/* cs-geo-v15-3
+   Apresentacao contextual da matriz.
+   Nenhum calculo, filtro ou consulta e alterado.
+*/
+
+/* Quando existe apenas um funil, evitar
+   que uma unica coluna ocupe a tela inteira. */
+table[data-cs-geo-v15-3="true"][data-single-funnel="true"] {
+  width: 100%;
+  max-width: 920px;
+  margin-inline: auto;
+}
+
+/* Volume: Total e coluna do funil repetem o mesmo numero.
+   Ocultar somente a coluna Total. */
+table[data-cs-geo-v15-3="true"][data-single-funnel="true"][data-matrix-mode="volume"] thead th:nth-child(2),
+table[data-cs-geo-v15-3="true"][data-single-funnel="true"][data-matrix-mode="volume"] tbody td:nth-child(2) {
+  display: none;
+}
+
+/* Participacao: o percentual aparece duas vezes.
+   Ocultar somente a coluna % do filtro. */
+table[data-cs-geo-v15-3="true"][data-single-funnel="true"][data-matrix-mode="participacao"] thead th:nth-child(3),
+table[data-cs-geo-v15-3="true"][data-single-funnel="true"][data-matrix-mode="participacao"] tbody td:nth-child(3) {
+  display: none;
+}
+
+/* Melhor leitura dos textos explicativos. */
+.cs-geo-matriz-v9 .space-y-2 > p + p {
+  margin-top: 8px;
+}
+
+@media (max-width: 767px) {
+  table[data-cs-geo-v15-3="true"][data-single-funnel="true"] {
+    max-width: none;
+  }
+}
+
+/* cs-geo-v15-3-css-fix */
+
+/* CS DASH - Calendario Geografico V16.1 */
+
+.cs-geo-periodo-v16-1 input[type="date"] {
+  color-scheme: dark;
+  accent-color: #F7304E;
+  min-height: 36px;
+  font-variant-numeric: tabular-nums;
+  border-radius: 9px;
+  transition: border-color 160ms ease;
+}
+
+.cs-geo-periodo-v16-1 input[type="date"]:hover {
+  border-color: hsl(var(--primary) / 0.45);
+}
+
+.cs-geo-periodo-v16-1 input[type="date"]:focus-visible {
+  outline: 2px solid hsl(var(--primary) / 0.65);
+  outline-offset: 2px;
+}
+
+.cs-geo-periodo-v16-1
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+/* Glass Perola */
+html.light .cs-geo-periodo-v16-1 input[type="date"] {
+  color-scheme: light;
+}
+
+@media (max-width: 767px) {
+  .cs-geo-periodo-v16-1 input[type="date"] {
+    max-width: 155px;
+  }
+}
+
+/* cs-geo-light-executivo-v18
+   Glass Perola Executivo.
+   Estilos restritos ao modulo Geografico.
+   O tema escuro permanece inalterado.
+*/
+
+/* KPIs executivos */
+html.light .cs-geo-layout-v3 .cs-geo-kpi-v3 {
+  background:
+    linear-gradient(
+      150deg,
+      rgba(255,255,255,0.98),
+      rgba(238,241,246,0.96)
+    ) !important;
+
+  border-color: rgba(88,103,126,0.25) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    0 10px 24px rgba(30,41,59,0.085) !important;
+}
+
+/* Painel principal do mapa */
+html.light .cs-geo-layout-v3 .cs-geo-brasil-panel {
+  background:
+    radial-gradient(
+      ellipse at 0% 0%,
+      rgba(247,48,78,0.11),
+      transparent 62%
+    ),
+    linear-gradient(
+      155deg,
+      rgba(255,255,255,0.96),
+      rgba(236,240,246,0.96)
+    ) !important;
+
+  border-color: rgba(88,103,126,0.25) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.90),
+    0 12px 28px rgba(30,41,59,0.075) !important;
+}
+
+/* Rankings laterais */
+html.light .cs-geo-layout-v3 .cs-geo-ranking-v3 {
+  background:
+    linear-gradient(
+      155deg,
+      rgba(255,255,255,0.98),
+      rgba(239,242,247,0.97)
+    ) !important;
+
+  border-color: rgba(88,103,126,0.24) !important;
+
+  box-shadow:
+    0 8px 24px rgba(30,41,59,0.065) !important;
+}
+
+html.light .cs-geo-layout-v3 .cs-geo-ranking-track {
+  background: rgba(70,85,105,0.12);
+}
+
+/* Matriz regional */
+html.light .cs-geo-layout-v3
+.cs-geo-matriz-light-v18 {
+  background:
+    radial-gradient(
+      ellipse at 0% 0%,
+      rgba(247,48,78,0.045),
+      transparent 55%
+    ),
+    linear-gradient(
+      155deg,
+      rgba(255,255,255,0.98),
+      rgba(238,241,246,0.98)
+    ) !important;
+
+  border-color: rgba(88,103,126,0.25) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.94),
+    0 12px 30px rgba(30,41,59,0.075) !important;
+}
+
+/* Hierarquia textual */
+html.light .cs-geo-matriz-light-v18 thead th {
+  color: #475569;
+  font-weight: 650;
+}
+
+html.light .cs-geo-matriz-light-v18 tbody td {
+  color: #263244;
+}
+
+html.light .cs-geo-matriz-light-v18
+.text-muted-foreground {
+  color: #64748b;
+}
+
+/* Preservar a intensidade das células
+   calculada a partir dos dados reais. */
+html.light .cs-geo-matriz-light-v18
+tbody td > div[title] {
+  border-color: rgba(156,52,79,0.22) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.32),
+    0 1px 3px rgba(102,32,48,0.045);
+}
+
+/* Cabeçalhos interativos de funil */
+html.light .cs-geo-matriz-light-v18
+.cs-geo-funil-trigger {
+  color: #475569;
+}
+
+html.light .cs-geo-matriz-light-v18
+.cs-geo-funil-trigger:hover {
+  background: rgba(247,48,78,0.09);
+  color: #8F1734;
+}
+
+html.light .cs-geo-matriz-light-v18
+.cs-geo-funil-trigger[aria-pressed="true"] {
+  background: rgba(247,48,78,0.13);
+  border-color: rgba(247,48,78,0.35);
+  color: #A31E3D;
+}
+
+/* Seleção regional */
+html.light .cs-geo-matriz-light-v18
+tr.cs-geo-row-focused td {
+  background-color: rgba(247,48,78,0.085);
+}
+
+/* Barra de período */
+html.light .cs-geo-layout-v3
+.cs-geo-periodo-v16-1 {
+  background:
+    linear-gradient(
+      150deg,
+      rgba(255,255,255,0.90),
+      rgba(239,242,247,0.95)
+    ) !important;
+
+  border-color: rgba(88,103,126,0.23) !important;
+  box-shadow: 0 5px 16px rgba(30,41,59,0.045);
+}
+
+/* Ajustes responsivos */
+@media (max-width: 767px) {
+  html.light .cs-geo-layout-v3
+  .cs-geo-matriz-light-v18 {
+    box-shadow: 0 4px 14px rgba(30,41,59,0.055)
+      !important;
+  }
+}
+
+/* cs-geo-perola-contraste-v19
+   Glass Perola Executivo: profundidade e contraste.
+   Restrito ao tema claro e a matriz geografica.
+*/
+
+/* Painel executivo: separar superficie do fundo */
+html.light .cs-geo-layout-v3 .cs-geo-matriz-light-v18 {
+  position: relative;
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      ellipse at 0% 0%,
+      rgba(247,48,78,0.075),
+      transparent 48%
+    ),
+    linear-gradient(
+      145deg,
+      #f8f9fc 0%,
+      #edf0f5 58%,
+      #e7ebf2 100%
+    ) !important;
+
+  border: 1px solid rgba(91,106,130,0.38) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.98),
+    0 12px 32px rgba(25,39,60,0.12),
+    0 2px 7px rgba(25,39,60,0.045) !important;
+}
+
+/* Hierarquia do cabecalho */
+html.light .cs-geo-matriz-light-v18 h3 {
+  color: #172235 !important;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+/* Textos secundarios mais legiveis */
+html.light .cs-geo-matriz-light-v18
+.text-muted-foreground {
+  color: #56657a !important;
+}
+
+/* Cabecalho da tabela */
+html.light .cs-geo-matriz-light-v18 thead th {
+  color: #3f4e64 !important;
+  font-weight: 650;
+}
+
+/* Regioes: blocos com mais presenca */
+html.light .cs-geo-matriz-light-v18
+tbody td:first-child {
+  background: #e6eaf1 !important;
+  border-radius: 10px 0 0 10px;
+  color: #1e293b !important;
+  font-weight: 700;
+}
+
+/* Os valores das colunas continuam dinamicos */
+html.light .cs-geo-matriz-light-v18
+tbody td > div[title] {
+  background-image:
+    linear-gradient(
+      rgba(247,48,78,0.055),
+      rgba(247,48,78,0.055)
+    );
+
+  border: 1px solid rgba(165,38,69,0.32) !important;
+  border-radius: 10px;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.25),
+    0 2px 5px rgba(98,28,48,0.055);
+
+  color: #212938 !important;
+  font-weight: 700;
+}
+
+/* Coluna residual: neutra, mas bem definida */
+html.light .cs-geo-matriz-light-v18
+tbody td > div:not([title]) {
+  border-color: rgba(91,106,130,0.20);
+  color: #273449;
+}
+
+/* Regiao selecionada */
+html.light .cs-geo-matriz-light-v18
+tr.cs-geo-row-focused td:first-child {
+  background: #f4dce3 !important;
+  box-shadow: inset 3px 0 0 #f7304e;
+}
+
+html.light .cs-geo-matriz-light-v18
+tr.cs-geo-row-focused td > div {
+  border-color: rgba(247,48,78,0.5) !important;
+}
+
+/* Controles Volume e Participacao */
+html.light .cs-geo-matriz-light-v18
+button[aria-pressed="true"] {
+  border-color: rgba(100,113,135,0.20);
+}
+
+/* Funil comercial ativo */
+html.light .cs-geo-matriz-light-v18
+.cs-geo-funil-trigger[aria-pressed="true"] {
+  color: #9d1837 !important;
+  background: rgba(247,48,78,0.13) !important;
+  border-color: rgba(247,48,78,0.4) !important;
+}
+
+/* Rodape com separacao mais visivel */
+html.light .cs-geo-matriz-light-v18
+.border-t {
+  border-color: rgba(91,106,130,0.18);
+}
+
+@media (max-width: 767px) {
+  html.light .cs-geo-layout-v3
+  .cs-geo-matriz-light-v18 {
+    box-shadow:
+      0 5px 18px rgba(25,39,60,0.08) !important;
+  }
+}
+
+/* cs-overview-executive-v1
+   CS Dash - Visao Executiva.
+   Glass Grafite e Glass Perola.
+   Escopo exclusivo dos quatro indicadores.
+*/
+
+.cs-overview-executive-v1 .cs-overview-primary {
+  position: relative;
+  overflow: hidden;
+  min-height: 210px;
+  background:
+    radial-gradient(
+      ellipse at 0% 0%,
+      rgba(247,48,78,.13),
+      transparent 62%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.055),
+      rgba(255,255,255,.008)
+    ),
+    hsl(var(--card) / .95);
+  border: 1px solid rgba(247,48,78,.32);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.06),
+    0 12px 28px rgba(0,0,0,.12);
+}
+
+.cs-overview-executive-v1 .cs-overview-primary::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 3px;
+  background: #F7304E;
+  pointer-events: none;
+}
+
+.cs-overview-executive-v1 .cs-overview-revenue {
+  font-size: clamp(2rem,2.7vw,2.9rem);
+  line-height: 1.12;
+  letter-spacing: -.035em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-overview-executive-v1 .cs-overview-support {
+  min-width: 0;
+  min-height: 155px;
+  background:
+    linear-gradient(
+      150deg,
+      rgba(255,255,255,.055),
+      rgba(255,255,255,.005)
+    ),
+    hsl(var(--card) / .94);
+  border: 1px solid rgba(175,190,210,.2);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.045),
+    0 8px 22px rgba(0,0,0,.08);
+}
+
+.cs-overview-executive-v1 .cs-overview-support-value {
+  font-size: clamp(1.35rem,1.8vw,1.9rem);
+  line-height: 1.2;
+  letter-spacing: -.025em;
+}
+
+/* Glass Perola */
+
+html.light .cs-overview-executive-v1
+.cs-overview-primary {
+  background:
+    radial-gradient(
+      ellipse at 0% 0%,
+      rgba(247,48,78,.11),
+      transparent 63%
+    ),
+    linear-gradient(145deg,#FCFCFE,#E9EDF4)
+    !important;
+  border-color: rgba(177,54,84,.38) !important;
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.98),
+    0 12px 28px rgba(31,45,65,.11)
+    !important;
+}
+
+html.light .cs-overview-executive-v1
+.cs-overview-support {
+  background:
+    linear-gradient(150deg,#FFFFFF,#E9EDF3)
+    !important;
+  border-color: rgba(85,103,127,.28)
+    !important;
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.95),
+    0 8px 22px rgba(31,45,65,.085)
+    !important;
+}
+
+html.light .cs-overview-executive-v1
+.cs-overview-support-value {
+  color: #1E293B;
+}
+
+@media (max-width:1279px) {
+  .cs-overview-executive-v1 .cs-overview-primary,
+  .cs-overview-executive-v1 .cs-overview-support {
+    min-height: 0;
+  }
+}
+
+/* cs-overview-insights-v2
+   Dashboard executivo: CS Intelligence compacto.
+   Escopo exclusivo da Visao Geral.
+*/
+
+.cs-overview-insights-v2 {
+  background:
+    radial-gradient(
+      ellipse at 0% 0%,
+      rgba(247,48,78,.105),
+      transparent 55%
+    ),
+    linear-gradient(
+      115deg,
+      hsl(var(--card) / .96),
+      hsl(var(--card) / .90)
+    );
+
+  box-shadow:
+    inset 3px 0 0 #F7304E,
+    inset 0 1px 0 rgba(255,255,255,.035),
+    0 8px 24px rgba(0,0,0,.06);
+}
+
+.cs-overview-insights-v2 .cs-overview-insight-item {
+  background: hsl(var(--background) / .45);
+}
+
+html.light .cs-overview-insights-v2 {
+  background:
+    radial-gradient(
+      ellipse at 0% 0%,
+      rgba(247,48,78,.085),
+      transparent 55%
+    ),
+    linear-gradient(
+      115deg,
+      #FCFCFE,
+      #EDF0F5
+    );
+
+  border-color: rgba(170,65,90,.26);
+
+  box-shadow:
+    inset 3px 0 0 #F7304E,
+    0 9px 24px rgba(30,41,59,.07);
+}
+
+html.light .cs-overview-insights-v2
+.cs-overview-insight-item {
+  background: rgba(255,255,255,.60);
+  border-color: rgba(85,103,127,.20);
+}
+
+
+/* =====================================================
+   cs-design-system-global-v1
+   CS DASH — EXECUTIVO CS / GLASS SUTIL
+
+   Padrao compartilhado por todas as paginas.
+   Nao altera dados, consultas ou cores dos graficos.
+   ===================================================== */
+
+/* Tokens oficiais do produto */
+:root {
+  --cs-bg-main: #11151C;
+  --cs-bg-surface: #1B222C;
+  --cs-bg-elevated: #202A35;
+  --cs-bg-sidebar: #0B111A;
+
+  --cs-accent-red: #F7304E;
+  --cs-accent-green: #12D995;
+  --cs-accent-blue: #11243A;
+
+  --cs-text-primary: #F4F7FB;
+  --cs-text-secondary: #A9B8CA;
+
+  --cs-border: rgba(128, 151, 181, .23);
+
+  --cs-radius-card: 12px;
+  --cs-radius-control: 9px;
+
+  --cs-shadow-card:
+    0 5px 18px rgba(0, 0, 0, .11);
+
+  --cs-glass-background:
+    linear-gradient(
+      135deg,
+      rgba(28, 36, 47, .96),
+      rgba(19, 27, 38, .96)
+    );
+}
+
+/* Tema escuro global */
+:root:not(.light):not([data-theme="light"]),
+.dark,
+[data-theme="dark"] {
+  --background: 215 24% 9%;
+  --foreground: 210 30% 96%;
+
+  --card: 213 24% 14%;
+  --card-foreground: 210 30% 96%;
+
+  --popover: 215 29% 12%;
+  --popover-foreground: 210 30% 96%;
+
+  --muted: 213 24% 17%;
+  --muted-foreground: 215 15% 70%;
+
+  --secondary: 212 27% 16%;
+  --secondary-foreground: 210 30% 95%;
+
+  --accent: 213 25% 18%;
+  --accent-foreground: 210 30% 96%;
+
+  --border: 215 18% 24%;
+  --input: 215 18% 24%;
+
+  --primary: 350 93% 58%;
+  --primary-foreground: 0 0% 100%;
+
+  --ring: 350 93% 58%;
+
+  --sidebar-background: 219 30% 7%;
+  --sidebar-foreground: 210 25% 91%;
+  --sidebar-primary: 350 93% 58%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 216 23% 15%;
+  --sidebar-accent-foreground: 210 30% 96%;
+  --sidebar-border: 216 20% 20%;
+  --sidebar-ring: 350 93% 58%;
+}
+
+/* Superficie Glass Sutil para componentes novos
+   e migracoes futuras */
+.cs-glass-surface {
+  background: var(--cs-glass-background);
+  border: 1px solid var(--cs-border);
+  border-radius: var(--cs-radius-card);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.035),
+    var(--cs-shadow-card);
+}
+
+/* Controles padronizados reutilizaveis */
+.cs-executive-control {
+  border: 1px solid var(--cs-border);
+  border-radius: var(--cs-radius-control);
+  background: rgba(15,24,36,.85);
+  color: var(--cs-text-primary);
+}
+
+/* Estados de foco acessiveis */
+.cs-glass-surface:focus-visible,
+.cs-executive-control:focus-visible {
+  outline: 2px solid var(--cs-accent-red);
+  outline-offset: 2px;
+}
+
+/* Fim do Design System Global V1 */
+
+
+/* cs-type-system-v3
+   EXECUTIVO CS — TITULOS HARMONIZADOS */
+
+
+
+/* ==================================================
+   cs-layout-v42
+   EXECUTIVO CS — CORES, BORDAS E INTERACOES
+   Substitui o bloco V4.1 sem modificar V3.
+   ================================================== */
+
+.cs-v32-shell {
+  --cs-v4-panel-padding: 16px;
+  --cs-v4-card-gap: 12px;
+  --cs-v4-section-radius: 12px;
+  --cs-v4-card-radius: 10px;
+
+  --cs-v42-brand: #F7304E;
+  --cs-v42-negative: #FF4967;
+  --cs-v42-positive: #17D4A2;
+  --cs-v42-warning: #F59E0B;
+
+  --cs-v42-surface: #151E2A;
+  --cs-v42-inset: #111D2C;
+  --cs-v42-border: rgba(132, 158, 192, .23);
+  --cs-v42-border-hover: rgba(166, 190, 218, .38);
+
+  --cs-v42-title: #F0F5FB;
+  --cs-v42-body: #C0CDDD;
+  --cs-v42-muted: #A0B3C9;
+}
+
+/* Paineis principais:
+   preservar os gradientes e as bordas vermelhas. */
+
+.cs-v32-shell
+.cs-intel-v34-section.cs-layout-v41-panel,
+.cs-v32-shell
+.cs-overview-v28-results.cs-layout-v41-panel,
+.cs-v32-shell
+.cs-overview-v29-dinamica.cs-layout-v41-panel {
+  padding: var(--cs-v4-panel-padding);
+  border-radius: var(--cs-v4-section-radius);
+  min-width: 0;
+}
+
+/* Acabamento de superficie sem trocar a cor base. */
+
+.cs-v32-shell
+.cs-overview-v28-results.cs-layout-v41-panel,
+.cs-v32-shell
+.cs-overview-v29-dinamica.cs-layout-v41-panel {
+  box-shadow:
+    inset 0 1px 0 rgba(218, 231, 249, .035);
+}
+
+/* Cinco destaques */
+
+.cs-v32-shell .cs-intel-v25-grid {
+  gap: var(--cs-v4-card-gap);
+}
+
+.cs-v32-shell .cs-intel-v25-card {
+  border-radius: var(--cs-v4-card-radius);
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease,
+    background-color .18s ease;
+}
+
+.cs-v32-shell .cs-intel-v25-card:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(219, 233, 250, .055);
+}
+
+/* Diagnosticos:
+   preservar os alertas amarelos e vermelhos. */
+
+.cs-v32-shell .cs-diag-v30-card {
+  border-radius: var(--cs-v4-section-radius);
+}
+
+.cs-v32-shell
+.cs-diag-v30-card .text-muted-foreground {
+  color: var(--cs-v42-muted);
+  line-height: 1.5;
+}
+
+/* Scorecards */
+
+.cs-v32-shell .cs-v36-board,
+.cs-v32-shell .cs-v36-marketing {
+  border-radius: var(--cs-v4-section-radius);
+  border-color: var(--cs-v42-border);
+}
+
+/* Marketing */
+
+.cs-v32-shell
+.cs-layout-v41-marketing > summary {
+  padding: 16px 18px;
+}
+
+/* Botao de insights:
+   marcado semanticamente no Index.tsx. */
+
+.cs-v32-shell
+[data-cs-v42-insights-action] {
+  width: min(100%, 320px);
+  min-height: 40px;
+  margin-inline-start: auto;
+  border-radius: 9px;
+  border-color: rgba(247,48,78,.58);
+  transition:
+    background-color .18s ease,
+    border-color .18s ease,
+    box-shadow .18s ease;
+}
+
+.cs-v32-shell
+[data-cs-v42-insights-action]:hover {
+  background-color: rgba(247,48,78,.075);
+  border-color: var(--cs-v42-brand);
+  box-shadow: 0 0 0 1px rgba(247,48,78,.10);
+}
+
+/* Abas da Dinamica Comercial */
+
+.cs-v32-shell
+.cs-overview-v29-dinamica [role="tab"] {
+  min-height: 36px;
+  transition:
+    background-color .18s ease,
+    border-color .18s ease,
+    color .18s ease;
+}
+
+/* Consultas adicionais */
+
+.cs-v32-shell
+.cs-intel-v28-queries :is(button, a) {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    border-color .18s ease,
+    background-color .18s ease;
+}
+
+/* Hover neutro somente para controles nao ativos. */
+
+.cs-v32-shell
+.cs-intel-v28-queries
+button:not([aria-pressed="true"]):hover {
+  border-color: var(--cs-v42-border-hover);
+}
+
+/* Acessibilidade:
+   foco visivel em teclado, sem trocar as cores
+   dos estados selecionados. */
+
+.cs-v32-shell :is(
+  button,
+  a[href],
+  select,
+  input,
+  summary,
+  [role="tab"],
+  [role="button"]
+):focus-visible {
+  outline: 2px solid var(--cs-v42-brand);
+  outline-offset: 3px;
+}
+
+/* Estados semanticos dos scorecards */
+
+.cs-v32-shell
+.cs-v36-metric[data-tone="positive"] small {
+  color: var(--cs-v42-positive);
+}
+
+.cs-v32-shell
+.cs-v36-metric[data-tone="negative"] small {
+  color: var(--cs-v42-negative);
+}
+
+
+/* cs-layout-v43 — legibilidade e controles */
+
+/* Textos auxiliares dos diagnosticos */
+
+.cs-v32-shell
+.cs-diag-v30-card :is(p, div).text-muted-foreground {
+  color: #A8BAD0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Rotulo tecnico da qualidade dos dados */
+
+.cs-v32-shell .cs-v43-quality-label {
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  letter-spacing: -.01em;
+  text-transform: none;
+  color: #E4ECF7;
+}
+
+/* Abas da Dinamica Comercial */
+
+.cs-v32-shell
+.cs-overview-v29-dinamica [role="tab"] {
+  min-height: 36px;
+  padding-inline: 13px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+/* Controles de consultas adicionais */
+
+.cs-v32-shell
+.cs-intel-v28-queries :is(button, a) {
+  min-height: 36px;
+  padding-inline: 12px;
+  border-radius: 8px;
+  line-height: 1.25;
+}
+
+/* Area de interacao dos criterios */
+
+.cs-v32-shell
+.cs-diag-v30-card details > summary {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Telas intermediarias */
+
+@media (max-width: 900px) {
+  .cs-v32-shell
+  .cs-overview-v29-dinamica [role="tablist"] {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .cs-v32-shell
+  .cs-diag-v30-card
+  :is(p, div).text-muted-foreground {
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Controles em celulares */
+
+@media (max-width: 640px) {
+  .cs-v32-shell
+  .cs-overview-v29-dinamica [role="tab"],
+  .cs-v32-shell
+  .cs-intel-v28-queries :is(button, a) {
+    min-height: 40px;
+  }
+
+  .cs-v32-shell .cs-intel-v28-queries {
+    row-gap: 8px;
+  }
+}
+
+
+/* ==================================================
+   cs-performance-mobile-v46
+   Performance Comercial: etapas e KPIs mobile
+   Substitui as correcoes V4.4 e V4.5.
+   ================================================== */
+
+/* No desktop permanece o funil SVG original. */
+
+.cs-performance-mobile-v46-stages {
+  display: none;
+}
+
+@media (max-width: 640px) {
+
+  .cs-v32-shell .cs-overview-v29-performance-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 14px;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Ocultar apenas a representacao desktop. */
+
+  .cs-v32-shell
+  .cs-overview-v29-performance-grid > div:first-child {
+    display: none !important;
+  }
+
+  /* Etapas mobile alimentadas pelos mesmos dados. */
+
+  .cs-v32-shell .cs-performance-mobile-v46-stages {
+      /* cs-performance-mobile-v47-ok */
+      display:grid; grid-template-columns:minmax(0,1fr);
+      gap:0; width:100%; min-width:0; padding:2px 14px;
+      border:1px solid rgba(132,158,192,.23);
+      border-radius:10px; background:rgba(17,29,44,.55);
+    }
+
+  .cs-v32-shell .cs-performance-mobile-v46-stage {
+      min-width:0; min-height:0; margin:0;
+      padding:12px 0; border:0;
+      border-bottom:1px solid rgba(132,158,192,.16);
+      border-radius:0; background:transparent;
+    }
+.cs-v32-shell .cs-performance-mobile-v46-stage:last-child {border-bottom:0;}
+
+  .cs-v32-shell .cs-performance-mobile-v46-top {
+      display:grid;
+      grid-template-columns:3px minmax(0,1fr) auto;
+      align-items:center; gap:12px; min-width:0;
+    }
+
+  .cs-v32-shell .cs-performance-mobile-v46-dot {
+      width:3px; height:22px;
+      border-radius:3px;
+    }
+
+  .cs-v32-shell .cs-performance-mobile-v46-name {
+      min-width:0; font-family:Inter,sans-serif;
+      font-size:14px; font-weight:600; line-height:20px;
+      color:#DDE6F2; overflow-wrap:anywhere;
+    }
+
+  .cs-v32-shell .cs-performance-mobile-v46-value {
+      font-family:Inter,sans-serif;
+      font-size:20px; font-weight:700; line-height:24px;
+      color:#F0F5FB; white-space:nowrap;
+      font-variant-numeric:tabular-nums;
+    }
+
+  .cs-v32-shell .cs-performance-mobile-v46-bottom {
+      display:flex; justify-content:flex-end;
+      min-height:16px; margin-top:1px;
+    }
+
+  .cs-v32-shell .cs-performance-mobile-v46-track {display:none;}
+
+  .cs-v32-shell .cs-performance-mobile-v46-fill {
+    height: 100%;
+    border-radius: inherit;
+  }
+
+  .cs-v32-shell .cs-performance-mobile-v46-percent {
+      min-width:0; margin:0; font-family:Inter,sans-serif;
+      font-size:11px; line-height:15px;
+      color:#9EB1C9; text-align:right;
+      font-variant-numeric:tabular-nums;
+    }
+
+  /* Manter os quatro indicadores em 2 x 2. */
+
+  .cs-v32-shell
+  .cs-overview-v29-performance
+  .cs-overview-v29-indicators {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .cs-v32-shell
+  .cs-overview-v29-performance
+  .cs-overview-v29-indicators-grid {
+    display: grid !important;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .cs-v32-shell
+  .cs-overview-v29-performance
+  .cs-performance-v57-kpi {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 132px;
+    padding: 12px 10px !important;
+    border-radius: 9px;
+  }
+
+  .cs-v32-shell
+  .cs-overview-v29-performance
+  .cs-performance-v57-label {
+    display: flex !important;
+    align-items: flex-start;
+    gap: 6px !important;
+    min-width: 0;
+    min-height: 36px;
+    white-space: normal !important;
+  }
+
+  .cs-v32-shell
+  .cs-overview-v29-performance
+  .cs-performance-v57-icon {
+    flex: 0 0 auto;
+  }
+
+  .cs-v32-shell
+  .cs-overview-v29-performance
+  .cs-performance-v57-label span {
+    min-width: 0;
+    font-size: 11px !important;
+    line-height: 15px !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+  }
+
+  .cs-v32-shell
+  .cs-overview-v29-performance
+  .cs-performance-v57-value {
+    font-size: 25px !important;
+    line-height: 30px !important;
+    white-space: nowrap;
+  }
+
+  .cs-v32-shell
+  .cs-overview-v29-performance
+  .cs-performance-v57-detail {
+    max-width: 100%;
+    font-size: 11px !important;
+    line-height: 15px !important;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 350px) {
+  .cs-v32-shell
+  .cs-overview-v29-performance
+  .cs-overview-v29-indicators-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 640px) {
+  .cs-v32-shell {
+    --cs-v4-panel-padding: 12px;
+    --cs-v4-card-gap: 10px;
+  }
+
+  .cs-v32-shell
+  .cs-layout-v41-marketing > summary {
+    padding: 12px 14px;
+  }
+
+  .cs-v32-shell
+  [data-cs-v42-insights-action] {
+    width: 100%;
+    max-width: none;
+    margin-inline-start: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-v32-shell .cs-intel-v25-card,
+  .cs-v32-shell [data-cs-v42-insights-action],
+  .cs-v32-shell
+  .cs-overview-v29-dinamica [role="tab"],
+  .cs-v32-shell
+  .cs-intel-v28-queries :is(button,a) {
+    transition: none;
+  }
+}
+
+.cs-v32-shell {
+  --cs-font-ui: "Inter", sans-serif;
+  --cs-font-display: "Barlow Condensed", sans-serif;
+  --cs-title-color: #F0F5FB;
+  --cs-description-color: #BECBDD;
+}
+
+/* Titulo principal da pagina */
+
+.cs-v32-shell .cs-overview-v32-header h1 {
+  font-family: var(--cs-font-display);
+  font-size: clamp(24px, 2.15vw, 32px);
+  font-weight: 800;
+  line-height: 1.06;
+}
+
+/* Todos os titulos principais */
+
+
+/* cs-type-v3-fine-tuning: hierarquia unica */
+.cs-v32-shell.cs-v32-shell h2.cs-section-title,
+.cs-v32-shell.cs-v32-shell summary.cs-section-title {
+  font-family: "Inter", sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  line-height: 22px !important;
+  letter-spacing: -.012em !important;
+  text-transform: none !important;
+  color: #F0F5FB !important;
+}
+
+
+/* Subtitulos */
+
+.cs-v32-shell .cs-section-description {
+  font-family: var(--cs-font-ui);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  letter-spacing: 0;
+  color: var(--cs-description-color);
+  margin-top: 3px;
+}
+
+/* Complemento do Funil */
+
+.cs-v32-shell .cs-section-qualifier {
+  display: inline;
+  margin-left: 6px;
+  font-family: var(--cs-font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: #95A9C1;
+  white-space: normal;
+}
+
+/* Identificadores executivos */
+
+.cs-v32-shell .cs-intel-v25-heading,
+.cs-v32-shell .cs-intel-v28-subheading {
+  font-family: var(--cs-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* Scorecards */
+
+.cs-v32-shell .cs-v36-name {
+  font-family: var(--cs-font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: .025em;
+}
+
+/* Marketing: eliminar titulo duplicado */
+
+.cs-v32-shell
+details.cs-overview-v29-marketing
+> div > div > h2 {
+  display: none;
+}
+
+/* Controles do Marketing */
+
+.cs-v32-shell
+.cs-overview-v29-marketing > summary > span {
+  font-family: var(--cs-font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+
+
+/* Titulos dos dois paineis de diagnostico */
+.cs-v32-shell .cs-diag-v30-card h3 {
+  font-family: "Inter", sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 20px !important;
+  letter-spacing: -.01em !important;
+  text-transform: none !important;
+}
+/* Mobile */
+
+@media (max-width: 640px) {
+  
+.cs-v32-shell.cs-v32-shell h2.cs-section-title,
+.cs-v32-shell.cs-v32-shell summary.cs-section-title {
+  font-size: 15px !important;
+  line-height: 21px !important;
+}
+
+
+  .cs-v32-shell .cs-section-qualifier {
+    font-size: 11px;
+  }
+}
+
+
+
+/*
+ cs-filtros-unificados-v24
+
+ CS DASH - EXECUTIVO CS / GLASS SUTIL
+
+ Referencia visual: filtro de Analises e Detalhes.
+ Aplicacao compartilhada com a Visao Geral.
+*/
+
+/* PAINEL LATERAL */
+
+.cs-filtro-drawer-v23 {
+  width: min(100vw, 320px) !important;
+  max-width: 320px !important;
+
+  background:
+    linear-gradient(
+      165deg,
+      #111920 0%,
+      #10171F 52%,
+      #0E151D 100%
+    ) !important;
+
+  border-left: 1px solid
+    rgba(98,115,139,.30) !important;
+
+  color: #F1F5FA !important;
+
+  box-shadow:
+    -16px 0 36px rgba(0,0,0,.32)
+    !important;
+
+  overflow-y: auto;
+}
+
+/* TITULO */
+
+.cs-filtro-drawer-v23 h2 {
+  font-family:
+    Inter, "Segoe UI", system-ui, sans-serif
+    !important;
+
+  font-size: 14px !important;
+  font-weight: 750 !important;
+
+  text-transform: uppercase !important;
+  letter-spacing: .035em !important;
+
+  color: #F3F6FA !important;
+}
+
+/* ROTULOS */
+
+.cs-filtro-drawer-v23 label {
+  font-size: 11px !important;
+  font-weight: 650 !important;
+
+  text-transform: uppercase !important;
+  letter-spacing: .075em !important;
+
+  color: #9DAABB !important;
+}
+
+.cs-filtro-drawer-v23 .text-muted-foreground {
+  color: #9DAABB !important;
+}
+
+/* CAMPOS */
+
+.cs-filtro-drawer-v23
+:is(
+  [role="combobox"],
+  input[type="date"],
+  input[type="text"]
+) {
+  min-height: 38px;
+
+  background: #171E27 !important;
+
+  border: 1px solid
+    rgba(103,118,139,.34) !important;
+
+  border-radius: 9px !important;
+
+  color: #E9EFF7 !important;
+
+  box-shadow: none !important;
+}
+
+.cs-filtro-drawer-v23
+[role="combobox"]:hover {
+  border-color:
+    rgba(135,156,183,.48) !important;
+}
+
+.cs-filtro-drawer-v23
+:is([role="combobox"], input):focus-visible {
+  outline: none !important;
+
+  border-color: #F7304E !important;
+
+  box-shadow:
+    0 0 0 3px rgba(247,48,78,.12)
+    !important;
+}
+
+/* OPCOES DE PERIODO */
+
+.cs-filtro-drawer-v23
+button[aria-pressed="false"] {
+  background: #171B22 !important;
+
+  border-color:
+    rgba(105,117,136,.34) !important;
+
+  color: #ACB5C2 !important;
+
+  box-shadow: none !important;
+}
+
+/* PERIODO ATIVO - PADRAO ANALISES */
+
+.cs-filtro-drawer-v23
+button[aria-pressed="true"] {
+  background: rgba(247,48,78,.12) !important;
+
+  border: 1px solid #B92C47 !important;
+
+  color: #FFFFFF !important;
+
+  box-shadow: none !important;
+}
+
+/* ACAO PRINCIPAL */
+
+.cs-filtro-drawer-v23
+button.bg-primary {
+  background: #F7304E !important;
+
+  border-color: #F7304E !important;
+
+  color: #FFFFFF !important;
+
+  box-shadow: none !important;
+}
+
+/* BOTAO SECUNDARIO */
+
+.cs-filtro-drawer-v23
+button[variant="outline"] {
+  background: #141C25 !important;
+
+  border-color:
+    rgba(103,118,139,.38) !important;
+
+  color: #C3CEDB !important;
+}
+
+/* OPCOES DOS DROPDOWNS */
+
+.cs-filtro-opcoes-v23 {
+  background: #151C25 !important;
+
+  border: 1px solid
+    rgba(102,119,143,.36) !important;
+
+  border-radius: 9px !important;
+
+  color: #E9EFF7 !important;
+
+  box-shadow:
+    0 18px 38px rgba(0,0,0,.38)
+    !important;
+}
+
+.cs-filtro-opcoes-v23 [role="option"] {
+  color: #D4DEEB !important;
+}
+
+.cs-filtro-opcoes-v23
+[role="option"][data-highlighted] {
+  background: rgba(91,114,143,.21) !important;
+  color: #FFFFFF !important;
+}
+
+.cs-filtro-opcoes-v23
+[role="option"][data-state="checked"] {
+  background: rgba(247,48,78,.11) !important;
+  color: #FFFFFF !important;
+}
+
+/* HOVER E ACESSIBILIDADE */
+
+.cs-filtro-drawer-v23
+button[aria-pressed="false"]:hover {
+  background: #202A35 !important;
+
+  border-color:
+    rgba(129,151,180,.48) !important;
+
+  color: #FFFFFF !important;
+}
+
+.cs-filtro-drawer-v23
+button:focus-visible {
+  outline: 2px solid #F7304E !important;
+  outline-offset: 2px;
+}
+
+/* MOBILE */
+
+@media (max-width: 640px) {
+  .cs-filtro-drawer-v23 {
+    width: min(100vw, 320px) !important;
+    max-width: 100vw !important;
+  }
+}
+
+/* /cs-filtros-unificados-v24 */
+
+

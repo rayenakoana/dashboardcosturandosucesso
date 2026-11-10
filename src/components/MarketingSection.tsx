@@ -56,7 +56,7 @@ function AIAnalysisPanel({
         method: "POST",
         headers: { ...auth, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
+          model: "claude-sonnet-5-5",
           max_tokens: 900,
           messages: [{ role: "user", content: prompt }],
         }),
@@ -90,7 +90,7 @@ function AIAnalysisPanel({
           method: "POST",
           headers: { ...auth, "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "claude-sonnet-4-6",
+            model: "claude-sonnet-5-5",
             max_tokens: 900,
             messages: [{ role: "user", content: prompt }],
           }),

@@ -17,9 +17,13 @@ export interface SDRPerformance {
   tarefasAgendadas: number;
   dealsSobResponsabilidade: number;
   qualificacoes: number;
+  leadsCriadosPeriodo: number;
+  leadsCriadosQualificadosPeriodo: number;
   dealsEsfriando: number;
+  dealsSemUltimaAtividade: number;
   dealsEmAndamento: number;
   tempoMedioPrimeiroContatoMs: number | null;
+  amostraPrimeiroContato: number;
 }
 
 const DIAS_ESFRIANDO = 3;
@@ -96,11 +100,27 @@ export function useUploadFotoSDR() {
  * - Deals sob responsabilidade / esfriando / em andamento: estado atual (não filtrado por período)
  * - Tempo médio 1º contato: considera deals cujo status_andamento_em caiu dentro do período
  */
-export function usePerformanceSDR(funil?: string, periodoStart?: Date, periodoEnd?: Date) {
+export function usePerformanceSDR(funil?: string | string[], periodoStart?: Date, periodoEnd?: Date) {
   const { data: sdrs = [] } = useSDRs(true);
+  const funis = Array.isArray(funil)
+    ? funil.filter(Boolean)
+    : funil ? [funil] : [];
+  const nomesRD: Record<string, string[]> = {
+    "Supplytex": ["SUPPLYTEX"],
+    "CS Club": ["C$ CLUB"],
+    "Segredos da Confecção": ["SEGREDOS DA CONFECÇÃO"],
+    "UniForce": ["UNIFORCE"],
+    "Imersão Paraguai": ["IMERSÃO PARAGUAI"],
+    "Imersão Europa": ["IMERSÃO EUROPA"],
+    "Imersão China": ["IMERSÃO CHINA"],
+    "Funil Diagnóstico": ["FUNIL DIAGNOSTICO", "FUNIL DIAGNÓSTICO"],
+  };
+  const funisRD = [...new Set(funis.flatMap(f => nomesRD[f] ?? [f]))];
+  const filtroAtivo = funis.length > 0;
+  const chaveFunis = [...funis].sort().join("|");
 
   return useQuery({
-    queryKey: ["performance-sdr", funil, periodoStart?.toISOString(), periodoEnd?.toISOString(), sdrs.map(s => s.id).join(",")],
+    queryKey: ["performance-sdr-v2", chaveFunis, periodoStart?.toISOString(), periodoEnd?.toISOString(), sdrs.map(s => s.id).join(",")],
     enabled: sdrs.length > 0,
     queryFn: async (): Promise<SDRPerformance[]> => {
       // Supabase/PostgREST limita a 1000 linhas por página por padrão.
@@ -127,7 +147,9 @@ export function usePerformanceSDR(funil?: string, periodoStart?: Date, periodoEn
 
       const deals = await fetchAllPages<any>(() => {
         let q = supabase.from("deals_sdr_tracking").select("*").order("deal_id");
-        if (funil) q = q.ilike("funil", funil);
+        if (filtroAtivo) {
+          q = q.in("funil", funisRD);
+        }
         return q;
       });
 
@@ -136,8 +158,10 @@ export function usePerformanceSDR(funil?: string, periodoStart?: Date, periodoEn
       );
 
       // Se está filtrando por funil, só conta tarefas de deals que pertencem a esse funil.
-      const dealIdsNoFunil = funil ? new Set(deals?.map(d => d.deal_id)) : null;
-      const tasks = funil
+      const dealIdsNoFunil = filtroAtivo
+        ? new Set(deals.map(d => d.deal_id))
+        : null;
+      const tasks = filtroAtivo
         ? (allTasks || []).filter(t => t.deal_id && dealIdsNoFunil!.has(t.deal_id))
         : (allTasks || []);
 
@@ -159,9 +183,23 @@ export function usePerformanceSDR(funil?: string, periodoStart?: Date, periodoEn
 
           const dealsAbertos = dealsDoSdr.filter(d => d.status !== "Fechado" && d.status !== "Perdido");
           const dealsEsfriando = dealsAbertos.filter(d => d.ultima_atividade_em && new Date(d.ultima_atividade_em) < limiteEsfriando);
+          const dealsSemUltimaAtividade = dealsAbertos.filter(
+            d => !d.ultima_atividade_em
+          );
           const dealsEmAndamento = dealsDoSdr.filter(d => d.status === "Em andamento");
 
-          const qualificacoes = dealsDoSdr.filter(d => dentroDoPeriodo((d as any).qualificado_em));
+          const qualificacoes = dealsDoSdr.filter(
+            d => dentroDoPeriodo(d.qualificado_em)
+          );
+
+          // Coorte: negócios criados E qualificados no período.
+          // Não confundir com qualificações gerais do período.
+          const leadsCriadosPeriodo = dealsDoSdr.filter(
+            d => dentroDoPeriodo(d.criado_em)
+          );
+          const leadsCriadosQualificadosPeriodo = leadsCriadosPeriodo.filter(
+            d => dentroDoPeriodo(d.qualificado_em)
+          ).length;
 
           const temposPrimeiroContato = dealsDoSdr
             .filter(d => d.criado_em && d.status_andamento_em && dentroDoPeriodo(d.status_andamento_em))
@@ -176,9 +214,13 @@ export function usePerformanceSDR(funil?: string, periodoStart?: Date, periodoEn
             tarefasAgendadas: tasksDoSdr.filter(t => t.status === "agendada" && dentroDoPeriodo(t.data_agendada)).length,
             dealsSobResponsabilidade: dealsDoSdr.length,
             qualificacoes: qualificacoes.length,
+            leadsCriadosPeriodo: leadsCriadosPeriodo.length,
+            leadsCriadosQualificadosPeriodo,
             dealsEsfriando: dealsEsfriando.length,
+            dealsSemUltimaAtividade: dealsSemUltimaAtividade.length,
             dealsEmAndamento: dealsEmAndamento.length,
             tempoMedioPrimeiroContatoMs,
+            amostraPrimeiroContato: temposPrimeiroContato.length,
           };
         })
         .sort((a, b) => b.qualificacoes - a.qualificacoes);

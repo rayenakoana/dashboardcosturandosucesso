@@ -1,0 +1,229 @@
+
+/* cs-performance-indicators-v57
+   V5.8 — ajuste fino de cores e semântica visual
+   Performance Comercial / Principais Indicadores
+*/
+
+.cs-overview-v29-performance
+.cs-overview-v29-indicators {
+  container-type: inline-size;
+  width: 100%;
+  height: auto !important;
+  min-height: 140px;
+  align-self: center;
+  padding: 12px 12px 13px !important;
+  border: 1px solid rgba(112, 139, 171, .20);
+  border-radius: 10px;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(27, 59, 90, .12), transparent 75%),
+    linear-gradient(135deg, #171E2A, #0D1825) !important;
+}
+
+.cs-overview-v29-performance
+.cs-overview-v29-indicators h3 {
+  margin: 0 0 11px !important;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 10px !important;
+  font-weight: 750;
+  letter-spacing: .075em;
+  line-height: 1.4;
+  color: #B7C6D7;
+  text-transform: uppercase;
+}
+
+.cs-overview-v29-performance
+.cs-overview-v29-indicators-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 0 !important;
+  align-items: stretch;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-kpi {
+  --kpi-accent: #B7C9DC;
+  --kpi-accent-soft: rgba(183, 201, 220, .10);
+
+  position: relative;
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  min-width: 0;
+  min-height: 109px;
+  padding: 5px 16px 10px !important;
+  border: 0 !important;
+  border-left: 1px solid rgba(132, 150, 176, .16) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  text-decoration: none;
+  transition: background .18s ease, box-shadow .18s ease;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-kpi:first-child {
+  border-left: 0 !important;
+  padding-left: 6px !important;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-kpi:hover {
+  background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015)) !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-kpi:focus-visible {
+  outline: 2px solid #F7304E;
+  outline-offset: -2px;
+  border-radius: 6px !important;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 23px;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-icon {
+  width: 18px !important;
+  height: 18px !important;
+  flex: 0 0 18px;
+  stroke-width: 1.9;
+  color: var(--kpi-accent);
+  filter: drop-shadow(0 0 6px var(--kpi-accent-soft));
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-label span {
+  min-width: 0;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 10.5px !important;
+  font-weight: 500;
+  line-height: 1.25;
+  color: #CBD5E1 !important;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-kpi
+.cs-performance-v57-value {
+  display: block;
+  margin-top: 8px;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(21px, 1.55vw, 29px) !important;
+  font-weight: 800 !important;
+  line-height: 1.1;
+  letter-spacing: -.04em;
+  color: #F8FAFD !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-detail {
+  display: block;
+  margin-top: 6px;
+  padding-right: 5px;
+  font-size: 10px !important;
+  font-weight: 400;
+  line-height: 1.3;
+  color: #9DAFC3 !important;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-arrow {
+  position: absolute;
+  right: 8px;
+  bottom: 10px;
+  width: 16px !important;
+  height: 16px !important;
+  color: #AFC0D2;
+  opacity: .92;
+  transition: color .15s ease, transform .15s ease, opacity .15s ease;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-kpi:hover
+.cs-performance-v57-arrow {
+  color: var(--kpi-accent);
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+/* Semântica de cor alinhada ao protótipo */
+.cs-overview-v29-performance
+.cs-performance-v57-kpi-1 {
+  --kpi-accent: #12E39A;
+  --kpi-accent-soft: rgba(18, 227, 154, .20);
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-kpi-2 {
+  --kpi-accent: #19E6A5;
+  --kpi-accent-soft: rgba(25, 230, 165, .20);
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-kpi-3 {
+  --kpi-accent: #EAF2FF;
+  --kpi-accent-soft: rgba(234, 242, 255, .18);
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-kpi-4 {
+  --kpi-accent: #FF3156;
+  --kpi-accent-soft: rgba(255, 49, 86, .22);
+}
+
+/* Pequeno reforço visual nos detalhes */
+.cs-overview-v29-performance
+.cs-performance-v57-kpi-1
+.cs-performance-v57-detail,
+.cs-overview-v29-performance
+.cs-performance-v57-kpi-2
+.cs-performance-v57-detail {
+  color: #A8CFC2 !important;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-kpi-3
+.cs-performance-v57-detail {
+  color: #B8C6D9 !important;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-kpi-4
+.cs-performance-v57-detail {
+  color: #B8C6D9 !important;
+}
+
+@container (max-width: 530px) {
+  .cs-overview-v29-indicators-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    row-gap: 12px !important;
+  }
+
+  .cs-performance-v57-kpi:nth-child(3) {
+    border-left: 0 !important;
+  }
+}
+
+@container (max-width: 310px) {
+  .cs-overview-v29-indicators-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .cs-performance-v57-kpi {
+    border-left: 0 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-overview-v29-performance .cs-performance-v57-kpi,
+  .cs-overview-v29-performance .cs-performance-v57-arrow {
+    transition: none;
+  }
+}

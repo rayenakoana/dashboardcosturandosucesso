@@ -12,53 +12,86 @@ export function funnelHalfH(
   minHalf: number,
 ): number {
   if (vMax <= 0) return minHalf;
-  const safe = Math.max(v, 0);
+
+  const safe = Math.max(0, v);
   if (safe === 0) return minHalf;
-  return minHalf + (maxHalf - minHalf) * Math.sqrt(safe / vMax);
+
+  // Escala visual com direção fiel aos dados:
+  // valores maiores sempre produzem alturas maiores.
+  const ratio = safe / vMax;
+  return minHalf + (maxHalf - minHalf) * Math.pow(ratio, 0.65);
 }
 
-// ─── Animation hook ────────────────────────────────────────────────────────────
+// ─── Animation hook ──────────────────────────────────────────────────────────
 function useAnimatedBoundaries(
   targets: number[],
   duration: number,
   enabled: boolean,
 ): number[] {
   const [current, setCurrent] = useState<number[]>(targets);
-  const fromRef   = useRef<number[]>(targets);
-  const rafRef    = useRef<number | null>(null);
-  const startRef  = useRef<number | null>(null);
-  const targetRef = useRef<number[]>(targets);
-  const key       = targets.join(",");
+  const currentRef = useRef<number[]>(targets);
+  const rafRef = useRef<number | null>(null);
+  const key = targets.join(",");
 
   useEffect(() => {
-    targetRef.current = targets;
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
 
     if (!enabled) {
-      setCurrent(targets);
-      fromRef.current = targets;
+      currentRef.current = [...targets];
+      setCurrent([...targets]);
       return;
     }
 
-    fromRef.current = current;
-    startRef.current = null;
-    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    // Retoma exatamente da geometria visível atual.
+    const from = [...currentRef.current];
+    const to = [...targets];
 
-    const animate = (ts: number) => {
-      if (startRef.current === null) startRef.current = ts;
-      const t = Math.min((ts - startRef.current) / duration, 1);
-      const eased = 1 - Math.pow(1 - t, 3);
-      const from = fromRef.current;
-      const to   = targetRef.current;
-      const next = from.map((f, i) => f + ((to[i] ?? f) - f) * eased);
+    if (from.length !== to.length) {
+      currentRef.current = to;
+      setCurrent(to);
+      return;
+    }
+
+    let started: number | null = null;
+
+    const animate = (timestamp: number) => {
+      if (started === null) started = timestamp;
+
+      const progress = Math.min(
+        (timestamp - started) / Math.max(duration, 1),
+        1
+      );
+
+      // Smoothstep: início e fim sem trancos de velocidade.
+      const eased = progress * progress * (3 - 2 * progress);
+
+      const next = from.map(
+        (value, i) => value + (to[i] - value) * eased
+      );
+
+      currentRef.current = next;
       setCurrent(next);
-      if (t < 1) rafRef.current = requestAnimationFrame(animate);
-      else fromRef.current = to;
+
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(animate);
+      } else {
+        rafRef.current = null;
+      }
     };
 
     rafRef.current = requestAnimationFrame(animate);
-    return () => { if (rafRef.current !== null) cancelAnimationFrame(rafRef.current); };
+
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, enabled]);
+  }, [key, duration, enabled]);
 
   return current;
 }
@@ -68,17 +101,17 @@ const SVG_W    = 700;
 const SVG_H    = 190;
 const CENTER_Y = 95;
 const MAX_HALF = 82;
-const MIN_HALF = 20;
+const MIN_HALF = 14;
 
 // ─── Color palette ─────────────────────────────────────────────────────────────
 // Base → lighter top → darker bottom  (crimson to deep maroon)
 const PALETTE: { base: string; top: string; btm: string }[] = [
-  { base: "#F7304E", top: "#FF6070", btm: "#CC1C36" },
-  { base: "#D72343", top: "#E84057", btm: "#AF1A34" },
-  { base: "#B21D38", top: "#C8334B", btm: "#8E142A" },
-  { base: "#90192F", top: "#A83041", btm: "#6E0E1F" },
-  { base: "#711526", top: "#8A2C3C", btm: "#530A18" },
-  { base: "#51111E", top: "#6A2230", btm: "#370A13" },
+  { base: "#F7304E", top: "#FF244E", btm: "#B6092F" },
+  { base: "#DE861C", top: "#F7A321", btm: "#805008" },
+  { base: "#13A64D", top: "#42D65A", btm: "#075F36" },
+  { base: "#079FB5", top: "#12C7D4", btm: "#07596F" },
+  { base: "#1768CD", top: "#1699F1", btm: "#102D77" },
+  { base: "#74249B", top: "#A53AC5", btm: "#351052" },
 ];
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
@@ -98,6 +131,44 @@ function pts(i: number, sw: number, b: number[], cy: number): string {
   ].map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
 }
 
+
+// ── Transições integradas · Executivo CS ─────────────────────────────────
+function chevronPts(
+  i: number,
+  n: number,
+  sw: number,
+  b: number[],
+  cy: number,
+): string {
+  const xL = i * sw;
+  const xR = (i + 1) * sw;
+  const hL = b[i] ?? MIN_HALF;
+  const hR = b[i + 1] ?? MIN_HALF;
+  const tip = Math.min(sw * 0.075, 8);
+
+  const points: [number, number][] = [
+    [xL, cy - hL],
+    [xR, cy - hR],
+  ];
+
+  if (i < n - 1) {
+    points.push([xR + tip, cy]);
+  }
+
+  points.push(
+    [xR, cy + hR],
+    [xL, cy + hL],
+  );
+
+  if (i > 0) {
+    points.push([xL + tip, cy]);
+  }
+
+  return points
+    .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`)
+    .join(" ");
+}
+
 // ─── Props ─────────────────────────────────────────────────────────────────────
 export interface FunilStage {
   label: string;
@@ -110,8 +181,10 @@ interface FunilSVGCoreProps {
   stages: FunilStage[];
   loading?: boolean;
   reduceMotion?: boolean;
+  fitToMax?: boolean;
   /** Show icon + label strip below SVG (for demo / standalone use) */
   showLabelStrip?: boolean;
+  compact?: boolean;
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -120,10 +193,17 @@ export function FunilSVGCore({
   loading = false,
   reduceMotion = false,
   showLabelStrip = false,
+  compact = false,
+  fitToMax = false,
 }: FunilSVGCoreProps) {
   const n    = stages.length;
   const vals = stages.map((s) => s.val);
-  const vMax = vals[0] > 0 ? vals[0] : Math.max(...vals, 1);
+  // cs-performance-fit-v56
+  // Opcao exclusiva para visualizacoes compactas.
+  // Mantem os volumes reais e evita ultrapassar o SVG.
+  const vMax = fitToMax
+    ? Math.max(...vals, 1)
+    : (vals[0] > 0 ? vals[0] : Math.max(...vals, 1));
 
   const targetBounds = useMemo<number[]>(() => {
     const b = vals.map((v) => funnelHalfH(v, vMax, MAX_HALF, MIN_HALF));
@@ -133,7 +213,7 @@ export function FunilSVGCore({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vals.join(","), vMax]);
 
-  const boundaries = useAnimatedBoundaries(targetBounds, 640, !loading && !reduceMotion);
+  const boundaries = useAnimatedBoundaries(targetBounds, 520, !loading && !reduceMotion);
   const sw = SVG_W / n;
 
   const nonMonotonic = vals.map((v, i) => i > 0 && v > vals[i - 1]);
@@ -170,7 +250,7 @@ export function FunilSVGCore({
       <svg
         viewBox={`0 0 ${SVG_W} ${SVG_H}`}
         width="100%"
-        preserveAspectRatio="xMidYMid meet"
+        preserveAspectRatio={compact ? "none" : "xMidYMid meet"}
         aria-label="Funil comercial — escala visual por raiz quadrada"
         role="img"
         style={{ display: "block", overflow: "visible" }}
@@ -197,14 +277,24 @@ export function FunilSVGCore({
         </defs>
 
         {/* ── Stage fills ── */}
-        {stages.map((_, i) => (
-          <polygon
-            key={i}
-            points={pts(i, sw, boundaries, CENTER_Y)}
-            fill={loading ? "url(#fsg-load)" : `url(#fsg-${Math.min(i, PALETTE.length - 1)})`}
-            stroke="none"
-          />
-        ))}
+        {/*
+          Segmentos integrados.
+          Renderizados da direita para a esquerda para que
+          cada ponta fique sobre o início da etapa seguinte.
+        */}
+        {Array.from({ length: n }, (_, index) => n - 1 - index)
+          .map((i) => (
+            <polygon
+              key={i}
+              points={chevronPts(i, n, sw, boundaries, CENTER_Y)}
+              fill={
+                loading
+                  ? "url(#fsg-load)"
+                  : `url(#fsg-${Math.min(i, PALETTE.length - 1)})`
+              }
+              stroke="none"
+            />
+          ))}
 
         {/* ── Outer unified contour ── */}
         <path
@@ -244,16 +334,26 @@ export function FunilSVGCore({
         />
 
         {/* ── Vertical dividers between stages ── */}
+        {/* Transições direcionais sutis — sem divisões verticais */}
         {Array.from({ length: n - 1 }, (_, i) => {
-          const x = ((i + 1) * sw).toFixed(2);
+          const x = (i + 1) * sw;
           const h = boundaries[i + 1] ?? MIN_HALF;
+          const tip = Math.min(sw * 0.075, 8);
+
+          const d = [
+            `M ${x.toFixed(2)} ${(CENTER_Y - h).toFixed(2)}`,
+            `L ${(x + tip).toFixed(2)} ${CENTER_Y}`,
+            `L ${x.toFixed(2)} ${(CENTER_Y + h).toFixed(2)}`,
+          ].join(" ");
+
           return (
-            <line
-              key={i}
-              x1={x} y1={(CENTER_Y - h).toFixed(2)}
-              x2={x} y2={(CENTER_Y + h).toFixed(2)}
-              stroke="rgba(255,255,255,0.14)"
-              strokeWidth="1"
+            <path
+              key={`separador-${i}`}
+              d={d}
+              fill="none"
+              stroke="rgba(255,255,255,0.12)"
+              strokeWidth="0.65"
+              strokeLinejoin="round"
             />
           );
         })}
@@ -263,7 +363,7 @@ export function FunilSVGCore({
           nm ? (
             <polygon
               key={i}
-              points={pts(i, sw, boundaries, CENTER_Y)}
+              points={chevronPts(i, n, sw, boundaries, CENTER_Y)}
               fill="none"
               stroke="#fbbf24"
               strokeWidth="1.5"
@@ -281,10 +381,15 @@ export function FunilSVGCore({
           const avg = (hL + hR) / 2;
 
           // Responsive font sizing based on available stage height
-          const numSz  = avg > 44 ? 22 : avg > 32 ? 18 : avg > 22 ? 14 : 11;
-          const showLbl = avg > 25;
-          const showPct = avg > 35;
-          const showVal = avg > 14; // always show number if there's any space
+          // cs-performance-refino-v61
+          // Tipografia ampliada somente na Visao Geral.
+          const numSz = compact
+            ? (avg > 35 ? 30 : avg > 22 ? 25 : 20)
+            : (avg > 35 ? 21 : avg > 22 ? 18 : 15);
+          // cs-performance-legenda-v62
+          const showLbl = !compact && avg > 22;
+          const showPct = !compact && avg > 35;
+          const showVal = true;
 
           // Vertical centering: push number up when label follows
           const numY = showLbl
@@ -325,8 +430,8 @@ export function FunilSVGCore({
                   x={cx.toFixed(2)}
                   y={(CENTER_Y + (avg > 35 ? 11 : 9)).toFixed(2)}
                   textAnchor="middle"
-                  fontSize={avg > 40 ? 8.5 : 7.5}
-                  fill="#F4CDD3"
+                  fontSize={avg > 40 ? 10.5 : 9.5}
+                  fill="#FFFFFF"
                   opacity="0.82"
                   style={{ fontFamily: "inherit" }}
                 >
@@ -338,8 +443,8 @@ export function FunilSVGCore({
                   x={cx.toFixed(2)}
                   y={(CENTER_Y + 24).toFixed(2)}
                   textAnchor="middle"
-                  fontSize="7"
-                  fill="rgba(255,255,255,0.35)"
+                  fontSize="9"
+                  fill="rgba(255,255,255,0.72)"
                   style={{ fontFamily: "inherit" }}
                 >
                   {i === 0
@@ -357,7 +462,7 @@ export function FunilSVGCore({
         <text
           x={SVG_W - 4} y={SVG_H - 3}
           textAnchor="end" fontSize="5.5"
-          fill="rgba(255,255,255,0.15)"
+          className="cs-funil-scale-label" fill="rgba(255,255,255,0.15)"
           style={{ fontFamily: "inherit" }}
         >
           ESCALA VISUAL √

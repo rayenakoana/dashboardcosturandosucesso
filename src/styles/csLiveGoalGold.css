@@ -1,0 +1,161 @@
+/* CS LIVE META DOURADA - unico bloco visual. Nao altera layout dos componentes. */
+.cs-live-executivo-root.cs-live-gold-persistent { position:relative; isolation:isolate; min-height:100vh; background: radial-gradient(ellipse at 50% 0%, #3a2810 0%, #15120d 40%, #0a0b0f 88%); }
+.cs-live-gold-persistent .cs-live-v2 { --cl-red:#eab94f; --cl-border:rgba(236,189,73,.27); --cl-muted:#d4c29c; position:relative; z-index:2; background:transparent !important; }
+.cs-live-gold-persistent .cs-live-v2__topbar { background:rgba(34,24,10,.83) !important; border-bottom-color:rgba(240,188,69,.55) !important; }
+.cs-live-gold-persistent .cs-live-v2__topbar::before { background:linear-gradient(90deg,rgba(53,36,12,.64),rgba(23,18,12,.87)) !important; background-image:linear-gradient(90deg,rgba(53,36,12,.64),rgba(23,18,12,.87)) !important; }
+.cs-live-gold-persistent .cs-live-v2__topbar::after { background:linear-gradient(90deg,transparent,#f8c95a,transparent) !important; }
+.cs-live-gold-persistent .cs-live-v2__monogram,
+.cs-live-gold-persistent .cs-live-v2__brand-stack strong,
+.cs-live-gold-persistent .cs-live-v2__brand-stack em,
+.cs-live-gold-persistent .cs-live-v2__clock { color:#ffd36a !important; text-shadow:0 0 18px rgba(238,173,53,.30); }
+.cs-live-gold-persistent .cs-live-v2__brand-stack small,
+.cs-live-gold-persistent .cs-live-v2__datetime { color:#e8cc83 !important; }
+.cs-live-gold-persistent .cs-live-v2__online,
+.cs-live-gold-persistent .cs-live-v2__status-dot { background:#f4c85d !important; box-shadow:0 0 10px rgba(244,194,67,.5) !important; }
+.cs-live-gold-persistent .cs-live-v2__tv,
+.cs-live-gold-persistent .cs-live-v2__exit,
+.cs-live-gold-persistent .cs-pulso__period { border-color:rgba(239,196,96,.43) !important; color:#ffdf95 !important; background:rgba(48,34,11,.55) !important; }
+.cs-live-gold-persistent .cs-live-v2__panel,
+.cs-live-gold-persistent .cs-pulso { border-color:rgba(239,184,62,.28) !important; background:linear-gradient(135deg,rgba(43,30,13,.78),rgba(12,13,18,.84)) !important; box-shadow:inset 0 1px 0 rgba(255,220,124,.05),0 0 20px rgba(240,171,38,.07) !important; }
+.cs-live-gold-persistent .cs-live-v2__revenue,
+.cs-live-gold-persistent .cs-live-v2__goal { background:linear-gradient(115deg,rgba(47,32,14,.76),rgba(14,15,20,.83)) !important; }
+.cs-live-gold-persistent .cs-live-v2__activity::before { background:linear-gradient(180deg,rgba(20,16,10,.65),rgba(13,12,10,.79)) !important; background-image:linear-gradient(180deg,rgba(20,16,10,.65),rgba(13,12,10,.79)) !important; opacity:1 !important; }
+.cs-live-gold-persistent .cs-live-v2__activity { background:rgba(22,19,14,.82) !important; }
+/* Fotos dos produtos totalmente ausentes enquanto a meta permanecer batida. */
+.cs-live-gold-persistent .cs-live-v2__product { --cs-live-photo:none !important; background-color:#1a160e !important; background-image:linear-gradient(110deg,rgba(73,48,12,.85),rgba(19,17,14,.72)) !important; border-color:rgba(232,183,80,.38) !important; box-shadow:inset 0 1px 0 rgba(255,222,140,.08) !important; }
+.cs-live-gold-persistent .cs-live-v2__product::after { background:radial-gradient(ellipse at 80% 50%,rgba(245,193,76,.14),transparent 75%) !important; }
+.cs-live-gold-persistent .cs-live-v2__product-name i { background:#f0c66a !important; box-shadow:0 0 8px rgba(242,195,87,.4) !important; }
+.cs-live-gold-persistent .cs-live-v2__feed-item:first-child { background:linear-gradient(90deg,rgba(110,72,17,.32),transparent) !important; border-color:rgba(239,190,74,.42) !important; box-shadow:inset 3px 0 0 #ecc45c !important; }
+.cs-live-gold-persistent .cs-live-v2__feed-item--sale .cs-live-v2__feed-icon,
+.cs-live-gold-persistent .cs-live-v2__goal-secondary svg,
+.cs-live-gold-persistent .cs-live-v2__goal-achieved,
+.cs-live-gold-persistent .cs-live-v2__clock { color:#ffd06d !important; }
+.cs-live-gold-persistent .cs-live-v2__goal-track { background:rgba(139,110,51,.36) !important; }
+.cs-live-gold-persistent .cs-live-v2__goal-track > span { background:linear-gradient(90deg,#bd8521,#ffe18b) !important; box-shadow:0 0 15px rgba(249,195,69,.30) !important; }
+.cs-live-gold-persistent .cs-live-v2__revenue-chart { filter:hue-rotate(53deg) saturate(.85) drop-shadow(0 0 7px rgba(228,172,55,.18)) !important; }
+/* SVG real da V20 - troca o vermelho do fluxo sem afetar seus numeros ou caixas. */
+.cs-live-gold-persistent .cs-pulso__shape { filter:hue-rotate(49deg) saturate(.86) !important; }
+.cs-live-gold-persistent .cs-pulso__icon { color:#ffc95d !important; filter:drop-shadow(0 0 8px rgba(242,189,53,.22)) !important; }
+.cs-live-gold-persistent .cs-pulso__header h2,
+.cs-live-gold-persistent .cs-live-v2__panel-head h2,
+.cs-live-gold-persistent .cs-live-v2__eyebrow,
+.cs-live-gold-persistent .cs-live-v2__activity h2,
+.cs-live-gold-persistent .cs-live-v2__section-head h2,
+.cs-live-gold-persistent .cs-live-v2__origin h2,
+.cs-live-gold-persistent .cs-live-v2__now h2 { color:#f4d182 !important; }
+.cs-live-gold-persistent .cs-live-v2__product-name,
+.cs-live-gold-persistent .cs-live-v2__product-totals,
+.cs-live-gold-persistent .cs-live-v2__product-totals strong { color:#ffedc7 !important; }
+
+/* Chuva continua de dinheiro dourado, atras dos componentes, ate virar o mes. */
+.cs-gold-money { position:fixed; inset:0; z-index:1; overflow:hidden; pointer-events:none; contain:layout paint; }
+.cs-gold-money__note { position:absolute; top:-19vh; left:var(--gold-x); width:clamp(58px,5.1vw,96px); height:auto; opacity:.73; will-change:transform; animation:cs-gold-bill-drop var(--gold-time) linear var(--gold-delay) infinite; filter:drop-shadow(0 8px 12px rgba(0,0,0,.32)); }
+@keyframes cs-gold-bill-drop { 0% { transform:translate3d(0,-22vh,0) rotate(var(--gold-spin)) skewY(4deg) scale(var(--gold-scale)); opacity:0; } 9% {opacity:.91;} 54% {transform:translate3d(calc(var(--gold-drift) * .55),65vh,0) rotate(calc(var(--gold-spin) + 135deg)) skewY(-7deg) scale(var(--gold-scale));opacity:.91;} 88% {opacity:.89;} 100% {transform:translate3d(var(--gold-drift),143vh,0) rotate(calc(var(--gold-spin) + 360deg)) skewY(5deg) scale(var(--gold-scale));opacity:0;} }
+
+/* Cerimonia central: somente durante a reproducao real de celebracao_meta.mp3. */
+.cs-gold-intro { position:fixed; inset:0; z-index:10000; display:grid; place-items:center; isolation:isolate; overflow:hidden; background:radial-gradient(ellipse at 50% 53%,rgba(102,63,9,.72),rgba(20,15,6,.90) 58%,rgba(7,8,11,.96)); pointer-events:none; }
+.cs-gold-intro__light { position:absolute;inset:-60%;background:repeating-conic-gradient(from 0deg at 50% 50%,transparent 0deg 16deg,rgba(255,216,101,.11) 18deg,transparent 22deg 37deg);mask-image:radial-gradient(ellipse at 50% 50%,#000 0%,rgba(0,0,0,.38) 30%,transparent 67%);animation:cs-gold-rays 28s linear infinite; }
+@keyframes cs-gold-rays {to{transform:rotate(360deg)}}
+/* cs-live-fireworks-gold-v1: estourando, somente no intro; CSS sem interferencia no dashboard. */
+.cs-gold-intro__fireworks {
+  position:absolute;
+  inset:0;
+  z-index:1;
+  overflow:hidden;
+  pointer-events:none;
+  contain:layout paint;
+}
+.cs-gold-intro__burst {
+  position:absolute;
+  top:var(--firework-y);
+  left:var(--firework-x);
+  width:0;
+  height:0;
+  transform:scale(var(--firework-scale));
+  pointer-events:none;
+}
+.cs-gold-intro__burst-flash,
+.cs-gold-intro__burst-ring,
+.cs-gold-intro__spark {
+  position:absolute;
+  left:0;
+  top:0;
+  transform-origin:center;
+  opacity:0;
+  animation-duration:5.1s;
+  animation-iteration-count:infinite;
+  animation-delay:var(--firework-delay);
+}
+.cs-gold-intro__burst-flash {
+  width:68px;
+  height:68px;
+  margin:-34px;
+  border-radius:50%;
+  background:radial-gradient(circle,#fffae2 0%,#fff0b4 13%,rgba(255,204,85,.7) 28%,transparent 66%);
+  filter:drop-shadow(0 0 17px rgba(255,211,88,.75));
+  animation-name:cs-gold-fw-flash;
+}
+.cs-gold-intro__burst-ring {
+  width:65px;
+  height:65px;
+  margin:-32.5px;
+  border:2px solid rgba(255,222,131,.8);
+  border-radius:50%;
+  box-shadow:0 0 15px rgba(249,189,67,.65),inset 0 0 12px rgba(255,210,104,.35);
+  animation-name:cs-gold-fw-ring;
+}
+.cs-gold-intro__spark {
+  width:4px;
+  height:13px;
+  margin:-6px -2px;
+  border-radius:10px;
+  background:linear-gradient(0deg,transparent,var(--spark-tone) 60%,#fffced);
+  box-shadow:0 0 10px 2px var(--spark-tone);
+  animation-name:cs-gold-fw-spark;
+  animation-timing-function:cubic-bezier(.14,.5,.4,1);
+}
+.cs-gold-intro__spark:nth-of-type(4n) {width:5px;height:7px;border-radius:50%;}
+@keyframes cs-gold-fw-flash {
+  0%,5%,32%,100% {opacity:0;transform:scale(.1)}
+  7% {opacity:1;transform:scale(1)}
+  12% {opacity:.55;transform:scale(1.9)}
+  19% {opacity:0;transform:scale(2.6)}
+}
+@keyframes cs-gold-fw-ring {
+  0%,5%,32%,100% {opacity:0;transform:scale(.08)}
+  8% {opacity:.9;transform:scale(.4)}
+  20% {opacity:.35;transform:scale(3.1)}
+  29% {opacity:0;transform:scale(4)}
+}
+@keyframes cs-gold-fw-spark {
+  0%,5% {opacity:0;transform:translate(0,0) rotate(var(--spark-angle)) scale(.1)}
+  7% {opacity:1;transform:translate(0,0) rotate(var(--spark-angle)) scale(1.1)}
+  15% {opacity:1;transform:translate(calc(var(--spark-x) * .62),calc(var(--spark-y) * .62)) rotate(var(--spark-angle)) scale(1)}
+  27% {opacity:0;transform:translate(var(--spark-x),var(--spark-y)) rotate(var(--spark-angle)) scale(.2)}
+  100% {opacity:0;transform:translate(var(--spark-x),var(--spark-y)) rotate(var(--spark-angle)) scale(.2)}
+}
+@media (max-width:760px) {
+  .cs-gold-intro__fireworks {transform:scale(.75);transform-origin:center}
+}
+@media (prefers-reduced-motion:reduce) {
+  .cs-gold-intro__burst-flash,
+  .cs-gold-intro__burst-ring,
+  .cs-gold-intro__spark {animation:none;opacity:0;}
+}
+
+.cs-gold-intro .cs-gold-money--intro { z-index:2; opacity:.95; }
+.cs-gold-intro__content { position:relative; z-index:3; width:min(890px,92vw);text-align:center;color:#ffe29a;text-shadow:0 0 29px rgba(242,163,24,.37),0 2px 3px #6d4209; }
+.cs-gold-intro__crown { color:#ffd268;font-size:clamp(56px,6.5vw,102px);line-height:.9;filter:drop-shadow(0 0 21px rgba(251,183,38,.48));margin-bottom:10px; }
+.cs-gold-intro__content h1 { margin:0;white-space:nowrap;font-family:Inter,"Segoe UI",sans-serif;font-size:clamp(43px,6.8vw,106px);line-height:1;letter-spacing:-.055em;font-weight:950;color:#ffd87a;-webkit-text-stroke:1px rgba(109,62,0,.5);background:linear-gradient(#fff3be 5%,#ffd375 42%,#d79a29 90%,#ffde89);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent; }
+.cs-gold-intro__amount {font-size:clamp(38px,5vw,78px);line-height:1.09;font-weight:900;letter-spacing:-.05em;margin-top:9px;}
+.cs-gold-intro__bar { width:min(680px,85vw);height:clamp(22px,2vw,30px);padding:3px;margin:17px auto 20px;border-radius:999px;border:1px solid #ffd985;background:linear-gradient(180deg,#d68f13,#6b4207);box-shadow:0 0 25px rgba(251,181,39,.45),inset 0 2px 3px rgba(255,238,161,.42); }
+.cs-gold-intro__bar span {display:flex;height:100%;align-items:center;justify-content:center;border-radius:999px;background:linear-gradient(180deg,#ffedaa,#ecc056);color:#664008;text-shadow:none;font-weight:900;font-size:clamp(14px,1.45vw,22px);}
+.cs-gold-intro__month {color:#fbd17a;font-weight:800;letter-spacing:.19em;font-size:clamp(15px,1.5vw,23px);}
+@media(max-width:640px){.cs-gold-money__note{width:58px}.cs-gold-intro__content h1{font-size:clamp(38px,9.3vw,58px)}.cs-gold-intro__month{letter-spacing:.07em}}
+@media(prefers-reduced-motion:reduce){.cs-gold-money__note {animation-duration:20s;opacity:.50}.cs-gold-intro__light,.cs-gold-intro__firework{animation:none;}}
+
+.cs-live-gold-persistent .cs-live-v2__feed-type,
+.cs-live-gold-persistent .cs-live-v2__feed-icon { color:#f5c966 !important; border-color:rgba(245,201,102,.35) !important; background:rgba(70,46,15,.30) !important; }
+.cs-live-gold-persistent .cs-live-v2__feed-main strong { color:#f7d58c !important; }
+.cs-live-gold-persistent .cs-live-v2__activity-source,
+.cs-live-gold-persistent .cs-live-v2__activity-count { color:#e7c578 !important; }

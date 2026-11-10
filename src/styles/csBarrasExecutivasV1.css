@@ -1,0 +1,192 @@
+
+/*
+ CS DASH - BARRAS EXECUTIVAS DE PARTICIPACAO V2
+
+ Modelo: bloco proporcional + linha fina.
+ Escopo: Principais Destaques.
+ Cores e dados: preservados.
+*/
+
+.cs-intel-v28-highlights
+.cs-intel-v25-card
+.cs-intel-v28-microbars {
+  height: auto !important;
+  min-height: 12px !important;
+  overflow: visible !important;
+}
+
+.cs-intel-v28-highlights
+.cs-intel-v25-card
+.cs-bars-v1-participation {
+  position: relative !important;
+  isolation: isolate;
+
+  display: block !important;
+
+  box-sizing: border-box !important;
+
+  width: 100% !important;
+  height: 12px !important;
+  min-height: 12px !important;
+
+  margin: 10px 0 0 !important;
+  padding: 0 !important;
+
+  overflow: visible !important;
+
+  background: transparent !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  box-shadow: none !important;
+}
+
+/* Linha de continuidade ate 100% */
+
+.cs-intel-v28-highlights
+.cs-intel-v25-card
+.cs-bars-v1-participation::before {
+  content: "";
+
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  height: 2px;
+
+  background: rgba(116,143,180,.40);
+
+  border-radius: 999px;
+  box-shadow: none;
+
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Bloco vermelho proporcional */
+
+.cs-intel-v28-highlights
+.cs-intel-v25-card
+.cs-bars-v1-participation
+> .cs-bars-v1-participation-fill {
+  position: relative !important;
+  z-index: 1;
+
+  display: block !important;
+
+  box-sizing: border-box !important;
+
+  height: 10px !important;
+  min-height: 10px !important;
+
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  margin: 1px 0 0 !important;
+  padding: 0 !important;
+
+  border: 0 !important;
+  border-radius: 2px !important;
+
+  background: #F7304E !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.10) !important;
+
+  transform: none !important;
+
+  transition: width .22s ease !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-intel-v28-highlights
+  .cs-intel-v25-card
+  .cs-bars-v1-participation
+  > .cs-bars-v1-participation-fill {
+    transition: none !important;
+  }
+}
+
+/* /cs-barras-participacao-v2 */
+
+
+/* cs-bars-meta-faturamento-v1
+   Familia: progresso de meta
+   Escopo exclusivo: Faturamento no Periodo
+*/
+
+.cs-overview-primary
+[role="progressbar"][aria-label="Progresso da meta de faturamento"] {
+  position: relative !important;
+  display: block !important;
+  box-sizing: border-box !important;
+
+  width: 100% !important;
+  height: 14px !important;
+  min-height: 14px !important;
+
+  margin-top: 10px !important;
+  padding: 0 !important;
+
+  overflow: hidden !important;
+
+  border: 1px solid rgba(134, 157, 189, .13) !important;
+  border-radius: 5px !important;
+
+  background: #273649 !important;
+
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, .22) !important;
+}
+
+.cs-overview-primary
+[role="progressbar"][aria-label="Progresso da meta de faturamento"]
+> div {
+  position: relative !important;
+  display: block !important;
+  box-sizing: border-box !important;
+
+  height: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: 0 !important;
+  border-radius: 4px !important;
+
+  background: linear-gradient(
+    90deg,
+    #DD2947 0%,
+    #F7304E 65%,
+    #FF526B 100%
+  ) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .14) !important;
+
+  transform: none !important;
+}
+
+@media (max-width: 520px) {
+  .cs-overview-primary
+  [role="progressbar"][aria-label="Progresso da meta de faturamento"] {
+    height: 12px !important;
+    min-height: 12px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-overview-primary
+  [role="progressbar"][aria-label="Progresso da meta de faturamento"]
+  > div {
+    transition: none !important;
+  }
+}
+
+/* /cs-bars-meta-faturamento-v1 */

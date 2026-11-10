@@ -1,0 +1,1021 @@
+
+/* CS Intelligence V3.4
+   Reproducao visual do prototipo aprovado.
+*/
+
+.cs-intel-v34-section {
+  position: relative;
+  min-width: 0;
+  padding: 11px 13px 12px;
+  border: 1px solid rgba(247,48,78,.48);
+  border-left: 5px solid #F7304E;
+  border-radius: 12px;
+  background:
+    radial-gradient(
+      ellipse at 2% 5%,
+      rgba(247,48,78,.11),
+      transparent 55%
+    ),
+    linear-gradient(
+      115deg,
+      rgba(18,21,30,.97),
+      rgba(12,20,31,.96)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.025),
+    0 7px 22px rgba(0,0,0,.09);
+}
+
+.cs-intel-v34-heading {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 9px;
+}
+
+.cs-intel-v34-heading-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 29px;
+  color: #F7304E;
+  flex-shrink: 0;
+}
+
+.cs-intel-v34-heading h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.3;
+  letter-spacing: .015em;
+  color: #F5F7FB;
+}
+
+.cs-intel-v34-heading p {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: #A2AEC0;
+  line-height: 1.4;
+}
+
+.cs-intel-v34-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0,1fr))
+    176px;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.cs-intel-v34-card {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 76px;
+  gap: 11px;
+  padding: 9px 12px;
+  border: 1px solid rgba(122,140,165,.14);
+  border-radius: 10px;
+  background:
+    linear-gradient(
+      130deg,
+      rgba(27,31,43,.91),
+      rgba(16,24,36,.93)
+    );
+}
+
+.cs-intel-v34-warning {
+  border-left: 1px solid rgba(247,48,78,.55);
+}
+
+.cs-intel-v34-positive {
+  border-left: 1px solid rgba(0,208,130,.53);
+  background:
+    linear-gradient(
+      125deg,
+      rgba(8,50,43,.45),
+      rgba(13,25,35,.93)
+    );
+}
+
+.cs-intel-v34-symbol {
+  display: flex;
+  width: 54px;
+  height: 54px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 54px;
+  border-radius: 50%;
+}
+
+.cs-intel-v34-warning .cs-intel-v34-symbol {
+  color: #FF455A;
+  border: 1px solid rgba(247,48,78,.28);
+  background:
+    radial-gradient(
+      circle,
+      rgba(247,48,78,.24),
+      rgba(247,48,78,.10)
+    );
+}
+
+.cs-intel-v34-positive .cs-intel-v34-symbol {
+  color: #00E395;
+  border: 1px solid rgba(0,220,135,.28);
+  background:
+    radial-gradient(
+      circle,
+      rgba(0,214,126,.28),
+      rgba(0,175,108,.09)
+    );
+}
+
+.cs-intel-v34-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.cs-intel-v34-content h3 {
+  color: #F4F6FA;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.4;
+  margin: 0 0 3px;
+}
+
+.cs-intel-v34-content p {
+  margin: 1px 0 0;
+  color: #B3BDCB;
+  font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.cs-intel-v34-content strong {
+  color: #F6F8FB;
+  font-weight: 750;
+}
+
+.cs-intel-v34-arrow {
+  color: #AFC1D6;
+  font-size: 25px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.cs-intel-v34-all {
+  display: flex;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 40px;
+  padding: 8px 11px;
+  color: #FF3655;
+  background: rgba(8,13,22,.48);
+  border: 1px solid #F7304E;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cs-intel-v34-all:hover {
+  background: rgba(247,48,78,.10);
+}
+
+.cs-intel-v34-all:focus-visible {
+  outline: 2px solid #F7304E;
+  outline-offset: 3px;
+}
+
+.cs-intel-v34-all span {
+  font-size: 19px;
+  line-height: 1;
+}
+
+.cs-intel-v34-expanded {
+  margin-top: 12px;
+  padding: 12px;
+  border-top: 1px solid rgba(128,150,180,.17);
+  color: #B2BED0;
+}
+
+.cs-intel-v34-expanded h3 {
+  font-size: 12px;
+  font-weight: 700;
+  color: #F4F6FA;
+  margin-bottom: 7px;
+}
+
+.cs-intel-v34-expanded p {
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 5px 0;
+}
+
+@media (max-width: 1279px) {
+  .cs-intel-v34-grid {
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+
+  .cs-intel-v34-all {
+    justify-self: start;
+    min-width: 175px;
+  }
+}
+
+@media (max-width: 700px) {
+  .cs-intel-v34-grid {
+    grid-template-columns: minmax(0,1fr);
+  }
+
+  .cs-intel-v34-card {
+    min-height: 76px;
+  }
+
+  .cs-intel-v34-symbol {
+    width: 48px;
+    height: 48px;
+    flex-basis: 48px;
+  }
+}
+
+
+/* cs-intelligence-refinamento-v35
+   Executivo CS — Glass Sutil
+   Refinamento fiel ao prototipo.
+*/
+
+/* Estrutura e iluminacao */
+.cs-intel-v34-section {
+  padding: 13px 15px 14px;
+  border: 1px solid rgba(247,48,78,.50);
+  border-left: 5px solid #F7304E;
+  border-radius: 12px;
+
+  background:
+    radial-gradient(
+      ellipse 48% 170% at 0% 0%,
+      rgba(122,34,63,.19),
+      transparent 78%
+    ),
+    radial-gradient(
+      ellipse 62% 135% at 82% 0%,
+      rgba(20,64,104,.13),
+      transparent 75%
+    ),
+    linear-gradient(
+      112deg,
+      #171823 0%,
+      #101622 54%,
+      #0A1320 100%
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.055),
+    0 9px 28px rgba(0,0,0,.14);
+}
+
+/* Titulo e subtitulo */
+.cs-intel-v34-heading {
+  gap: 13px;
+  margin-bottom: 12px;
+}
+
+.cs-intel-v34-heading-icon {
+  width: 31px;
+  height: 33px;
+  color: #F7304E;
+  filter: drop-shadow(0 0 7px rgba(247,48,78,.22));
+}
+
+.cs-intel-v34-heading-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2;
+}
+
+.cs-intel-v34-heading h2 {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 750;
+  letter-spacing: .01em;
+  line-height: 1.3;
+  color: #F6F8FC;
+}
+
+.cs-intel-v34-heading p {
+  margin-top: 3px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #B5C2D3;
+}
+
+/* Distribuicao dos tres cards */
+.cs-intel-v34-grid {
+  gap: 13px;
+}
+
+/* Cards com vidro escuro */
+.cs-intel-v34-card {
+  position: relative;
+  min-height: 94px;
+  gap: 13px;
+  padding: 12px 13px;
+
+  border-radius: 10px;
+  border: 1px solid rgba(124,147,178,.20);
+
+  background:
+    radial-gradient(
+      ellipse at 0% 0%,
+      rgba(63,77,106,.11),
+      transparent 78%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(27,32,45,.95),
+      rgba(12,22,35,.97)
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.045),
+    0 4px 14px rgba(0,0,0,.11);
+}
+
+/* Alertas negativos */
+.cs-intel-v34-warning {
+  border-left-color: rgba(247,48,78,.72);
+
+  background:
+    radial-gradient(
+      ellipse at 0% 50%,
+      rgba(247,48,78,.075),
+      transparent 60%
+    ),
+    linear-gradient(
+      125deg,
+      #20202D,
+      #101B2A
+    );
+}
+
+/* Indicador positivo */
+.cs-intel-v34-positive {
+  border-color: rgba(15,186,132,.29);
+  border-left-color: rgba(12,219,145,.72);
+
+  background:
+    radial-gradient(
+      ellipse at 0% 50%,
+      rgba(0,202,130,.13),
+      transparent 67%
+    ),
+    linear-gradient(
+      120deg,
+      #102B2A,
+      #0B1D2A
+    );
+}
+
+/* Circulos dos icones */
+.cs-intel-v34-symbol {
+  width: 57px;
+  height: 57px;
+  flex: 0 0 57px;
+  border-radius: 50%;
+}
+
+.cs-intel-v34-symbol svg {
+  width: 28px;
+  height: 28px;
+  stroke-width: 2.1;
+}
+
+.cs-intel-v34-warning .cs-intel-v34-symbol {
+  color: #FF4964;
+  border: 1px solid rgba(247,48,78,.42);
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(247,48,78,.27),
+      rgba(247,48,78,.12) 75%
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.04),
+    0 0 21px rgba(247,48,78,.085);
+}
+
+.cs-intel-v34-positive .cs-intel-v34-symbol {
+  color: #13E8A0;
+  border: 1px solid rgba(13,229,145,.39);
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(0,218,135,.33),
+      rgba(0,149,101,.12) 78%
+    );
+
+  box-shadow:
+    0 0 22px rgba(0,209,137,.12),
+    inset 0 1px 0 rgba(255,255,255,.045);
+}
+
+/* Tipografia interna dos cards */
+.cs-intel-v34-content h3 {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.35;
+  letter-spacing: -.012em;
+  font-weight: 740;
+  color: #F8FAFC;
+  margin-bottom: 5px;
+}
+
+.cs-intel-v34-content p {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 12.5px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: #C0CBD9;
+}
+
+.cs-intel-v34-content strong {
+  color: #FFFFFF;
+  font-weight: 750;
+}
+
+.cs-intel-v34-arrow {
+  font-size: 29px;
+  color: #C2D3E8;
+}
+
+/* Botao de detalhes */
+.cs-intel-v34-all {
+  min-height: 44px;
+  padding: 10px 13px;
+
+  border-radius: 8px;
+  border: 1px solid #F7304E;
+
+  background:
+    linear-gradient(
+      140deg,
+      rgba(247,48,78,.065),
+      rgba(9,16,27,.62)
+    );
+
+  color: #FF4761;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+
+  transition:
+    background .18s ease,
+    box-shadow .18s ease;
+}
+
+.cs-intel-v34-all:hover {
+  background: rgba(247,48,78,.12);
+  box-shadow: 0 0 17px rgba(247,48,78,.10);
+}
+
+/* Informacoes expandidas */
+.cs-intel-v34-expanded {
+  margin-top: 13px;
+  padding: 14px 13px 7px;
+  border-top: 1px solid rgba(138,158,187,.18);
+}
+
+.cs-intel-v34-expanded h3 {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cs-intel-v34-expanded p {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: #BECBDD;
+}
+
+/* Responsividade */
+@media (max-width: 1279px) {
+  .cs-intel-v34-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .cs-intel-v34-grid {
+    grid-template-columns: minmax(0,1fr);
+  }
+
+  .cs-intel-v34-card {
+    min-height: 85px;
+    padding: 11px;
+  }
+
+  .cs-intel-v34-symbol {
+    width: 51px;
+    height: 51px;
+    flex-basis: 51px;
+  }
+
+  .cs-intel-v34-symbol svg {
+    width: 25px;
+    height: 25px;
+  }
+
+  .cs-intel-v34-content h3 {
+    font-size: 13.5px;
+  }
+
+  .cs-intel-v34-content p {
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-intel-v34-all {
+    transition: none;
+  }
+}
+
+
+/* cs-intelligence-proporcoes-v36
+   Refinamento de proporcoes segundo o prototipo aprovado.
+*/
+
+/* Painel principal mais compacto */
+.cs-intel-v34-section {
+  padding: 10px 12px 11px;
+  border-left-width: 5px;
+  background:
+    radial-gradient(
+      ellipse 50% 155% at 0% 0%,
+      rgba(107,30,59,.16),
+      transparent 78%
+    ),
+    radial-gradient(
+      ellipse 55% 100% at 85% 0%,
+      rgba(23,61,102,.13),
+      transparent 78%
+    ),
+    linear-gradient(
+      110deg,
+      #171922 0%,
+      #101723 57%,
+      #0A1420 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.035),
+    0 5px 18px rgba(0,0,0,.10);
+}
+
+/* Cabecalho da secao */
+.cs-intel-v34-heading {
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.cs-intel-v34-heading-icon {
+  width: 28px;
+  height: 29px;
+}
+
+.cs-intel-v34-heading-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.cs-intel-v34-heading h2 {
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.cs-intel-v34-heading p {
+  margin-top: 2px;
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+/* Proporcoes dos cards */
+.cs-intel-v34-grid {
+  grid-template-columns:
+    repeat(3, minmax(0,1fr))
+    175px;
+  gap: 12px;
+}
+
+.cs-intel-v34-card {
+  min-height: 81px;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.035),
+    0 3px 11px rgba(0,0,0,.08);
+}
+
+/* Icones: grandes, sem dominar o card */
+.cs-intel-v34-symbol {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+}
+
+.cs-intel-v34-symbol svg {
+  width: 25px;
+  height: 25px;
+  stroke-width: 2;
+}
+
+/* Texto mais proximo da referencia */
+.cs-intel-v34-content h3 {
+  font-size: 12.5px;
+  line-height: 1.3;
+  font-weight: 750;
+  letter-spacing: -.01em;
+  margin-bottom: 3px;
+}
+
+.cs-intel-v34-content p {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: #B7C3D3;
+}
+
+/* Mantem resumo compacto.
+   O texto integral aparece em Ver todos os insights. */
+.cs-intel-v34-card .cs-intel-v34-content p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.cs-intel-v34-content strong {
+  font-weight: 750;
+  color: #F7FAFE;
+}
+
+/* Seta discreta */
+.cs-intel-v34-arrow {
+  font-size: 23px;
+  color: #B4C7DE;
+}
+
+/* Card positivo: verde sofisticado */
+.cs-intel-v34-positive {
+  background:
+    radial-gradient(
+      ellipse at 6% 50%,
+      rgba(0,204,131,.12),
+      transparent 67%
+    ),
+    linear-gradient(
+      122deg,
+      #102A2B,
+      #0B1C29
+    );
+}
+
+.cs-intel-v34-positive .cs-intel-v34-symbol {
+  color: #12E49A;
+  box-shadow:
+    0 0 16px rgba(0,215,139,.10),
+    inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+/* Botao do lado direito */
+.cs-intel-v34-all {
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: 11px;
+  border-radius: 8px;
+}
+
+/* Responsividade */
+@media (max-width: 1279px) {
+  .cs-intel-v34-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .cs-intel-v34-grid {
+    grid-template-columns: minmax(0,1fr);
+  }
+
+  .cs-intel-v34-card {
+    min-height: 81px;
+  }
+
+  .cs-intel-v34-symbol {
+    width: 48px;
+    height: 48px;
+    flex-basis: 48px;
+  }
+
+  .cs-intel-v34-symbol svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .cs-intel-v34-content p {
+    font-size: 11.5px;
+  }
+}
+
+
+/* cs-intelligence-final-v37
+   Texto completo e cards interativos.
+*/
+
+.cs-intel-v34-card {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease;
+}
+
+.cs-intel-v34-card .cs-intel-v34-content p {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+}
+
+.cs-intel-v34-card:hover {
+  border-color: rgba(247,48,78,.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.045),
+    0 0 16px rgba(247,48,78,.08);
+}
+
+.cs-intel-v34-positive:hover {
+  border-color: rgba(16,226,150,.60);
+  box-shadow: 0 0 16px rgba(0,215,139,.09);
+}
+
+.cs-intel-v34-card:focus-visible {
+  outline: 2px solid #F7304E;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-intel-v34-card {
+    transition: none;
+  }
+}
+
+
+/* cs-intelligence-fundo-executivo-v38
+   Padrao Executivo CS — Glass Sutil
+   Referencia visual aprovada.
+*/
+
+/* Fundo principal da secao */
+.cs-v32-shell .cs-intel-v34-section {
+  background:
+    radial-gradient(
+      ellipse 65% 145% at 0% 30%,
+      rgba(112, 30, 51, .24),
+      transparent 76%
+    ),
+    radial-gradient(
+      ellipse 65% 130% at 85% 0%,
+      rgba(26, 57, 91, .11),
+      transparent 78%
+    ),
+    linear-gradient(
+      105deg,
+      #191923 0%,
+      #111823 55%,
+      #0B1420 100%
+    );
+
+  border: 1px solid rgba(247,48,78,.42);
+  border-left: 5px solid #F7304E;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.035),
+    0 6px 20px rgba(0,0,0,.10);
+}
+
+/* Cards de alerta: vidro grafite, sem cor excessiva */
+.cs-v32-shell .cs-intel-v34-warning {
+  background:
+    radial-gradient(
+      ellipse at 0% 50%,
+      rgba(115, 36, 60, .095),
+      transparent 68%
+    ),
+    linear-gradient(
+      125deg,
+      #1D1C29,
+      #101B29
+    );
+
+  border-color: rgba(124,147,178,.20);
+  border-left-color: rgba(247,48,78,.55);
+}
+
+/* Card positivo: mesmo fundo executivo,
+   com iluminacao verde contida */
+.cs-v32-shell .cs-intel-v34-positive {
+  background:
+    radial-gradient(
+      ellipse at 0% 50%,
+      rgba(0,175,115,.10),
+      transparent 72%
+    ),
+    linear-gradient(
+      125deg,
+      #102329,
+      #0E1B28
+    );
+
+  border-color: rgba(18,172,121,.30);
+}
+
+/* Profundidade sutil dos cards */
+.cs-v32-shell .cs-intel-v34-card {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.035),
+    0 4px 14px rgba(0,0,0,.09);
+}
+
+/* Texto na mesma paleta executiva */
+.cs-v32-shell .cs-intel-v34-heading p,
+.cs-v32-shell .cs-intel-v34-content p {
+  color: #B5C2D3;
+}
+
+.cs-v32-shell .cs-intel-v34-heading h2,
+.cs-v32-shell .cs-intel-v34-content h3 {
+  color: #F5F7FB;
+}
+
+
+/* cs-intel-v39-fundo-referencia
+   Acabamento conforme prototipo aprovado.
+   Estas regras substituem os gradientes anteriores.
+*/
+
+/* Fundo vinho -> grafite -> azul profundo */
+.cs-v32-shell .cs-intel-v34-section {
+  background:
+    radial-gradient(
+      ellipse 65% 145% at 0% 35%,
+      rgba(142, 30, 61, .34) 0%,
+      rgba(95, 26, 49, .16) 42%,
+      transparent 82%
+    ),
+    radial-gradient(
+      ellipse 55% 130% at 77% 0%,
+      rgba(27, 59, 96, .20),
+      transparent 78%
+    ),
+    linear-gradient(
+      105deg,
+      #211922 0%,
+      #161721 38%,
+      #101522 70%,
+      #0A1320 100%
+    ) !important;
+
+  border-color: rgba(247,48,78,.52) !important;
+  border-left: 5px solid #F7304E !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.065),
+    0 7px 24px rgba(0,0,0,.16),
+    0 0 18px rgba(247,48,78,.045) !important;
+}
+
+/* Alertas: vidro grafite com iluminacao vinho */
+.cs-v32-shell .cs-intel-v34-card.cs-intel-v34-warning {
+  background:
+    radial-gradient(
+      ellipse at 0% 40%,
+      rgba(128,37,66,.15),
+      transparent 73%
+    ),
+    linear-gradient(
+      112deg,
+      rgba(37,29,42,.96),
+      rgba(14,22,35,.97)
+    ) !important;
+
+  border-color: rgba(116,128,153,.20) !important;
+  border-left-color: rgba(247,48,78,.65) !important;
+}
+
+/* Positivo: verde profundo, nao verde chapado */
+.cs-v32-shell .cs-intel-v34-card.cs-intel-v34-positive {
+  background:
+    radial-gradient(
+      ellipse at 0% 55%,
+      rgba(0,202,131,.18),
+      transparent 76%
+    ),
+    linear-gradient(
+      115deg,
+      #102B2B,
+      #0B1A28
+    ) !important;
+
+  border-color: rgba(0,201,135,.35) !important;
+}
+
+/* Brilho controlado nos icones */
+.cs-v32-shell .cs-intel-v34-warning .cs-intel-v34-symbol {
+  background: rgba(247,48,78,.16) !important;
+  box-shadow:
+    0 0 21px rgba(247,48,78,.13),
+    inset 0 0 12px rgba(247,48,78,.055) !important;
+}
+
+.cs-v32-shell .cs-intel-v34-positive .cs-intel-v34-symbol {
+  background: rgba(0,189,125,.19) !important;
+  box-shadow:
+    0 0 22px rgba(0,214,140,.14),
+    inset 0 0 12px rgba(0,214,140,.07) !important;
+}
+
+
+/* cs-intel-calibracao-v40
+   Cores ajustadas pela referencia visual aprovada.
+   Sem alteracao de estrutura ou tipografia.
+*/
+
+.cs-v32-shell .cs-intel-v34-section {
+  background:
+    radial-gradient(
+      ellipse 65% 140% at 0% 30%,
+      rgba(110, 30, 49, .19),
+      transparent 77%
+    ),
+    radial-gradient(
+      ellipse 60% 125% at 80% 0%,
+      rgba(22, 50, 82, .075),
+      transparent 78%
+    ),
+    linear-gradient(
+      105deg,
+      #201A22 0%,
+      #181923 34%,
+      #121720 69%,
+      #0F1620 100%
+    ) !important;
+}
+
+.cs-v32-shell .cs-intel-v34-card.cs-intel-v34-warning {
+  background:
+    radial-gradient(
+      ellipse at 0% 50%,
+      rgba(105, 35, 55, .075),
+      transparent 72%
+    ),
+    linear-gradient(
+      115deg,
+      #211C27 0%,
+      #111A27 100%
+    ) !important;
+}
+
+.cs-v32-shell .cs-intel-v34-card.cs-intel-v34-positive {
+  background:
+    radial-gradient(
+      ellipse at 0% 55%,
+      rgba(0, 177, 112, .09),
+      transparent 73%
+    ),
+    linear-gradient(
+      120deg,
+      #102427 0%,
+      #0C1823 100%
+    ) !important;
+}
+
+.cs-v32-shell .cs-intel-v34-warning .cs-intel-v34-symbol {
+  background: rgba(247,48,78,.13) !important;
+  box-shadow: 0 0 15px rgba(247,48,78,.075) !important;
+}
+
+.cs-v32-shell .cs-intel-v34-positive .cs-intel-v34-symbol {
+  background: rgba(0,189,125,.15) !important;
+  box-shadow: 0 0 16px rgba(0,214,140,.09) !important;
+}

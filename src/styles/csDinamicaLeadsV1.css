@@ -1,0 +1,1510 @@
+/* cs-dinamica-leads-executiva-v1 */
+/* Escopo exclusivo: Chegada de Leads / Visao Geral */
+
+.cs-overview-v29-leads-preview:has(.cs-dyn-v1) {
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+.cs-dyn-v1 {
+  container-type: inline-size;
+  width: 100%;
+  min-width: 0;
+  padding: 12px 16px;
+  border: 1px solid rgba(116,140,170,.17);
+  border-radius: 12px;
+  background:
+    radial-gradient(ellipse at 0% 0%,
+      rgba(247,48,78,.045),transparent 47%),
+    linear-gradient(120deg,#1C222C,#101B29);
+  color: #F7FAFD;
+}
+
+.cs-dyn-v1-head,
+.cs-dyn-v1-column-title,
+.cs-dyn-v1-context,
+.cs-dyn-v1-ranking-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cs-dyn-v1-head {
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.cs-dyn-v1-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cs-dyn-v1-heading strong {
+  color: #F7304E;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .065em;
+}
+
+.cs-dyn-v1-heading span {
+  color: #B5C5D9;
+  font-size: 12px;
+}
+
+.cs-dyn-v1-filters {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.cs-dyn-v1-filters label {
+  color: #95A7BE;
+  font-size: 11px;
+}
+
+.cs-dyn-v1-filters select,
+.cs-dyn-v1-custom input {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(113,143,178,.30);
+  border-radius: 7px;
+  background: #111C2B;
+  color: #EDF4FC;
+  font-size: 11px;
+  outline-offset: 2px;
+}
+
+.cs-dyn-v1-custom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.cs-dyn-v1-custom label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #9FB3CC;
+  font-size: 11px;
+}
+
+.cs-dyn-v1-context {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 6px 15px;
+  margin-bottom: 8px;
+  color: #8296AE;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-dyn-v1-context span {
+  color: #B4C5D9;
+}
+
+.cs-dyn-v1-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.25fr)
+    minmax(135px, .36fr)
+    minmax(0, .9fr);
+  align-items: stretch;
+  gap: 12px;
+}
+
+.cs-dyn-v1-chart,
+.cs-dyn-v1-ranking {
+  min-width: 0;
+}
+
+.cs-dyn-v1-column-title {
+  min-width: 0;
+  margin-bottom: 10px;
+}
+
+.cs-dyn-v1-column-title strong {
+  font-size: 12px;
+  font-weight: 750;
+  color: #F1F6FC;
+}
+
+.cs-dyn-v1-column-title span {
+  color: #8497AE;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.cs-dyn-v1-chartbox {
+  width: 100%;
+  height: 184px;
+  min-width: 0;
+}
+
+.cs-dyn-v1-chart-empty,
+.cs-dyn-v1-message {
+  min-height: 135px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #99ABC2;
+  font-size: 12px;
+}
+
+.cs-dyn-v1-error {
+  color: #FF91A4;
+}
+
+.cs-dyn-v1-error small {
+  color: #AABBD0;
+  max-width: 90%;
+  text-align: center;
+}
+
+.cs-dyn-v1-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+  padding: 5px 12px;
+  border-left: 1px solid rgba(135,157,186,.15);
+  border-right: 1px solid rgba(135,157,186,.15);
+}
+
+.cs-dyn-v1-total > strong {
+  color: #F7304E;
+  font-size: clamp(28px,2.6vw,37px);
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: -.045em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-dyn-v1-total > span {
+  margin-top: 7px;
+  font-size: 12px;
+  color: #DAE5F2;
+}
+
+.cs-dyn-v1-total > b {
+  margin-top: 13px;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.cs-dyn-v1-total > b[data-estado="positivo"] {
+  color: #12D995;
+}
+
+.cs-dyn-v1-total > b[data-estado="negativo"] {
+  color: #F7304E;
+}
+
+.cs-dyn-v1-total > b[data-estado="neutro"] {
+  color: #9AACBF;
+  font-size: 12px;
+}
+
+.cs-dyn-v1-total > small {
+  margin-top: 4px;
+  color: #91A5BD;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.cs-dyn-v1-ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: none;
+  overflow: visible;
+}
+
+.cs-dyn-v1-ranking-row {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 42px;
+  gap: 3px 9px;
+  align-items: center;
+}
+
+.cs-dyn-v1-ranking-info {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+  gap: 7px;
+}
+
+.cs-dyn-v1-ranking-info i {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.cs-dyn-v1-ranking-info span {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: #C8D5E5;
+}
+
+.cs-dyn-v1-ranking-info strong {
+  color: #F8FBFF;
+  font-size: 12px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-dyn-v1-track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: #242E3D;
+}
+
+.cs-dyn-v1-track div {
+  height: 100%;
+  border-radius: inherit;
+}
+
+.cs-dyn-v1-ranking-row small {
+  color: #97A9BF;
+  font-size: 10px;
+  text-align: right;
+}
+
+.cs-dyn-v1-ranking-empty,
+.cs-dyn-v1-notice {
+  color: #9BADC3;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.cs-dyn-v1-notice {
+  margin-top: 13px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(137,157,181,.14);
+}
+
+@container (max-width: 920px) {
+  .cs-dyn-v1-grid {
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+  }
+
+  .cs-dyn-v1-chart {
+    grid-column: 1 / -1;
+  }
+
+  .cs-dyn-v1-total {
+    border-right: 0;
+  }
+}
+
+@container (max-width: 600px) {
+  .cs-dyn-v1 {
+    padding: 13px;
+  }
+
+  .cs-dyn-v1-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cs-dyn-v1-chart {
+    grid-column: auto;
+  }
+
+  .cs-dyn-v1-total {
+    border: 0;
+    border-top: 1px solid rgba(135,157,186,.15);
+    border-bottom: 1px solid rgba(135,157,186,.15);
+    padding: 15px 0;
+  }
+
+  .cs-dyn-v1-chartbox {
+    height: 165px;
+  }
+
+  .cs-dyn-v1-filters {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* cs-dinamica-leads-refino-v11
+   Refinamento da versao executiva.
+   Nao altera dados ou componentes.
+*/
+
+.cs-dyn-v1-chartbox .recharts-cartesian-grid line {
+  stroke-opacity: .65;
+}
+
+.cs-dyn-v1-chartbox .recharts-bar-rectangle {
+  transition: opacity .18s ease;
+}
+
+.cs-dyn-v1-ranking-row {
+  border-radius: 5px;
+  transition: background .18s ease;
+}
+
+.cs-dyn-v1-ranking-row:hover {
+  background: rgba(255,255,255,.035);
+}
+
+.cs-dyn-v1-total > strong {
+  text-shadow: 0 0 24px rgba(247,48,78,.10);
+}
+
+.cs-dyn-v1-filters select:focus-visible,
+.cs-dyn-v1-custom input:focus-visible {
+  outline: 2px solid #F7304E;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-dyn-v1-ranking-row,
+  .cs-dyn-v1-chartbox .recharts-bar-rectangle {
+    transition: none;
+  }
+}
+
+
+/* cs-dinamica-leads-v12
+   Interatividade e acabamento executivo.
+*/
+
+.cs-dyn-v1-ranking-row {
+  padding: 4px 8px 5px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  transition:
+    background .16s ease,
+    border-color .16s ease;
+}
+
+.cs-dyn-v1-ranking-row:hover {
+  background: rgba(255,255,255,.04);
+  border-color: rgba(125,149,178,.20);
+}
+
+.cs-dyn-v1-ranking-row[data-ativo="true"] {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,.055),
+    rgba(255,255,255,.012)
+  );
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.025);
+}
+
+.cs-dyn-v1-ranking-row:focus-visible {
+  outline: 2px solid #F7304E;
+  outline-offset: 2px;
+}
+
+.cs-dyn-v1-chartbox {
+  cursor: crosshair;
+}
+
+.cs-dyn-v12-day {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border: 1px solid rgba(130,155,184,.17);
+  border-radius: 6px;
+  background: rgba(8,15,25,.30);
+  color: #9FB0C7;
+  font-size: 11px;
+}
+
+.cs-dyn-v12-day span {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.cs-dyn-v12-day strong {
+  color: #F5F8FD;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-dyn-v12-day button,
+.cs-dyn-v12-focus button {
+  width: fit-content;
+  border: 0;
+  padding: 2px 0;
+  background: transparent;
+  color: #F7304E;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cs-dyn-v12-focus {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(132,155,185,.17);
+}
+
+.cs-dyn-v12-focus small {
+  color: #94A9C2;
+  font-size: 9px;
+  letter-spacing: .06em;
+  font-weight: 700;
+}
+
+.cs-dyn-v12-focus strong {
+  font-size: 23px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-dyn-v12-focus span {
+  color: #CAD8E8;
+  font-size: 11px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-dyn-v1-ranking-row {
+    transition: none;
+  }
+}
+
+
+/* cs-dinamica-leads-v13
+   Acabamento executivo e expansao do ranking.
+*/
+
+.cs-dyn-v13-expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: fit-content;
+  margin-top: 8px;
+  padding: 5px 2px;
+  border: 0;
+  background: transparent;
+  color: #F7304E;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cs-dyn-v13-expand:hover {
+  color: #FF6B83;
+}
+
+.cs-dyn-v13-expand:focus-visible {
+  outline: 2px solid #F7304E;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.cs-dyn-v1-ranking-info span {
+  letter-spacing: .005em;
+}
+
+.cs-dyn-v1-ranking-row[data-ativo="true"]
+.cs-dyn-v1-ranking-info span {
+  color: #FFFFFF;
+  font-weight: 650;
+}
+
+.cs-dyn-v1-chartbox .recharts-cartesian-grid line {
+  stroke: rgba(139,158,183,.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-dyn-v1-ranking-row {
+    transition: none;
+  }
+}
+
+
+/* cs-dinamica-controles-v14
+   Controles Executive CS — Glass Sutil.
+*/
+
+/* Seletor local de periodo */
+.cs-dyn-v1 .cs-dyn-v14-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 182px;
+  min-width: 182px;
+  height: 36px;
+  padding: 0 11px;
+  border: 1px solid rgba(118,145,178,.30);
+  border-radius: 8px;
+  background: linear-gradient(
+    135deg,
+    #152131,
+    #101A29
+  );
+  color: #EEF4FC;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.cs-dyn-v1 .cs-dyn-v14-trigger:hover {
+  border-color: rgba(155,178,207,.48);
+  background: #182638;
+}
+
+.cs-dyn-v1 .cs-dyn-v14-trigger:focus-visible {
+  outline: 2px solid #F7304E;
+  outline-offset: 2px;
+}
+
+.cs-dyn-v1 .cs-dyn-v14-trigger svg {
+  width: 15px;
+  height: 15px;
+  color: #A9BDD2;
+  opacity: 1;
+}
+
+/* Menu renderizado em portal, fora do card */
+.cs-dyn-v14-content {
+  z-index: 100 !important;
+  min-width: 182px !important;
+  overflow: hidden;
+  border: 1px solid rgba(126,153,185,.35) !important;
+  border-radius: 9px !important;
+  background: #141F2E !important;
+  color: #EAF1FA !important;
+  box-shadow:
+    0 16px 35px rgba(0,0,0,.38),
+    0 0 0 1px rgba(255,255,255,.025);
+}
+
+.cs-dyn-v14-content
+[role="option"] {
+  min-height: 34px;
+  color: #C9D6E8;
+  font-size: 12px;
+}
+
+.cs-dyn-v14-content
+[role="option"][data-highlighted] {
+  outline: none;
+  background: rgba(247,48,78,.12);
+  color: #FFFFFF;
+}
+
+.cs-dyn-v14-content
+[role="option"][data-state="checked"] {
+  color: #FF647D;
+  font-weight: 700;
+}
+
+/* Calendario nativo com tema escuro.
+   A aparencia exata pode variar por navegador. */
+.cs-dyn-v1-custom input[type="date"] {
+  color-scheme: dark;
+  background: #111B29;
+  color: #F0F5FC;
+  border: 1px solid rgba(120,147,180,.32);
+  border-radius: 8px;
+  min-height: 36px;
+  padding: 0 11px;
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.cs-dyn-v1-custom input[type="date"]:hover {
+  border-color: rgba(155,180,210,.52);
+}
+
+.cs-dyn-v1-custom input[type="date"]:focus-visible {
+  border-color: #F7304E;
+  outline: 2px solid rgba(247,48,78,.45);
+  outline-offset: 2px;
+}
+
+.cs-dyn-v1-custom
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: .85;
+  cursor: pointer;
+}
+
+/* Toolbar responsiva */
+@container (max-width: 600px) {
+  .cs-dyn-v1 .cs-dyn-v14-trigger {
+    width: 170px;
+    min-width: 150px;
+  }
+
+  .cs-dyn-v1-custom {
+    flex-wrap: wrap;
+  }
+}
+
+
+/* cs-dinamica-calendario-v15
+   Mesmo calendario do filtro geral do CS Dash.
+*/
+
+.cs-dyn-v1 .cs-dyn-v1-custom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 8px 0 10px;
+}
+
+.cs-dyn-v1 .cs-dyn-v15-date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 0 1 180px;
+  min-width: 155px;
+}
+
+.cs-dyn-v1 .cs-dyn-v15-date-label {
+  color: #A0B2C9;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.cs-dyn-v1 .cs-dyn-v15-date-field
+.cs-date-v1-trigger {
+  width: 100%;
+  height: 42px;
+}
+
+@container (max-width: 480px) {
+  .cs-dyn-v1 .cs-dyn-v15-date-field {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+}
+
+
+/* cs-dinamica-graficos-v16
+   Ritmo, Faturamento e hover da Chegada de Leads.
+   Sem alteracao de consultas ou indicadores.
+*/
+
+.cs-dyn-v16-panel {
+  min-width: 0;
+  padding: 14px 16px !important;
+  border: 1px solid rgba(127,151,183,.22) !important;
+  border-radius: 12px !important;
+  background:
+    radial-gradient(
+      ellipse at 0% 0%,
+      rgba(247,48,78,.035),
+      transparent 54%
+    ),
+    linear-gradient(
+      125deg,
+      #1A202B,
+      #101B29
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+.cs-dyn-v16-panel > h3 {
+  margin-bottom: 10px !important;
+  color: #D9E5F2 !important;
+  font-size: 12px !important;
+  font-weight: 750 !important;
+  letter-spacing: .055em !important;
+}
+
+.cs-dyn-v16-panel > h3 svg {
+  color: #F7304E;
+}
+
+.cs-dyn-v16-chart {
+  width: 100%;
+  min-width: 0;
+  height: 218px;
+}
+
+.cs-dyn-v16-chart .recharts-cartesian-axis-tick {
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-dyn-v16-chart .recharts-legend-item-text {
+  color: #B8C9DD !important;
+  font-size: 11px;
+}
+
+.cs-dyn-v16-chart .recharts-tooltip-cursor,
+.cs-dyn-v1-chartbox .recharts-tooltip-cursor {
+  fill: transparent !important;
+  stroke: transparent !important;
+}
+
+.cs-dyn-v16-chart .recharts-surface,
+.cs-dyn-v1-chartbox .recharts-surface {
+  outline: none;
+}
+
+.cs-dyn-v16-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 150px;
+  color: #95A9C2;
+  font-size: 12px;
+  text-align: center;
+}
+
+.cs-dyn-v16-panel .recharts-cartesian-axis-line,
+.cs-dyn-v16-panel .recharts-cartesian-axis-tick-line {
+  stroke: transparent;
+}
+
+@media (max-width: 768px) {
+  .cs-dyn-v16-panel {
+    padding: 12px !important;
+  }
+
+  .cs-dyn-v16-chart {
+    height: 192px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-dyn-v16-chart * {
+    animation: none !important;
+  }
+}
+
+
+/* cs-dinamica-resumo-v17
+   Leitura executiva dos graficos.
+*/
+
+.cs-dyn-v16-chart {
+  height: 192px;
+}
+
+.cs-dyn-v17-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 22px;
+  margin: 0 0 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(130,153,183,.13);
+}
+
+.cs-dyn-v17-metrics span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #95A9C1;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.cs-dyn-v17-metrics strong {
+  color: #F2F6FC;
+  font-size: 13px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-dyn-v17-metrics i {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+}
+
+@media (max-width: 768px) {
+  .cs-dyn-v16-chart {
+    height: 185px;
+  }
+
+  .cs-dyn-v17-metrics {
+    gap: 8px 14px;
+  }
+}
+
+
+/* cs-ranking-executivo-v18
+   Ranking premium — Executivo CS / Glass Sutil.
+*/
+
+.cs-dyn-v1 .cs-dyn-v1-ranking {
+  min-width: 0;
+}
+
+.cs-dyn-v1 .cs-dyn-v1-ranking
+.cs-dyn-v1-column-title {
+  margin-bottom: 5px;
+}
+
+.cs-dyn-v18-context {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+  min-height: 24px;
+  margin-bottom: 7px;
+  color: #8FA5BF;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.cs-dyn-v18-context strong {
+  color: #D7E3F2;
+  font-size: 11px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-dyn-v1 .cs-dyn-v1-ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: none;
+  overflow: visible;
+  scrollbar-width: none;
+}
+
+.cs-dyn-v1 .cs-dyn-v1-ranking-row {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 52px;
+  align-items: center;
+  gap: 4px 9px;
+  min-height: 54px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgba(132,155,186,.12);
+  background: rgba(255,255,255,.014);
+  box-shadow: none;
+  transition:
+    border-color .16s ease,
+    background .16s ease,
+    transform .16s ease;
+}
+
+.cs-dyn-v1 .cs-dyn-v1-ranking-row[data-lider="true"] {
+  background: linear-gradient(
+    105deg,
+    rgba(255,255,255,.052),
+    rgba(255,255,255,.012) 72%
+  );
+  border-color: rgba(156,178,208,.23);
+}
+
+.cs-dyn-v1 .cs-dyn-v1-ranking-row:hover {
+  background: rgba(255,255,255,.048);
+  transform: translateX(2px);
+}
+
+.cs-dyn-v1
+.cs-dyn-v1-ranking-row[data-ativo="true"] {
+  background: linear-gradient(
+    105deg,
+    rgba(255,255,255,.07),
+    rgba(255,255,255,.015)
+  );
+}
+
+.cs-dyn-v1 .cs-dyn-v1-ranking-info {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.cs-dyn-v18-rank {
+  flex: 0 0 18px;
+  width: 18px;
+  color: #647B96;
+  font-size: 10px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-dyn-v1-ranking-row[data-lider="true"]
+.cs-dyn-v18-rank {
+  color: #D8E7F7;
+}
+
+.cs-dyn-v1 .cs-dyn-v1-ranking-info i {
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.cs-dyn-v1 .cs-dyn-v18-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #BDCEE2;
+  font-size: 11px;
+  font-weight: 550;
+}
+
+.cs-dyn-v1-ranking-row[data-lider="true"]
+.cs-dyn-v18-name {
+  color: #F3F7FD;
+  font-weight: 700;
+}
+
+.cs-dyn-v18-leader {
+  flex-shrink: 0;
+  padding: 2px 6px;
+  border: 1px solid rgba(169,191,219,.19);
+  border-radius: 4px;
+  color: #AAC0DA;
+  background: rgba(255,255,255,.025);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.cs-dyn-v1 .cs-dyn-v1-ranking-info strong {
+  margin-left: auto;
+  color: #F4F8FD;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -.015em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-dyn-v1 .cs-dyn-v1-track {
+  position: relative;
+  height: 5px;
+  border-radius: 5px;
+  background: rgba(120,145,178,.16);
+  overflow: visible;
+}
+
+.cs-dyn-v1 .cs-dyn-v1-track > div {
+  height: 100%;
+  min-width: 0;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(255,255,255,.035);
+}
+
+.cs-dyn-v1 .cs-dyn-v1-ranking-row > small {
+  justify-self: end;
+  color: #A3B7D0;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-dyn-v18-compare {
+  margin-top: 4px;
+  font-size: 10px !important;
+  line-height: 1.35;
+}
+
+.cs-dyn-v18-compare[data-estado="positivo"] {
+  color: #13D49D !important;
+}
+
+.cs-dyn-v18-compare[data-estado="negativo"] {
+  color: #FF4B69 !important;
+}
+
+.cs-dyn-v18-compare[data-estado="neutro"] {
+  color: #92A5BC !important;
+}
+
+@container (max-width: 520px) {
+  .cs-dyn-v18-leader {
+    display: none;
+  }
+
+  .cs-dyn-v18-context {
+    justify-content: flex-start;
+  }
+
+  .cs-dyn-v1 .cs-dyn-v1-ranking-row {
+    min-height: 49px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-dyn-v1 .cs-dyn-v1-ranking-row {
+    transition: none;
+  }
+
+  .cs-dyn-v1 .cs-dyn-v1-ranking-row:hover {
+    transform: none;
+  }
+}
+
+
+/* cs-dinamica-acabamento-v19
+   Hierarquia do total geral e do funil selecionado.
+   Preserva as consultas e o layout de tres colunas.
+*/
+
+/* Total de leads: indicador principal */
+.cs-dyn-v1 .cs-dyn-v1-total > strong {
+  font-size: clamp(30px, 2.6vw, 39px);
+  line-height: 1.05;
+  letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-dyn-v1 .cs-dyn-v1-total > span:not(
+  .cs-dyn-v19-overall-label
+) {
+  color: #C7D7E9;
+}
+
+/* Funil selecionado: numero e crescimento juntos */
+.cs-dyn-v1 .cs-dyn-v12-focus {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "label label"
+    "amount compare"
+    "name name"
+    "clear clear";
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 5px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 11px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(144,166,194,.18);
+}
+
+.cs-dyn-v1 .cs-dyn-v12-focus
+> small:not(.cs-dyn-v18-compare) {
+  grid-area: label;
+  margin: 0;
+  color: #95AEC9;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: .075em;
+}
+
+.cs-dyn-v1 .cs-dyn-v12-focus > strong {
+  grid-area: amount;
+  margin: 0;
+  font-size: 27px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-dyn-v1 .cs-dyn-v12-focus
+> .cs-dyn-v18-compare {
+  grid-area: compare;
+  margin: 0;
+  min-width: 0;
+  font-size: 10px !important;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: normal;
+}
+
+.cs-dyn-v1 .cs-dyn-v12-focus > span {
+  grid-area: name;
+  margin: 0;
+  color: #C9D9EB;
+  font-size: 11px;
+  font-weight: 550;
+  line-height: 1.4;
+}
+
+.cs-dyn-v1 .cs-dyn-v12-focus > button {
+  grid-area: clear;
+  justify-self: start;
+  margin: 2px 0 0;
+  padding: 2px 0;
+  font-size: 10px;
+}
+
+/* Variacao geral: bloco separado e discreto */
+.cs-dyn-v1 .cs-dyn-v19-overall-label {
+  display: block;
+  align-self: stretch;
+  width: 100%;
+  margin-top: 13px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(144,166,194,.18);
+  color: #95AEC9;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: .075em;
+  line-height: 1.4;
+}
+
+.cs-dyn-v1 .cs-dyn-v1-total
+> b[data-estado] {
+  margin-top: 4px;
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-dyn-v1 .cs-dyn-v1-total > small {
+  margin-top: 4px;
+  color: #91A7C2;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+/* Se nao houver funil selecionado,
+   a evolucao geral continua identificada. */
+.cs-dyn-v1 .cs-dyn-v1-total
+> .cs-dyn-v19-overall-label {
+  flex-shrink: 0;
+}
+
+@container (max-width: 600px) {
+  .cs-dyn-v1 .cs-dyn-v12-focus {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .cs-dyn-v1 .cs-dyn-v12-focus > strong {
+    font-size: 25px;
+  }
+
+  .cs-dyn-v1 .cs-dyn-v19-overall-label {
+    margin-top: 11px;
+  }
+}
+
+
+/* cs-dinamica-compare-v191
+   Comparacao individual sem quebra inadequada.
+*/
+
+.cs-dyn-v1 .cs-dyn-v12-focus {
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 14px;
+  align-items: center;
+}
+
+.cs-dyn-v1 .cs-dyn-v12-focus
+> .cs-dyn-v18-compare {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+}
+
+.cs-dyn-v1 .cs-dyn-v191-percent {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: inherit;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-dyn-v1 .cs-dyn-v191-caption {
+  color: #8FA5BD;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+@container (max-width: 480px) {
+  .cs-dyn-v1 .cs-dyn-v12-focus {
+    column-gap: 10px;
+  }
+
+  .cs-dyn-v1 .cs-dyn-v191-percent {
+    font-size: 14px;
+  }
+}
+
+/* cs-ranking-linhas-v20
+   Dinamica Comercial / Principais Funis
+   Ranking editorial, sem mini-cards individuais.
+*/
+
+/* Lista unica, com separadores discretos */
+
+.cs-dyn-v1 .cs-dyn-v1-ranking
+.cs-dyn-v1-ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0 !important;
+  margin-top: 7px;
+  border-top: 1px solid rgba(137,158,187,.13);
+}
+
+/* Linhas do ranking */
+
+.cs-dyn-v1 .cs-dyn-v1-ranking
+.cs-dyn-v1-ranking-row {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) 54px !important;
+  align-items: center !important;
+  gap: 7px 12px !important;
+  min-height: 62px !important;
+  padding: 10px 9px 11px !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(137,158,187,.14) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: background .18s ease !important;
+}
+
+/* Funil lider: destaque editorial discreto */
+
+.cs-dyn-v1 .cs-dyn-v1-ranking
+.cs-dyn-v1-ranking-row[data-lider="true"] {
+  background: linear-gradient(
+    90deg,
+    rgba(74,157,255,.075),
+    rgba(74,157,255,0) 80%
+  ) !important;
+  box-shadow: inset 3px 0 #4A9DFF !important;
+  padding-left: 13px !important;
+}
+
+/* Hover sem deslocar a linha */
+
+.cs-dyn-v1 .cs-dyn-v1-ranking
+.cs-dyn-v1-ranking-row:hover {
+  background: rgba(139,166,202,.045) !important;
+  transform: none !important;
+}
+
+/* Funil selecionado permanece identificavel */
+
+.cs-dyn-v1 .cs-dyn-v1-ranking
+.cs-dyn-v1-ranking-row[data-ativo="true"] {
+  background: rgba(86,125,178,.10) !important;
+  box-shadow: inset 3px 0 #F7304E !important;
+}
+
+/* Cabecalho com nome, posicao e volume */
+
+.cs-dyn-v1 .cs-dyn-v1-ranking
+.cs-dyn-v1-ranking-info {
+  grid-column: 1 / -1 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0;
+}
+
+.cs-dyn-v1 .cs-dyn-v1-ranking
+.cs-dyn-v18-name {
+  color: #CEDBEC;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cs-dyn-v1 .cs-dyn-v1-ranking
+.cs-dyn-v1-ranking-info strong {
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Trilhos alinhados, com a mesma espessura */
+
+.cs-dyn-v1 .cs-dyn-v1-ranking
+.cs-dyn-v1-ranking-row .cs-dyn-v1-track {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 7px !important;
+  min-height: 7px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 5px !important;
+  background: #29394C !important;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.15);
+}
+
+.cs-dyn-v1 .cs-dyn-v1-ranking
+.cs-dyn-v1-ranking-row .cs-dyn-v1-track > div {
+  display: block;
+  height: 100% !important;
+  max-width: 100%;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  transition: width .22s ease;
+}
+
+/* Percentual na mesma linha da barra */
+
+.cs-dyn-v1 .cs-dyn-v1-ranking
+.cs-dyn-v1-ranking-row > small {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  align-self: center !important;
+  justify-self: end !important;
+  margin: 0 !important;
+  color: #B5C9E1 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-dyn-v1 .cs-dyn-v1-ranking
+.cs-dyn-v1-ranking-row[data-lider="true"] > small {
+  color: #F2F7FF !important;
+}
+
+/* Mobile */
+
+@container (max-width: 520px) {
+  .cs-dyn-v1 .cs-dyn-v1-ranking
+  .cs-dyn-v1-ranking-row {
+    min-height: 58px !important;
+    padding: 9px 6px 10px !important;
+    grid-template-columns: minmax(0,1fr) 52px !important;
+  }
+
+  .cs-dyn-v1 .cs-dyn-v1-ranking
+  .cs-dyn-v1-ranking-row[data-lider="true"] {
+    padding-left: 10px !important;
+  }
+}
+
+/* Acessibilidade */
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-dyn-v1 .cs-dyn-v1-ranking
+  .cs-dyn-v1-ranking-row,
+  .cs-dyn-v1 .cs-dyn-v1-ranking
+  .cs-dyn-v1-track > div {
+    transition: none !important;
+  }
+}
+
+
+
+/* cs-principais-funis-modelo-a-v2
+   Modelo A definitivo: bloco proporcional + linha fina.
+   Escopo exclusivo: Dinamica Comercial / Principais funis.
+   Preserva layout editorial cs-ranking-linhas-v20.
+*/
+
+.cs-dyn-v1 .cs-dyn-v1-ranking
+.cs-dyn-v1-ranking-row .cs-dyn-v1-track {
+  position: relative !important;
+  isolation: isolate;
+  display: block !important;
+  width: 100% !important;
+
+  height: 12px !important;
+  min-height: 12px !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  overflow: visible !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Linha de continuidade ate 100% */
+
+.cs-dyn-v1 .cs-dyn-v1-ranking
+.cs-dyn-v1-ranking-row .cs-dyn-v1-track::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+
+  height: 2px;
+  transform: translateY(-50%);
+
+  border-radius: 999px;
+
+  background: rgba(116, 143, 180, 0.38);
+
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Bloco colorido proporcional aos dados reais */
+
+.cs-dyn-v1 .cs-dyn-v1-ranking
+.cs-dyn-v1-ranking-row .cs-dyn-v1-track > div {
+  position: relative;
+  z-index: 1;
+
+  display: block !important;
+
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  height: 12px !important;
+  min-height: 12px !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: 0 !important;
+  border-radius: 2px !important;
+
+  box-shadow: none !important;
+
+  transition: width .22s ease;
+}
+
+/* A cor e a largura continuam vindo do React.
+   Nao definir width ou background fixos aqui. */
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-dyn-v1 .cs-dyn-v1-ranking
+  .cs-dyn-v1-ranking-row .cs-dyn-v1-track > div {
+    transition: none !important;
+  }
+}
+
+/* /cs-principais-funis-modelo-a-v2 */
+
+

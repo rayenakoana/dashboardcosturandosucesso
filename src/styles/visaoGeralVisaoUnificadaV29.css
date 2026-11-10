@@ -1,0 +1,34 @@
+/* CS Dash V2.9 — Visao Geral continua, sem mudar fontes de dados */
+.cs-overview-v29-stack > section{min-width:0;scroll-margin-top:70px}
+.cs-overview-v29-marketing{border:1px solid hsl(var(--border)/.65);border-radius:12px;background:hsl(var(--card)/.55)}
+.cs-overview-v29-marketing > summary{display:flex;justify-content:space-between;gap:12px;cursor:pointer;padding:15px 18px;font-weight:700;list-style:none}
+.cs-overview-v29-marketing > summary::-webkit-details-marker{display:none}
+.cs-overview-v29-marketing > summary span{font-size:11px;color:hsl(var(--muted-foreground));font-weight:500}
+.cs-overview-v29-marketing > summary:focus-visible{outline:2px solid #F7304E;outline-offset:3px}
+.cs-overview-v29-performance{border:1px solid hsl(var(--border)/.6);border-left:3px solid #F7304E;background:linear-gradient(130deg,rgba(247,48,78,.045),hsl(var(--card)/.75) 55%)}
+.cs-overview-v29-performance-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:stretch}
+.cs-overview-v29-performance-grid > div{min-width:0}
+.cs-overview-v29-ribbon{min-width:630px!important;border:0!important;overflow:visible!important;background:transparent!important;min-height:146px}
+.cs-overview-v29-ribbon .cs-overview-v29-stage{isolation:isolate;min-height:146px;min-width:0;margin-left:-10px;padding:18px 17px 15px 24px!important;clip-path:polygon(0 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,0 100%,14px 50%);border:0!important;color:white!important;display:flex;flex-direction:column;justify-content:center}
+.cs-overview-v29-ribbon .cs-overview-v29-stage:first-child{margin-left:0;padding-left:14px!important;clip-path:polygon(0 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,0 100%)}
+.cs-overview-v29-ribbon .cs-overview-v29-stage > div.absolute,.cs-overview-v29-ribbon .cs-overview-v29-stage > div:first-of-type{display:none}
+.cs-overview-v29-ribbon .cs-overview-v29-stage p{color:#fff!important;overflow-wrap:normal}
+.cs-overview-v29-ribbon .cs-overview-v29-stage > p:nth-of-type(1){font-size:11px!important;line-height:1.3!important;min-height:30px!important;margin-top:0!important;font-weight:600}
+.cs-overview-v29-ribbon .cs-overview-v29-stage > p:nth-of-type(2){font-size:26px!important;line-height:1.1!important;margin-top:4px!important;letter-spacing:-.04em}
+.cs-overview-v29-ribbon .cs-overview-v29-stage > div.flex{margin-top:9px!important;display:flex!important;align-items:flex-end;justify-content:flex-start;gap:7px}
+.cs-overview-v29-ribbon .cs-overview-v29-stage > div.flex span:first-child{display:none}
+.cs-overview-v29-ribbon .cs-overview-v29-stage > div.flex span:last-child{color:white!important;font-size:12px!important}
+.cs-overview-v29-ribbon .cs-overview-v29-stage > div.h-1\.5{display:none}
+.cs-overview-v29-indicators{min-width:0;background:linear-gradient(155deg,hsl(var(--card)/.95),hsl(var(--card)/.78));border:1px solid hsl(var(--border)/.55);border-radius:12px;padding:13px}
+.cs-overview-v29-indicators h3{font-size:11px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:hsl(var(--muted-foreground));margin-bottom:11px}
+.cs-overview-v29-indicators-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.cs-overview-v29-indicator{min-width:0;border:1px solid hsl(var(--border)/.5);background:rgba(6,15,25,.2);border-radius:9px;padding:11px;display:flex;flex-direction:column;gap:7px}
+.cs-overview-v29-indicator span{font-size:11px;color:hsl(var(--muted-foreground));line-height:1.25}
+.cs-overview-v29-indicator strong{font-size:clamp(19px,1.5vw,27px);line-height:1.1;font-weight:800;letter-spacing:-.03em;color:hsl(var(--foreground));font-variant-numeric:tabular-nums}
+.cs-overview-v29-dinamica{min-width:0;border:1px solid hsl(var(--border)/.55);border-left:3px solid #F7304E;background:linear-gradient(125deg,rgba(247,48,78,.035),hsl(var(--card)/.52) 50%);padding:15px;border-radius:12px}
+.cs-overview-v29-dinamica [role=tablist]{background:transparent;border:0;padding:0;gap:5px}
+.cs-overview-v29-dinamica [role=tab]{border:1px solid hsl(var(--border)/.65);border-radius:7px;min-height:33px;font-size:12px}
+.cs-overview-v29-leads-preview{max-height:400px;overflow:auto;scrollbar-width:thin;border-radius:12px}
+@media(min-width:1350px){.cs-overview-v29-performance-grid{grid-template-columns:minmax(0,1.25fr) minmax(340px,1fr)}}
+@media(max-width:700px){.cs-overview-v29-performance-grid{grid-template-columns:minmax(0,1fr)}.cs-overview-v29-indicators-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cs-overview-v29-dinamica{padding:12px}.cs-overview-v29-leads-preview{max-height:none;overflow:visible}}
+@media(prefers-reduced-motion:reduce){.cs-overview-v29-ribbon .cs-overview-v29-stage *{transition:none!important}}

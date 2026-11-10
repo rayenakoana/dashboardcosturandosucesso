@@ -1,0 +1,3379 @@
+/*
+ * CS Dash — Executive Cards V2.4
+ * Somente visual.
+ * Sem alteracoes de dados ou consultas.
+ */
+
+.cs-intel-v24-card {
+  min-width: 0;
+}
+
+.cs-intel-v24-card .cs-intel-v24-summary {
+  min-width: 0;
+  margin-top: 0.5rem;
+}
+
+/*
+ * Destaca valores ja renderizados pelos
+ * componentes Geografico e Meta x Vendido.
+ * Nao interfere nos outros componentes.
+ */
+.cs-intel-v24-summary
+:is(.text-lg, .text-xl, .text-2xl, .text-3xl)
+:is(.font-bold, .font-semibold) {
+  font-size: clamp(1.6rem, 1.7vw, 1.9rem);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-intel-v24-card p {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1440px) {
+  .cs-intel-v24-summary
+  :is(.text-lg, .text-xl, .text-2xl, .text-3xl)
+  :is(.font-bold, .font-semibold) {
+    font-size: 1.6rem;
+  }
+}
+
+
+/* CS Dash UX V2.5 — cards executivos responsivos */
+.cs-intel-v25-section {
+  container: cs-intel / inline-size;
+}
+
+.cs-intel-v25-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0 9px;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+.cs-intel-v25-heading::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: #F7304E;
+}
+
+.cs-intel-v25-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.cs-intel-v25-grid .cs-intel-v25-card {
+  min-height: 198px;
+  padding: 16px;
+  gap: 12px;
+  background: linear-gradient(
+    155deg,
+    hsl(var(--card) / .94),
+    hsl(var(--card) / .80)
+  );
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+.cs-intel-v25-grid .cs-intel-v25-card > span:last-child {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid hsl(var(--border) / .55);
+  font-size: 12px;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+}
+
+.cs-intel-v25-grid .cs-intel-v25-card:hover > span:last-child,
+.cs-intel-v25-grid .cs-intel-v25-card[aria-pressed="true"] > span:last-child {
+  color: hsl(var(--primary));
+}
+
+.cs-intel-v25-grid .cs-intel-v25-card:focus-visible {
+  outline: 2px solid #F7304E;
+  outline-offset: 2px;
+}
+
+.cs-intel-v25-grid .cs-intel-v24-summary {
+  margin-top: 12px;
+}
+
+.cs-intel-v25-grid .cs-intel-v24-summary
+:is(.text-lg,.text-xl,.text-2xl,.text-3xl)
+:is(.font-bold,.font-semibold) {
+  font-size: clamp(22px, 1.6vw, 27px);
+}
+
+.cs-intel-v25-diagnostics {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@container cs-intel (min-width: 480px) {
+  .cs-intel-v25-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container cs-intel (min-width: 780px) {
+  .cs-intel-v25-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@container cs-intel (min-width: 900px) {
+  .cs-intel-v25-diagnostics {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  }
+}
+
+@container cs-intel (min-width: 1120px) {
+  .cs-intel-v25-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+
+/* cs-intel-v25-acabamento-compacto-v1 */
+
+/* Densidade executiva sem altura fixa */
+.cs-intel-v25-grid .cs-intel-v25-card {
+  min-height: 0;
+  padding: 14px;
+  gap: 6px;
+}
+
+/* Aproxima as informacoes relacionadas */
+.cs-intel-v25-grid .cs-intel-v24-summary {
+  margin-top: 5px;
+}
+
+.cs-intel-v25-grid .cs-intel-v24-summary > div {
+  margin-top: 7px;
+}
+
+.cs-intel-v25-grid .cs-intel-v24-summary p {
+  line-height: 1.4;
+}
+
+/* Acoes discretas, mas legiveis */
+.cs-intel-v25-grid .cs-intel-v25-card > span:last-child {
+  margin-top: 8px;
+  padding-top: 8px;
+  font-size: 12px;
+  color: hsl(var(--foreground) / .76);
+}
+
+.cs-intel-v25-grid .cs-intel-v25-card:hover > span:last-child,
+.cs-intel-v25-grid .cs-intel-v25-card[aria-pressed="true"] > span:last-child {
+  color: #F7304E;
+}
+
+
+/* CS Dash UX V2.6 — leitura progressiva dos diagnosticos */
+
+.cs-intel-v26-method {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid hsl(var(--border) / .55);
+}
+
+.cs-intel-v26-caveat {
+  color: hsl(var(--muted-foreground));
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.cs-intel-v26-details {
+  margin-top: 8px;
+}
+
+.cs-intel-v26-details summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  list-style: none;
+  cursor: pointer;
+  color: hsl(var(--foreground) / .78);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cs-intel-v26-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.cs-intel-v26-details summary::after {
+  content: "›";
+  display: inline-block;
+  color: #F7304E;
+  font-size: 16px;
+  line-height: 1;
+  transition: transform .15s ease;
+}
+
+.cs-intel-v26-details[open] summary::after {
+  transform: rotate(90deg);
+}
+
+.cs-intel-v26-details summary:focus-visible {
+  outline: 2px solid #F7304E;
+  outline-offset: 4px;
+  border-radius: 3px;
+}
+
+.cs-intel-v26-full-note {
+  margin-top: 9px;
+  max-width: 75ch;
+  color: hsl(var(--muted-foreground));
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+
+/* cs-intel-v27-final-css
+   Executivo CS — Glass Sutil
+   Acabamento visual consolidado.
+*/
+
+/* Titulos dos grupos */
+.cs-intel-v25-section .cs-intel-v25-heading {
+  margin: 20px 0 11px;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .10em;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Cinco destaques */
+.cs-intel-v25-section .cs-intel-v25-grid {
+  gap: 12px;
+  align-items: stretch;
+}
+
+.cs-intel-v25-section .cs-intel-v25-card {
+  min-width: 0;
+  min-height: 0;
+  padding: 16px;
+  gap: 8px;
+  border-radius: 12px;
+  border: 1px solid hsl(var(--border) / .70);
+
+  background:
+    radial-gradient(
+      ellipse at 0% 0%,
+      hsl(var(--primary) / .045),
+      transparent 65%
+    ),
+    linear-gradient(
+      155deg,
+      hsl(var(--card) / .97),
+      hsl(var(--card) / .86)
+    );
+
+  box-shadow:
+    inset 0 1px 0 hsl(var(--foreground) / .035),
+    0 5px 16px rgba(0,0,0,.045);
+
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease,
+    transform .18s ease;
+}
+
+/* Titulos e numeros */
+.cs-intel-v25-section .cs-intel-v25-card
+> div:first-child > div:first-child p {
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.cs-intel-v25-section .cs-intel-v25-card
+p.font-bold.tabular-nums {
+  font-size: clamp(24px, 1.6vw, 30px);
+  line-height: 1.15;
+  letter-spacing: -.035em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-intel-v25-section .cs-intel-v25-card p {
+  overflow-wrap: anywhere;
+}
+
+/* Acoes alinhadas no rodape */
+.cs-intel-v25-section .cs-intel-v25-card
+> span:last-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 11px;
+  border-top: 1px solid hsl(var(--border) / .55);
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 650;
+  color: hsl(var(--foreground) / .80);
+}
+
+.cs-intel-v25-section .cs-intel-v25-card
+> span:last-child::after {
+  content: "↗";
+  font-size: 15px;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Estados interativos */
+.cs-intel-v25-section .cs-intel-v25-card:hover {
+  border-color: hsl(var(--primary) / .55);
+  box-shadow: 0 10px 24px rgba(0,0,0,.10);
+  transform: translateY(-1px);
+}
+
+.cs-intel-v25-section .cs-intel-v25-card:hover
+> span:last-child {
+  color: hsl(var(--primary));
+}
+
+.cs-intel-v25-section .cs-intel-v25-card:focus-visible {
+  outline: 2px solid #F7304E;
+  outline-offset: 3px;
+}
+
+.cs-intel-v25-section .cs-intel-v25-card[aria-pressed="true"] {
+  border-color: hsl(var(--primary) / .75);
+}
+
+/* Diagnosticos inferiores */
+.cs-intel-v25-section .cs-intel-v25-diagnostics {
+  gap: 14px;
+  align-items: start;
+}
+
+.cs-intel-v25-section .cs-intel-v25-diagnostics
+> section {
+  min-width: 0;
+  padding: 18px;
+  border-radius: 12px;
+  border-color: hsl(var(--border) / .70);
+  background:
+    linear-gradient(
+      150deg,
+      hsl(var(--card) / .97),
+      hsl(var(--card) / .87)
+    );
+}
+
+.cs-intel-v25-section .cs-intel-v25-diagnostics
+h3 {
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.cs-intel-v25-section .cs-intel-v25-diagnostics
+p.font-bold.tabular-nums {
+  letter-spacing: -.035em;
+  line-height: 1.16;
+}
+
+/* Barra de qualidade */
+.cs-intel-v25-section .cs-intel-v25-diagnostics
+[role="progressbar"] {
+  height: 6px;
+  border-radius: 999px;
+}
+
+/* Explicacoes expansíveis */
+.cs-intel-v25-section .cs-intel-v26-method {
+  margin-top: 14px;
+  padding-top: 11px;
+}
+
+.cs-intel-v25-section .cs-intel-v26-caveat {
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.cs-intel-v25-section .cs-intel-v26-details summary {
+  min-height: 30px;
+  color: hsl(var(--foreground) / .80);
+}
+
+/* Atalhos complementares */
+.cs-intel-v25-section .cs-intel-v25-diagnostics
++ div {
+  padding-top: 13px;
+  border-top: 1px solid hsl(var(--border) / .50);
+}
+
+/* Celular */
+@container cs-intel (max-width: 479px) {
+  .cs-intel-v25-section .cs-intel-v25-card,
+  .cs-intel-v25-section .cs-intel-v25-diagnostics > section {
+    padding: 15px;
+  }
+
+  .cs-intel-v25-section .cs-intel-v25-card
+  p.font-bold.tabular-nums {
+    font-size: 27px;
+  }
+}
+
+/* Reduzir animacoes quando solicitado pelo sistema */
+@media (prefers-reduced-motion: reduce) {
+  .cs-intel-v25-section .cs-intel-v25-card {
+    transition: none;
+    transform: none !important;
+  }
+}
+
+
+/* cs-intel-executivo-v28
+   Inteligencia do Negocio — alinhamento ao prototipo aprovado.
+   Alteracoes de apresentacao; consultas e periodos permanecem inalterados.
+*/
+.cs-intel-v28-section { min-width:0; container-type:inline-size; container-name:cs-intel; }
+.cs-intel-v28-section .cs-intel-v28-subheading {
+  display:flex; align-items:center; gap:9px;
+  margin: 7px 0 0; color:#C4D1E2;
+  font-size:10px; font-weight:800; line-height:1.4;
+  text-transform:uppercase; letter-spacing:.105em;
+}
+.cs-intel-v28-section .cs-intel-v28-subheading::before {
+  content:""; width:6px; height:6px; border-radius:50%;
+  background:#F7304E; box-shadow:0 0 9px rgba(247,48,78,.18);
+}
+.cs-intel-v28-section .cs-intel-v28-highlights {
+  gap:11px; padding:10px 0 2px; min-width:0;
+}
+.cs-intel-v28-section .cs-intel-v28-highlights > .cs-intel-v25-card {
+  min-width:0; min-height:218px; height:auto;
+  display:flex; flex-direction:column; justify-content:space-between;
+  padding:13px 13px 11px !important; gap:9px;
+  border:1px solid rgba(119,144,177,.24) !important;
+  border-radius:11px;
+  background:
+    radial-gradient(circle at 3% 0%,rgba(247,48,78,.045),transparent 55%),
+    linear-gradient(135deg,#1B232F,#121D2A) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+  overflow:hidden;
+}
+.cs-intel-v28-section .cs-intel-v28-highlights > .cs-intel-v25-card:hover,
+.cs-intel-v28-section .cs-intel-v28-highlights > .cs-intel-v25-card[aria-pressed="true"] {
+  border-color:rgba(247,48,78,.52) !important;
+  background:
+    radial-gradient(circle at 4% 0%,rgba(247,48,78,.085),transparent 58%),
+    linear-gradient(135deg,#1D2430,#121E2C) !important;
+}
+.cs-intel-v28-section .cs-intel-v28-highlights > .cs-intel-v25-card:focus-visible {
+  outline:2px solid #F7304E; outline-offset:2px;
+}
+.cs-intel-v28-section .cs-intel-v28-highlights > .cs-intel-v25-card > div:first-child {
+  min-width:0; flex:1; overflow:visible;
+}
+.cs-intel-v28-section .cs-intel-v28-highlights > .cs-intel-v25-card > div:first-child > div:first-child {
+  gap:8px;
+}
+.cs-intel-v28-section .cs-intel-v28-highlights > .cs-intel-v25-card > div:first-child > div:first-child p {
+  font-size:12px !important; font-weight:750; line-height:1.3;
+  letter-spacing:-.01em;
+}
+.cs-intel-v28-section .cs-intel-v28-highlights > .cs-intel-v25-card > div:first-child > span {
+  margin-top:8px; max-width:100%; padding:4px 7px;
+  font-size:9px !important; line-height:1.2; letter-spacing:.005em;
+  border-color:rgba(137,161,193,.17) !important;
+  color:#A2B5CD !important;
+  white-space:normal;
+}
+.cs-intel-v28-section .cs-intel-v28-highlights .cs-intel-v24-summary { margin-top:7px; }
+.cs-intel-v28-section .cs-intel-v28-highlights .cs-intel-v24-summary p {
+  line-height:1.32; overflow-wrap:anywhere;
+}
+.cs-intel-v28-section .cs-intel-v28-highlights .cs-intel-v24-summary p[class*="text-[26px]"],
+.cs-intel-v28-section .cs-intel-v28-highlights .cs-intel-v24-summary p[class*="text-[25px]"] {
+  letter-spacing:-.035em;
+}
+.cs-intel-v28-section .cs-intel-v28-highlights .cs-intel-v25-card p[class*="text-[25px]"] {
+  font-size:22px !important; line-height:1.14;
+  font-variant-numeric:tabular-nums;
+}
+.cs-intel-v28-section .cs-intel-v28-highlights .cs-intel-v25-card p.break-words {
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  overflow:hidden; font-size:11px; line-height:1.3;
+}
+.cs-intel-v28-section .cs-intel-v28-highlights .cs-intel-v25-card > span:last-child {
+  display:flex; align-items:center; min-height:28px;
+  margin-top:auto !important; padding-top:8px;
+  border-top:1px solid rgba(141,161,189,.14);
+  color:#BFD1E8; font-size:10px !important; font-weight:750;
+}
+.cs-intel-v28-section .cs-intel-v28-microbars {
+  display:flex; flex-direction:column; gap:5px;
+  min-width:0; margin-top:9px;
+}
+.cs-intel-v28-section .cs-intel-v28-microtrack {
+  width:100%; height:5px; overflow:hidden; border-radius:6px;
+  background:rgba(130,150,178,.14);
+}
+.cs-intel-v28-section .cs-intel-v28-microtrack > span {
+  display:block; height:100%; border-radius:6px;
+  background:linear-gradient(90deg,#C9183D,#F7304E);
+}
+/* Diagnosticos: prioridade para indicador, criterio fica acessivel. */
+.cs-intel-v28-section .cs-intel-v25-diagnostics { gap:12px; align-items:stretch; }
+.cs-intel-v28-section .cs-intel-v25-diagnostics > section {
+  min-width:0; height:100%; padding:15px !important;
+  border-color:rgba(125,150,184,.24) !important;
+  background:linear-gradient(135deg,#1B2530,#141E2A) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+}
+.cs-intel-v28-section .cs-intel-v25-diagnostics h3 {
+  font-size:13px !important; letter-spacing:-.01em;
+}
+.cs-intel-v28-section .cs-intel-v25-diagnostics p[class*="text-2xl"] {
+  font-variant-numeric:tabular-nums; letter-spacing:-.035em;
+}
+.cs-intel-v28-section .cs-intel-v26-details summary {
+  cursor:pointer; color:#FF5673; font-weight:650;
+}
+/* Consultas adicionais: selecao tem o mesmo status dos destaques. */
+.cs-intel-v28-section .cs-intel-v28-queries {
+  gap:7px; border-top:1px solid rgba(136,155,182,.17);
+  padding:12px 0 0;
+}
+.cs-intel-v28-section .cs-intel-v28-queries > span {
+  margin-right:5px; color:#97ABC4;
+}
+.cs-intel-v28-section .cs-intel-v28-queries button {
+  min-height:31px; background:rgba(11,19,30,.42);
+  color:#BACBE0; font-weight:600; border-radius:7px;
+}
+.cs-intel-v28-section .cs-intel-v28-queries button[aria-pressed="true"] {
+  border-color:#F7304E !important; color:#FF647D !important;
+  background:rgba(247,48,78,.085);
+}
+.cs-intel-v28-section .cs-intel-v28-detail {
+  margin-top:4px; padding:13px 0 0;
+  border-top:1px solid rgba(136,155,182,.2);
+}
+.cs-intel-v28-section .cs-intel-v28-detail > div:first-child {
+  min-height:26px;
+}
+.cs-intel-v28-section .cs-intel-v28-detail .recharts-tooltip-cursor {
+  fill:transparent !important;
+}
+@container cs-intel (min-width:1100px) {
+  .cs-intel-v28-section .cs-intel-v28-highlights {
+    grid-template-columns:repeat(5,minmax(0,1fr));
+  }
+  .cs-intel-v28-section .cs-intel-v25-diagnostics {
+    grid-template-columns:minmax(0,1fr) minmax(0,1.16fr);
+  }
+}
+@container cs-intel (min-width:780px) and (max-width:1099px) {
+  .cs-intel-v28-section .cs-intel-v28-highlights {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+@container cs-intel (min-width:480px) and (max-width:779px) {
+  .cs-intel-v28-section .cs-intel-v28-highlights {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@container cs-intel (max-width:479px) {
+  .cs-intel-v28-section .cs-intel-v28-highlights { grid-template-columns:minmax(0,1fr); }
+  .cs-intel-v28-section .cs-intel-v25-diagnostics { grid-template-columns:minmax(0,1fr); }
+  .cs-intel-v28-section .cs-intel-v28-highlights > .cs-intel-v25-card { min-height:188px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .cs-intel-v28-section .cs-intel-v25-card { transition:none !important; }
+}
+
+/* cs-intel-prototipo-v29
+   Revisao estrutural do bloco de cinco destaques. Mantem fontes e filtros.
+*/
+.cs-intel-v28-section .cs-intel-v29-feature {
+  position:relative;
+  min-width:0;
+  margin-top:4px;
+  padding:13px 13px 14px;
+  border:1px solid rgba(116,145,177,.22);
+  border-left:3px solid #F7304E;
+  border-radius:12px;
+  background:
+    radial-gradient(ellipse at 0 0,rgba(247,48,78,.075),transparent 44%),
+    linear-gradient(125deg,#171D28,#0D1826 80%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.023);
+}
+.cs-intel-v28-section .cs-intel-v29-feature > .cs-intel-v28-subheading {
+  margin:0 0 9px;
+  color:#E0EAF6;
+  font-size:10px;
+  letter-spacing:.075em;
+}
+.cs-intel-v28-section .cs-intel-v29-highlights,
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v28-highlights {
+  display:grid;
+  gap:9px;
+  padding:0;
+  align-items:stretch;
+}
+/* O estilo V2.8 era quase somente cosmetico: agora mudamos proporcao e composicao. */
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card {
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  min-height:172px !important;
+  height:172px;
+  padding:11px 12px 10px !important;
+  gap:0 !important;
+  isolation:isolate;
+  border:1px solid rgba(116,143,177,.22) !important;
+  border-radius:9px !important;
+  background:
+    radial-gradient(ellipse at 0 100%,rgba(247,48,78,.055),transparent 58%),
+    linear-gradient(145deg,rgba(25,33,45,.96),rgba(12,23,36,.97)) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.028);
+  overflow:hidden;
+  transition:border-color .16s ease,background .16s ease,transform .16s ease;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:hover {
+  border-color:rgba(247,48,78,.57) !important;
+  transform:translateY(-1px);
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card[aria-pressed="true"] {
+  border-color:rgba(247,48,78,.72) !important;
+  background:linear-gradient(140deg,#21232D,#111D2A) !important;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card > div:first-child {
+  min-width:0;
+  padding-right:60px;
+  overflow:visible;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card > div:first-child > div:first-child p {
+  color:#F6F9FE;
+  font-size:11px !important;
+  font-weight:750;
+  line-height:1.24;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card > div:first-child > span {
+  display:inline-flex;
+  max-width:100%;
+  margin-top:6px;
+  padding:3px 6px;
+  color:#92AAC6 !important;
+  background:rgba(11,21,34,.45) !important;
+  border-color:rgba(125,152,184,.17) !important;
+  font-size:9px !important;
+  font-weight:500;
+  line-height:1.1;
+  white-space:normal;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card .cs-intel-v24-summary {
+  margin-top:5px !important;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card .cs-intel-v24-summary p {
+  margin-top:2px;
+  line-height:1.24;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card .cs-intel-v24-summary p[class*="text-[26px]"] {
+  font-size:22px !important;
+  margin-top:3px;
+  line-height:1.12 !important;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card p[class*="text-[25px]"] {
+  font-size:21px !important;
+  line-height:1.12 !important;
+  margin-top:3px;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card p[class*="text-[11px]"] {
+  font-size:10px;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card p.break-words {
+  font-size:10px !important;
+  line-height:1.22 !important;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  overflow-wrap:anywhere;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card > span:last-child {
+  position:relative;
+  z-index:2;
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  min-height:23px;
+  margin:5px 0 0 !important;
+  padding:6px 0 0 !important;
+  border-top:1px solid rgba(121,152,184,.15);
+  color:#AFC5E0 !important;
+  font-size:10px !important;
+  font-weight:700;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:hover > span:last-child {
+  color:#FF637E !important;
+}
+/* Os previews sao miniaturas, nao controles adicionais; o card inteiro permanece clicavel. */
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-media {
+  position:absolute;
+  z-index:0;
+  right:12px;
+  bottom:42px;
+  width:62px;
+  height:64px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+  opacity:.91;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-media svg {
+  display:block;
+  width:100%;
+  height:100%;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-map svg {
+  filter:drop-shadow(0 5px 7px rgba(0,0,0,.17));
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-target svg {
+  opacity:.85;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-bars {
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:center;
+  gap:7px;
+  padding:7px 1px;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-track {
+  height:7px;
+  width:100%;
+  border-radius:4px;
+  overflow:hidden;
+  background:rgba(112,139,171,.17);
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-track > span {
+  display:block;
+  height:100%;
+  border-radius:4px;
+  background:linear-gradient(90deg,#B41234,#F7304E);
+}
+/* Ocultar SOMENTE barras duplicadas pela V2.8 dentro de Produto/Segmento. */
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:nth-child(3) .cs-intel-v28-microbars,
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:nth-child(4) .cs-intel-v28-microbars {
+  display:none !important;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:nth-child(3) .cs-intel-v24-summary > div[class*="h-1.5"],
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:nth-child(4) .cs-intel-v24-summary > div[class*="h-1.5"] {
+  display:none !important;
+}
+/* Informacoes de referencia dos cards e diagnosticos continuam disponiveis. */
+@container cs-intel (min-width:1450px) {
+  .cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v28-highlights {
+    grid-template-columns:repeat(5,minmax(0,1fr));
+  }
+}
+@container cs-intel (min-width:990px) and (max-width:1449px) {
+  .cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v28-highlights {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+@container cs-intel (min-width:550px) and (max-width:989px) {
+  .cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v28-highlights {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@container cs-intel (max-width:549px) {
+  .cs-intel-v28-section .cs-intel-v29-feature {
+    padding:11px 9px 12px;
+  }
+  .cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v28-highlights {
+    grid-template-columns:minmax(0,1fr);
+  }
+  .cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card {
+    min-height:160px !important;
+    height:160px;
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  .cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card {
+    transition:none;
+  }
+  .cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:hover {
+    transform:none;
+  }
+}
+
+/* cs-intel-acabamento-v291
+   Corrige corte de conteudo e alinhamento dos CTAs.
+*/
+
+.cs-intel-v28-section
+.cs-intel-v29-feature
+.cs-intel-v29-card {
+  height: auto !important;
+  min-height: 200px !important;
+  overflow: hidden;
+  justify-content: flex-start;
+}
+
+.cs-intel-v28-section
+.cs-intel-v29-feature
+.cs-intel-v29-card > div:first-child {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-bottom: 12px;
+}
+
+.cs-intel-v28-section
+.cs-intel-v29-feature
+.cs-intel-v29-card > span:last-child {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: 100%;
+  min-height: 28px;
+  margin-top: auto !important;
+  padding-top: 8px !important;
+}
+
+.cs-intel-v28-section
+.cs-intel-v29-feature
+.cs-intel-v29-media {
+  bottom: 46px;
+}
+
+@container cs-intel (max-width: 549px) {
+  .cs-intel-v28-section
+  .cs-intel-v29-feature
+  .cs-intel-v29-card {
+    height: auto !important;
+    min-height: 180px !important;
+  }
+}
+
+
+/* cs-intel-mapa-brasil-v292 - silhueta geográfica real e proporcional */
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-map {
+  width: 74px;
+  height: 76px;
+  right: 8px;
+  bottom: 43px;
+  opacity: .95;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-map svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 9px rgba(0,0,0,.25));
+}
+@container cs-intel (max-width: 479px) {
+  .cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-map {
+    width: 68px;
+    height: 70px;
+  }
+}
+
+/* cs-intel-participacao-v293 — barras proporcionais, alinhadas ao texto */
+
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:nth-child(3) > .cs-intel-v29-bars { display:none !important; }
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:nth-child(3) > div:first-child { padding-right:0 !important; }
+
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:nth-child(3) .cs-intel-v28-microbars {
+  display:flex !important;
+  flex-direction:column;
+  gap:0;
+  width:100%;
+  margin:10px 0 0 !important;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:nth-child(3) .cs-intel-v28-microtrack {
+  width:100%; height:7px;
+  overflow:hidden;
+  border-radius:999px;
+  background:rgba(120,148,180,.18);
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:nth-child(3) .cs-intel-v28-microtrack > span {
+  display:block; height:100%; border-radius:999px;
+  background:linear-gradient(90deg,#B91B3A,#F7304E);
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:nth-child(3) .cs-intel-v24-summary > div[class*="h-1.5"] { display:none !important; }
+
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:nth-child(4) > .cs-intel-v29-bars { display:none !important; }
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:nth-child(4) > div:first-child { padding-right:0 !important; }
+
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:nth-child(4) .cs-intel-v28-microbars {
+  display:flex !important;
+  flex-direction:column;
+  gap:0;
+  width:100%;
+  margin:10px 0 0 !important;
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:nth-child(4) .cs-intel-v28-microtrack {
+  width:100%; height:7px;
+  overflow:hidden;
+  border-radius:999px;
+  background:rgba(120,148,180,.18);
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:nth-child(4) .cs-intel-v28-microtrack > span {
+  display:block; height:100%; border-radius:999px;
+  background:linear-gradient(90deg,#B91B3A,#F7304E);
+}
+.cs-intel-v28-section .cs-intel-v29-feature .cs-intel-v29-card:nth-child(4) .cs-intel-v24-summary > div[class*="h-1.5"] { display:none !important; }
+
+
+/* cs-diag-executivo-v30
+   Diagnostico Comercial | Executivo CS - Glass Sutil.
+   Resultado, risco e qualidade dos dados em niveis visuais separados.
+   Zero, por si so, nao e classificado como sucesso.
+*/
+.cs-intel-v28-section .cs-diag-v30-layout {
+  display: grid;
+  grid-template-columns: minmax(0,1fr);
+  gap: 13px;
+  align-items: stretch !important;
+  min-width: 0;
+  margin-top: 1px;
+}
+
+.cs-intel-v28-section .cs-diag-v30-layout > .cs-diag-v30-card {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  height: 100% !important;
+  min-width: 0;
+  min-height: 0;
+  gap: 0;
+  padding: 16px 16px 15px !important;
+  border: 1px solid rgba(124,148,180,.25) !important;
+  border-radius: 11px !important;
+  background:
+    radial-gradient(ellipse at 0 0,rgba(247,48,78,.043),transparent 44%),
+    linear-gradient(135deg,#1B2430,#131E2B 85%) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.028);
+}
+
+/* Cabecalho: titulo forte, descricao curta e chips compactos. */
+.cs-diag-v30-card > div:first-child {
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 0;
+}
+.cs-diag-v30-card h3 {
+  color: #F2F6FC !important;
+  font-size: 14px !important;
+  font-weight: 750 !important;
+  line-height: 1.3;
+  letter-spacing: -.015em;
+}
+.cs-diag-v30-card > div:first-child p {
+  color: #9EAFCA;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.cs-diag-v30-card > div:first-child > div:last-child span {
+  background: rgba(13,23,37,.33);
+  border-color: rgba(138,160,189,.19) !important;
+  color: #A8BBD2;
+  white-space: normal;
+}
+
+/* Tres indicadores como celulas executivas, nao como tabela larga. */
+.cs-intel-v28-section .cs-diag-v30-card .cs-diag-v30-metrics {
+  display: grid !important;
+  grid-template-columns: repeat(3,minmax(0,1fr)) !important;
+  gap: 8px !important;
+  margin-top: 15px !important;
+  margin-bottom: 13px;
+}
+.cs-intel-v28-section .cs-diag-v30-metrics > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 104px;
+  padding: 12px 11px 10px !important;
+  border: 1px solid rgba(128,151,179,.16) !important;
+  border-top: 2px solid rgba(132,156,188,.55) !important;
+  border-radius: 9px;
+  background: linear-gradient(140deg,rgba(9,21,35,.35),rgba(15,26,40,.26));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.018);
+}
+.cs-intel-v28-section .cs-diag-v30-metrics > div:nth-child(2) {
+  border-top-color: rgba(239,159,39,.68) !important;
+}
+.cs-intel-v28-section .cs-diag-v30-metrics > div:nth-child(3) {
+  border-top-color: rgba(247,48,78,.66) !important;
+}
+.cs-intel-v28-section .cs-diag-v30-metrics > div > p:first-child {
+  min-height: 30px;
+  margin: 0;
+  color: #A9BDD4 !important;
+  font-size: 10px !important;
+  line-height: 1.4 !important;
+  font-weight: 550;
+  overflow-wrap: normal;
+}
+.cs-intel-v28-section .cs-diag-v30-metrics > div > p:nth-child(2) {
+  margin: 7px 0 0 !important;
+  color: #F5F8FD !important;
+  font-size: clamp(24px,2.2vw,31px) !important;
+  line-height: 1.04 !important;
+  font-weight: 790 !important;
+  letter-spacing: -.035em;
+  font-variant-numeric: tabular-nums;
+}
+.cs-intel-v28-section .cs-diag-v30-metrics > div > p:nth-child(n+3) {
+  margin-top: 7px;
+  color: #92A9C3 !important;
+  font-size: 10px !important;
+  line-height: 1.35;
+}
+
+/* Nota metodologica acessivel, visualmente subordinada. */
+.cs-diag-v30-card .cs-intel-v26-method {
+  margin-top: auto !important;
+  padding-top: 12px;
+  border-top: 1px solid rgba(130,155,184,.15);
+  color: #91A8C3;
+}
+.cs-diag-v30-card .cs-intel-v26-caveat {
+  color: #91A8C3;
+  line-height: 1.45;
+  font-size: 10px;
+}
+.cs-diag-v30-card .cs-intel-v26-details {
+  margin-top: 6px;
+}
+.cs-diag-v30-card .cs-intel-v26-details summary {
+  width: fit-content;
+  padding: 4px 0;
+  color: #D7E4F4 !important;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cs-diag-v30-card .cs-intel-v26-details summary:hover {
+  color: #FF657F !important;
+}
+.cs-diag-v30-card .cs-intel-v26-details summary:focus-visible {
+  outline: 2px solid #F7304E;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* Qualidade da carteira: subpainel principal, barra proporcional existente. */
+.cs-intel-v28-section .cs-diag-v30-carteira .cs-diag-v30-quality {
+  margin: 0 0 12px !important;
+  padding: 12px 12px 10px !important;
+  border: 1px solid rgba(132,156,187,.20) !important;
+  border-radius: 9px;
+  background: rgba(11,22,36,.31);
+}
+.cs-diag-v30-quality h4 {
+  color: #E9F1FB;
+  font-size: 11px !important;
+  font-weight: 750;
+}
+.cs-diag-v30-quality .text-right p:first-child {
+  font-size: 25px !important;
+  line-height: 1 !important;
+  font-variant-numeric: tabular-nums;
+}
+.cs-diag-v30-quality > div[class*="h-2"] {
+  height: 6px !important;
+  margin-top: 11px !important;
+  background: rgba(131,155,183,.14) !important;
+  border-radius: 5px;
+}
+.cs-diag-v30-quality > div[class*="h-2"] > div {
+  height: 100% !important;
+  border-radius: 5px;
+}
+.cs-diag-v30-quality > div:last-child {
+  gap: 7px 17px;
+}
+
+/* Layout por largura real do modulo, nao pelo monitor inteiro. */
+@container cs-intel (min-width: 1120px) {
+  .cs-intel-v28-section .cs-diag-v30-layout {
+    grid-template-columns: minmax(0,.96fr) minmax(0,1.04fr) !important;
+  }
+}
+@container cs-intel (min-width: 850px) and (max-width: 1119px) {
+  .cs-intel-v28-section .cs-diag-v30-layout {
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important;
+  }
+  .cs-intel-v28-section .cs-diag-v30-metrics > div {
+    min-height: 116px;
+  }
+}
+@container cs-intel (max-width: 849px) {
+  .cs-intel-v28-section .cs-diag-v30-layout {
+    grid-template-columns: minmax(0,1fr) !important;
+  }
+}
+@container cs-intel (max-width: 540px) {
+  .cs-intel-v28-section .cs-diag-v30-card .cs-diag-v30-metrics {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+  }
+  .cs-intel-v28-section .cs-diag-v30-metrics > div:last-child {
+    grid-column: 1 / -1;
+    min-height: 82px;
+  }
+  .cs-intel-v28-section .cs-diag-v30-layout > .cs-diag-v30-card {
+    padding: 13px 12px !important;
+  }
+}
+@container cs-intel (max-width: 355px) {
+  .cs-intel-v28-section .cs-diag-v30-card .cs-diag-v30-metrics {
+    grid-template-columns: minmax(0,1fr) !important;
+  }
+  .cs-intel-v28-section .cs-diag-v30-metrics > div:last-child {
+    grid-column: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cs-diag-v30-quality > div[class*="h-2"] > div { transition: none !important; }
+}
+
+/* cs-diag-acabamento-v31
+   Diagnosticos proporcionais e cores semanticamente neutras.
+*/
+
+/* Cada painel utiliza sua altura real. */
+.cs-intel-v28-section .cs-diag-v30-layout {
+  align-items: start !important;
+}
+
+.cs-intel-v28-section
+.cs-diag-v30-layout > .cs-diag-v30-card {
+  height: auto !important;
+  align-self: start !important;
+}
+
+/* Oportunidade: eliminar vazio artificial. */
+.cs-intel-v28-section
+.cs-diag-v30-vinculos .cs-diag-v30-metrics {
+  margin-bottom: 8px !important;
+}
+
+.cs-intel-v28-section
+.cs-diag-v30-vinculos .cs-diag-v30-metrics > div {
+  min-height: 96px;
+}
+
+/* Sem status comprovado, usar acento neutro. */
+.cs-intel-v28-section
+.cs-diag-v30-vinculos .cs-diag-v30-metrics > div {
+  border-top-color: rgba(132,156,188,.42) !important;
+}
+
+/* Nota metodologica acompanha os indicadores,
+   sem ser empurrada para o fim de uma caixa vazia. */
+.cs-intel-v28-section
+.cs-diag-v30-vinculos .cs-intel-v26-method {
+  margin-top: 9px !important;
+}
+
+/* Carteira: diminuir peso e verticalidade. */
+.cs-intel-v28-section
+.cs-diag-v30-carteira .cs-diag-v30-metrics > div {
+  min-height: 104px;
+}
+
+.cs-intel-v28-section
+.cs-diag-v30-carteira .cs-diag-v30-quality {
+  margin-top: 1px !important;
+  padding: 12px !important;
+}
+
+/* Manter os links de criterios acessiveis. */
+.cs-diag-v30-card
+.cs-intel-v26-details summary {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Evitar quebra de numeros e excesso de altura. */
+.cs-intel-v28-section
+.cs-diag-v30-metrics > div > p:nth-child(2) {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+@container cs-intel (max-width: 849px) {
+  .cs-intel-v28-section .cs-diag-v30-layout {
+    grid-template-columns: minmax(0,1fr) !important;
+  }
+}
+
+/* cs-vinculos-historico-v32: controles proprios do diagnostico por oportunidade */
+.cs-diag-v30-vinculos .cs-diag-v32-periods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.cs-diag-v30-vinculos .cs-diag-v32-period {
+  min-height: 29px;
+  padding: 5px 9px;
+  background: rgba(9,17,29,.24);
+  border: 1px solid rgba(134,155,185,.22);
+  border-radius: 7px;
+  color: #A8BCD5;
+  font-size: 10px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.cs-diag-v30-vinculos .cs-diag-v32-period[aria-pressed="true"] {
+  color: #FFF;
+  background: rgba(247,48,78,.13);
+  border-color: rgba(247,48,78,.63);
+}
+.cs-diag-v30-vinculos .cs-diag-v32-period:focus-visible {
+  outline: 2px solid #F7304E;
+  outline-offset: 2px;
+}
+.cs-diag-v30-vinculos .cs-diag-v32-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 16px;
+  margin-top: 12px;
+  color: #91A8C2;
+  font-size: 11px;
+}
+.cs-diag-v30-vinculos .cs-diag-v32-sources strong {
+  color: #E8F2FC;
+  margin-left: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.cs-diag-v30-vinculos .cs-diag-v32-empty {
+  padding-top: 8px;
+  color: #AFC0D4;
+  font-size: 11px;
+}
+
+
+/* cs-diag-interpretacao-v33 - Interpretacao sem alterar a leitura dos dados. */
+.cs-intel-v28-section .cs-diag-v30-vinculos .cs-diag-v33-match {
+  margin-top: 11px;
+  padding: 10px 11px;
+  border: 1px solid rgba(120,151,184,.19);
+  border-radius: 8px;
+  background: rgba(10,21,34,.27);
+}
+.cs-diag-v33-match-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 5px 12px;
+}
+.cs-diag-v33-match-heading span {
+  color: #AFC3DA;
+  font-size: 11px;
+  font-weight: 600;
+}
+.cs-diag-v33-match-heading strong {
+  color: #EAF2FD;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cs-diag-v33-track {
+  height: 5px;
+  margin-top: 8px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: rgba(136,157,187,.14);
+}
+.cs-diag-v33-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #7898BF; /* Indicador de correspondencia, sem status verde/vermelho. */
+}
+.cs-diag-v33-match > p,
+.cs-diag-v30-vinculos .cs-diag-v33-no-proposals {
+  margin-top: 7px;
+  color: #92A9C3;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.cs-intel-v28-section .cs-diag-v30-vinculos
+.cs-diag-v33-divergences[data-revisao="true"] {
+  border-top-color: rgba(245,158,11,.8) !important;
+}
+.cs-diag-v33-divergence-note {
+  margin-top: 7px !important;
+  color: #E3BA79 !important;
+  font-size: 10px !important;
+  line-height: 1.45 !important;
+  font-weight: 500;
+  white-space: normal;
+}
+.cs-diag-v30-carteira .cs-diag-v33-coverage-note {
+  margin: 9px 0 0;
+  padding: 8px 10px;
+  border-left: 2px solid rgba(245,158,11,.8);
+  border-radius: 0 6px 6px 0;
+  background: rgba(245,158,11,.045);
+  color: #B5C6DC;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.cs-diag-v30-carteira .cs-diag-v33-coverage-note strong {
+  color: #E7BD84;
+  font-weight: 750;
+}
+@container cs-intel (max-width: 540px) {
+  .cs-diag-v33-match-heading { align-items: flex-start; }
+}
+
+
+/* cs-intel-consultas-v34 — Consultas Adicionais / Executivo CS */
+.cs-intel-v34-queries {
+  gap: 8px !important;
+  border-top: 1px solid rgba(130,151,180,.15);
+  padding-top: 13px;
+}
+.cs-intel-v34-queries button {
+  min-height: 32px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 650;
+}
+.cs-intel-v34-queries button[aria-pressed="true"] {
+  background: rgba(247,48,78,.08);
+  border-color: rgba(247,48,78,.7);
+}
+.cs-intel-v34-detail {
+  padding-top: 14px !important;
+}
+.cs-intel-v34-kpis {
+  gap: 12px !important;
+  min-width: 0;
+}
+.cs-intel-v34-kpis > * {
+  min-width: 0;
+  border-radius: 11px;
+  background: linear-gradient(145deg, #1A2430, #111C29);
+  border-color: rgba(128,153,185,.22);
+}
+.cs-intel-v34-plot {
+  border: 1px solid rgba(132,157,188,.22) !important;
+  border-radius: 12px !important;
+  padding: 16px 18px !important;
+  min-width: 0;
+  background: linear-gradient(130deg, #1B222D, #101C29) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+}
+.cs-intel-v34-chart-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ECF4FC;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: .018em;
+}
+.cs-intel-v34-chart-title svg { color: #F7304E; }
+.cs-intel-v34-chart-desc {
+  margin: 4px 0 12px;
+  color: #9AAEC6;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.cs-intel-v34-chart { height: 225px; min-width: 0; width: 100%; }
+.cs-intel-v34-chart .recharts-cartesian-axis-tick,
+.cs-intel-v34-plot .recharts-legend-item-text {
+  font-variant-numeric: tabular-nums;
+}
+.cs-intel-v34-chart .recharts-legend-item-text { color: #B7CADF !important; }
+.cs-intel-v34-chart .recharts-tooltip-cursor { fill: transparent !important; }
+.cs-intel-v34-empty {
+  min-height: 135px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8FA4BE;
+  font-size: 12px;
+}
+.cs-intel-v34-funnel-rows { display: grid; gap: 9px; }
+.cs-intel-v34-funnel-row {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  column-gap: 12px;
+  row-gap: 5px;
+  padding: 9px 12px;
+  border: 1px solid rgba(134,157,187,.14);
+  border-radius: 9px;
+  background: rgba(15,25,38,.45);
+}
+.cs-intel-v34-funnel-header {
+  display: contents;
+}
+.cs-intel-v34-stage-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  color: #D9E5F3;
+  font-size: 12px;
+  font-weight: 650;
+}
+.cs-intel-v34-stage-name i {
+  display: inline-block;
+  flex: 0 0 7px;
+  height: 7px;
+  width: 7px;
+  border-radius: 50%;
+}
+.cs-intel-v34-funnel-header strong {
+  grid-column: 2;
+  justify-self: end;
+  color: #F4F7FC;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.cs-intel-v34-funnel-track {
+  grid-column: 1 / -1;
+  height: 7px;
+  border-radius: 8px;
+  background: rgba(129,151,181,.14);
+  overflow: hidden;
+}
+.cs-intel-v34-funnel-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width .2s ease;
+}
+.cs-intel-v34-funnel-share {
+  grid-column: 1 / -1;
+  color: #90A8C2;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.cs-intel-v34-funnel-note {
+  color: #8FA5C0;
+  font-size: 10px;
+  line-height: 1.5;
+  max-width: 900px;
+  padding: 2px 3px;
+}
+@media (max-width: 640px) {
+  .cs-intel-v34-plot { padding: 12px !important; }
+  .cs-intel-v34-chart { height: 205px; }
+  .cs-intel-v34-funnel-row { padding: 8px 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cs-intel-v34-funnel-track > span { transition: none; }
+}
+
+
+/* cs-intel-consultas-v35 — Acabamento / Executivo CS */
+/* Compactacao do funil em um resumo 2x2, sem reinterpretar as metricas. */
+.cs-intel-v34-detail .cs-intel-v34-funnel-rows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-items: stretch;
+}
+.cs-intel-v34-detail .cs-intel-v34-funnel-row {
+  padding: 10px 12px;
+  min-width: 0;
+}
+.cs-intel-v34-detail .cs-intel-v34-funnel-note {
+  grid-column: 1 / -1;
+  border-top: 1px solid rgba(138,160,188,.15);
+  padding: 9px 2px 0;
+  margin-top: 2px;
+}
+/* Show-up: totais de cada serie com suas proprias cores. */
+.cs-intel-v35-showup-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 21px;
+  padding: 0 0 9px;
+  margin: 0 0 6px;
+  border-bottom: 1px solid rgba(138,160,188,.13);
+}
+.cs-intel-v35-showup-summary > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #91AAC5;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.cs-intel-v35-showup-summary strong {
+  color: #F0F6FD;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 750;
+}
+.cs-intel-v35-dot {
+  display: inline-block;
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.cs-intel-v35-dot-confirm { background: #638BB1; }
+.cs-intel-v35-dot-real { background: #13BFA2; }
+.cs-intel-v34-detail .cs-intel-v34-showup .cs-intel-v34-chart { height: 195px; }
+/* Acordeao de Marketing: o texto corresponde ao estado aberto/fechado. */
+.cs-overview-v29-marketing:not([open]) > summary .cs-intel-v35-marketing-open { display: none; }
+.cs-overview-v29-marketing[open] > summary .cs-intel-v35-marketing-closed { display: none; }
+/* Fontes acessiveis sem ocupar duas linhas permanentemente. */
+.cs-intel-v35-source-notes {
+  border-top: 1px solid rgba(138,160,188,.13);
+  padding-top: 9px;
+  color: #91AAC5;
+}
+.cs-intel-v35-source-notes > summary {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+  color: #AFC1D8;
+  font-size: 11px;
+  font-weight: 650;
+  min-height: 26px;
+}
+.cs-intel-v35-source-notes > summary::-webkit-details-marker { display: none; }
+.cs-intel-v35-source-notes > summary::after {
+  content: '⌄';
+  display: inline-block;
+  padding-left: 7px;
+  color: #F7304E;
+}
+.cs-intel-v35-source-notes[open] > summary::after { content: '⌃'; }
+.cs-intel-v35-source-notes > p { padding-top: 7px; max-width: 1100px; }
+.cs-intel-v35-source-notes > summary:focus-visible { outline: 2px solid #F7304E; outline-offset: 3px; }
+@media (max-width: 770px) {
+  .cs-intel-v34-detail .cs-intel-v34-funnel-rows { grid-template-columns: minmax(0, 1fr); }
+  .cs-intel-v34-detail .cs-intel-v34-showup .cs-intel-v34-chart { height: 205px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cs-intel-v34-detail .cs-intel-v34-funnel-track > span { transition: none !important; }
+}
+
+/* cs-scorecards-v36 — Executivo CS / Glass Sutil */
+
+.cs-v36-board,
+.cs-v36-marketing {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid rgba(135,159,191,.25);
+  border-radius: 12px;
+  background: linear-gradient(115deg,#182331,#101c2b);
+  padding: 16px 10px;
+  min-width: 0;
+}
+
+.cs-v36-marketing {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding-bottom: 0;
+}
+
+.cs-v36-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  padding: 5px 17px 8px;
+}
+
+.cs-v36-board .cs-v36-metric + .cs-v36-metric,
+.cs-v36-marketing .cs-v36-metric + .cs-v36-metric {
+  border-left: 1px solid rgba(133,159,189,.18);
+}
+
+.cs-v36-name {
+  color: #99aec8;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .055em;
+  line-height: 1.4;
+}
+
+.cs-v36-metric strong {
+  color: #f1f6fc;
+  font-size: clamp(23px,2vw,34px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-v36-meta {
+  color: #bdcde0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.cs-v36-metric small {
+  color: #92a8c1;
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+.cs-v36-metric[data-tone="positive"] small {
+  color: #17d4a2;
+}
+
+.cs-v36-metric[data-tone="negative"] small {
+  color: #ff4967;
+}
+
+.cs-v36-marketing
+.cs-v36-metric[data-tone="positive"] strong {
+  color: #17d4a2;
+}
+
+.cs-v36-marketing
+.cs-v36-metric[data-tone="negative"] strong {
+  color: #ff4967;
+}
+
+.cs-v36-marketing-foot {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px 13px;
+  border-top: 1px solid rgba(133,159,189,.17);
+  margin: 14px 9px 0;
+  padding: 10px 9px;
+  color: #96aac4;
+  font-size: 11px;
+}
+
+.cs-v36-marketing-foot > span:first-child {
+  color: #bdcde0;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .04em;
+}
+
+.cs-v36-marketing-foot strong {
+  color: #eef5fc;
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-v36-skeleton {
+  min-height: 105px;
+}
+
+@media (max-width: 1050px) {
+  .cs-v36-board {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+
+  .cs-v36-board .cs-v36-metric {
+    border-left: 0 !important;
+  }
+
+  .cs-v36-board .cs-v36-metric:nth-child(even) {
+    border-left: 1px solid rgba(133,159,189,.18) !important;
+  }
+
+  .cs-v36-board .cs-v36-metric:nth-child(n+3) {
+    border-top: 1px solid rgba(133,159,189,.18);
+    padding-top: 15px;
+    margin-top: 9px;
+  }
+
+  .cs-v36-marketing {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+
+  .cs-v36-marketing .cs-v36-metric:nth-child(3) {
+    border-left: 0 !important;
+    border-top: 1px solid rgba(133,159,189,.18);
+    padding-top: 15px;
+    margin-top: 9px;
+  }
+}
+
+@media (max-width: 560px) {
+  .cs-v36-board,
+  .cs-v36-marketing {
+    grid-template-columns: minmax(0,1fr);
+    padding: 10px;
+  }
+
+  .cs-v36-board .cs-v36-metric,
+  .cs-v36-marketing .cs-v36-metric {
+    border-left: 0 !important;
+    border-top: 1px solid rgba(133,159,189,.18);
+    padding: 14px 9px !important;
+    margin: 0 !important;
+  }
+
+  .cs-v36-board .cs-v36-metric:first-child,
+  .cs-v36-marketing .cs-v36-metric:first-child {
+    border-top: 0;
+  }
+
+  .cs-v36-metric strong {
+    font-size: 27px;
+  }
+}
+
+
+/* cs-diag-editorial-v71
+   CS DASH / DIAGNOSTICO EXECUTIVO
+   Composicao integrada e sem mini-cards
+*/
+
+.cs-intel-v25-diagnostics.cs-diag-v70-board {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important;
+  gap: 0 !important;
+  align-items: stretch !important;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(133,160,190,.24);
+  border-left: 3px solid #F7304E;
+  border-radius: 12px;
+  background: linear-gradient(125deg,#192331,#101b29);
+}
+
+.cs-diag-v70-board > .cs-diag-exec-v70 {
+  display: flex !important;
+  flex-direction: column !important;
+  align-self: stretch !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 25px 27px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.cs-diag-v70-board > .cs-diag-v30-vinculos {
+  border-right: 1px solid rgba(145,169,198,.18) !important;
+  background: radial-gradient(
+    ellipse at 0% 0%,
+    rgba(247,48,78,.065),
+    transparent 66%
+  ) !important;
+}
+
+.cs-diag-v70-board > .cs-diag-v30-carteira {
+  background: radial-gradient(
+    ellipse at 100% 0%,
+    rgba(62,110,157,.085),
+    transparent 69%
+  ) !important;
+}
+
+.cs-diag-exec-v70 h3 {
+  font-family: Inter,system-ui,sans-serif !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  line-height: 23px !important;
+  letter-spacing: -.025em;
+  color: #F3F7FC !important;
+}
+
+.cs-diag-exec-v70 > div:first-child p.text-muted-foreground {
+  font-size: 12px !important;
+  line-height: 19px !important;
+  color: #ACBED2 !important;
+}
+
+.cs-diag-exec-v70 .cs-diag-v32-periods {
+  gap: 7px !important;
+  margin-top: 15px !important;
+}
+
+.cs-diag-exec-v70 .cs-diag-v32-period {
+  min-height: 34px;
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+/* Rastreabilidade: dado principal domina a leitura */
+
+.cs-diag-v70-board .cs-diag-v30-vinculos .cs-diag-v33-match {
+  margin-top: 21px !important;
+  padding: 21px 19px 19px !important;
+  border: 0 !important;
+  border-left: 3px solid #F7304E !important;
+  border-radius: 0 !important;
+  background: linear-gradient(
+    100deg,rgba(247,48,78,.10),rgba(19,32,48,.20)
+  ) !important;
+  box-shadow: none !important;
+}
+
+.cs-diag-exec-v70 .cs-diag-v33-match-heading {
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap;
+  gap: 12px !important;
+}
+
+.cs-diag-exec-v70 .cs-diag-v33-match-heading span {
+  max-width: 27ch;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 20px !important;
+  color: #C2D0E0 !important;
+}
+
+.cs-diag-exec-v70 .cs-diag-v33-match-heading strong {
+  font-family: Inter,system-ui,sans-serif;
+  font-size: clamp(29px,2.7vw,41px) !important;
+  font-weight: 750 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -.045em;
+  color: #FFFFFF !important;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-diag-exec-v70 .cs-diag-v33-track {
+  height: 5px !important;
+  margin: 14px 0 9px !important;
+  border-radius: 99px;
+  background: #27394D;
+}
+
+.cs-diag-exec-v70 .cs-diag-v33-match p.text-muted-foreground {
+  font-size: 11px !important;
+  line-height: 17px !important;
+  color: #A8BBD1 !important;
+}
+
+/* Faixa de indicadores: nenhum mini-card */
+
+.cs-diag-v70-board .cs-diag-exec-v70 .cs-diag-v30-metrics {
+  display: grid !important;
+  grid-template-columns: repeat(3,minmax(0,1fr)) !important;
+  gap: 0 !important;
+  margin: 20px 0 0 !important;
+  padding: 19px 0 0 !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(145,169,198,.20) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.cs-diag-v70-board .cs-diag-v30-metrics > div {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  grid-column: auto !important;
+  min-width: 0 !important;
+  min-height: 100px !important;
+  margin: 0 !important;
+  padding: 2px 16px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.cs-diag-v70-board .cs-diag-v30-metrics > div:first-child {
+  padding-left: 0 !important;
+}
+.cs-diag-v70-board .cs-diag-v30-metrics > div:last-child {
+  padding-right: 0 !important;
+}
+.cs-diag-v70-board .cs-diag-v30-metrics > div + div {
+  border-left: 1px solid rgba(145,169,198,.19) !important;
+}
+.cs-diag-v70-board .cs-diag-v30-metrics > div::before,
+.cs-diag-v70-board .cs-diag-v30-metrics > div::after {
+  display: none !important;
+}
+
+.cs-diag-exec-v70 .cs-diag-v30-metrics > div > p:first-child {
+  min-height: 35px;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 18px !important;
+  color: #B7C7DA !important;
+}
+
+.cs-diag-exec-v70 .cs-diag-v30-metrics > div > p:nth-of-type(2) {
+  margin-top: 10px !important;
+  font-family: Inter,system-ui,sans-serif;
+  font-size: 35px !important;
+  font-weight: 750 !important;
+  line-height: 40px !important;
+  letter-spacing: -.04em;
+  color: #F3F7FD !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-diag-exec-v70 .cs-diag-v30-metrics > div > p:nth-of-type(n+3) {
+  margin-top: 6px !important;
+  font-size: 11px !important;
+  line-height: 16px !important;
+  color: #A3B6CD !important;
+}
+
+/* Carteira: risco operacional e cobertura */
+
+.cs-diag-v70-board .cs-diag-v30-carteira .cs-diag-v30-metrics {
+  margin-top: 23px !important;
+}
+
+.cs-diag-v70-board .cs-diag-v30-carteira
+.cs-diag-v30-metrics > div:nth-child(2) > p:first-child {
+  color: #F0B45C !important;
+}
+
+.cs-diag-v70-board .cs-diag-v30-carteira
+.cs-diag-v30-metrics > div:nth-child(3) > p:first-child {
+  color: #F47D91 !important;
+}
+
+.cs-diag-v70-board .cs-diag-exec-v70 .cs-diag-v30-quality {
+  margin-top: 21px !important;
+  padding: 18px 0 0 !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(145,169,198,.20) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.cs-diag-exec-v70 .cs-v43-quality-label {
+  font-size: 14px !important;
+  line-height: 20px !important;
+  font-weight: 700 !important;
+  color: #EDF4FD !important;
+}
+
+.cs-diag-exec-v70
+.cs-diag-v30-quality .text-right > p:first-child {
+  font-family: Inter,system-ui,sans-serif;
+  font-size: 40px !important;
+  line-height: 44px !important;
+  font-weight: 750 !important;
+  letter-spacing: -.045em;
+  color: #F3F7FC !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-diag-v70-board .cs-diag-v30-carteira
+.cs-diag-v30-quality [role="status"] {
+  border-left: 2px solid #EBA63D !important;
+  border-radius: 2px !important;
+  background: rgba(235,166,61,.06) !important;
+}
+
+/* Metodologia preservada, mas discreta */
+
+.cs-diag-exec-v70 .cs-intel-v26-method {
+  margin-top: auto !important;
+  padding-top: 15px !important;
+  border-top: 1px solid rgba(145,169,198,.17) !important;
+}
+
+.cs-diag-exec-v70 .cs-intel-v26-caveat {
+  font-size: 11px !important;
+  line-height: 17px !important;
+  color: #9FB1C8 !important;
+}
+
+.cs-diag-exec-v70 .cs-intel-v26-details summary {
+  min-height: 32px;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+}
+
+/* Tablet e celular */
+
+@media (max-width: 1120px) {
+  .cs-intel-v25-diagnostics.cs-diag-v70-board {
+    grid-template-columns: minmax(0,1fr) !important;
+  }
+  .cs-diag-v70-board > .cs-diag-v30-vinculos {
+    border-right: 0 !important;
+    border-bottom: 1px solid rgba(145,169,198,.20) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .cs-diag-v70-board > .cs-diag-exec-v70 {
+    padding: 18px 16px !important;
+  }
+  .cs-diag-v70-board .cs-diag-v30-vinculos .cs-diag-v33-match {
+    padding: 16px 14px !important;
+  }
+  .cs-diag-exec-v70 .cs-diag-v33-match-heading strong {
+    font-size: 30px !important;
+  }
+  .cs-diag-v70-board .cs-diag-exec-v70 .cs-diag-v30-metrics {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+    row-gap: 15px !important;
+  }
+  .cs-diag-v70-board .cs-diag-v30-metrics > div {
+    min-height: 90px !important;
+    padding: 0 12px !important;
+  }
+  .cs-diag-v70-board .cs-diag-v30-metrics > div:nth-child(2) {
+    padding-right: 0 !important;
+  }
+  .cs-diag-v70-board .cs-diag-v30-metrics > div:nth-child(3) {
+    grid-column: 1/-1 !important;
+    min-height: 70px !important;
+    padding: 12px 0 0 !important;
+    border-left: 0 !important;
+    border-top: 1px solid rgba(145,169,198,.17) !important;
+  }
+  .cs-diag-exec-v70 .cs-diag-v30-metrics > div > p:first-child {
+    min-height: 0;
+  }
+  .cs-diag-exec-v70
+  .cs-diag-v30-quality .text-right > p:first-child {
+    font-size: 32px !important;
+  }
+}
+
+
+/* V7.1 — HIERARQUIA E ACABAMENTO */
+
+/* Contorno menos dominante */
+
+.cs-intel-v25-diagnostics.cs-diag-v70-board {
+  border-left-width: 2px;
+  border-color: rgba(129,156,189,.23);
+  border-left-color: #F7304E;
+  background:
+    radial-gradient(
+      ellipse 65% 85% at 0% 0%,
+      rgba(116,38,66,.10),
+      transparent 85%
+    ),
+    linear-gradient(115deg,#172130,#0E1A28);
+}
+
+.cs-diag-v70-board > .cs-diag-v30-vinculos {
+  border-right-color: rgba(139,163,193,.12) !important;
+}
+
+/* Rastreabilidade: foco na correspondencia */
+
+.cs-diag-v70-board
+.cs-diag-v30-vinculos .cs-diag-v33-match {
+  margin-top: 17px !important;
+  padding: 20px 22px 18px !important;
+  border-left-width: 2px !important;
+  background:
+    linear-gradient(
+      100deg,
+      rgba(247,48,78,.095),
+      rgba(247,48,78,.015) 78%
+    ) !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v33-match-heading {
+  align-items: center !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v33-match-heading
+.cs-diag-v71-primary {
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  max-width: none !important;
+  flex: 0 0 auto;
+}
+
+.cs-diag-v70-board
+.cs-diag-v33-match-heading
+.cs-diag-v71-primary > .cs-diag-v71-percent {
+  font-family: Inter,system-ui,sans-serif !important;
+  font-size: 46px !important;
+  font-weight: 750 !important;
+  line-height: 1.05 !important;
+  letter-spacing: -.05em !important;
+  color: #FFFFFF !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v33-match-heading
+.cs-diag-v71-ratio,
+.cs-diag-v70-board
+.cs-diag-v33-match-heading
+.cs-diag-v71-ratio strong {
+  font-family: Inter,system-ui,sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 17px !important;
+  letter-spacing: 0 !important;
+  color: #ADC0D7 !important;
+  white-space: nowrap;
+}
+
+/* Indicadores secundarios nao disputam atencao */
+
+.cs-diag-v70-board
+.cs-diag-v30-vinculos
+.cs-diag-v30-metrics > div:first-child
+> p:nth-of-type(2) {
+  font-size: 27px !important;
+  line-height: 33px !important;
+  color: #BED0E4 !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v30-metrics > div {
+  min-height: 89px !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v30-metrics > div > p:first-child {
+  font-size: 11px !important;
+  line-height: 17px !important;
+  color: #A9BCD1 !important;
+}
+
+/* Carteira: dado sem registro tem maior destaque.
+   Nao interpreta ausencia de data como falta de atendimento. */
+
+.cs-diag-v70-board
+.cs-diag-v30-carteira
+.cs-diag-v30-metrics > div:nth-child(3)
+> p:nth-of-type(2) {
+  font-size: 42px !important;
+  line-height: 46px !important;
+  color: #F1C17D !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v30-carteira
+.cs-diag-v30-metrics > div:nth-child(3)
+> p:first-child {
+  color: #F1C17D !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v30-carteira
+.cs-diag-v30-quality {
+  margin-top: 14px !important;
+  padding-top: 17px !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v30-carteira
+.cs-diag-v30-quality
+.text-right > p:first-child {
+  font-size: 29px !important;
+  line-height: 33px !important;
+  color: #DCE7F4 !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v30-carteira
+.cs-diag-v30-quality [role="status"] {
+  padding: 11px 13px !important;
+  margin: 15px 0 12px !important;
+  border-left: 2px solid #EAB05C !important;
+  border-radius: 3px !important;
+  background: rgba(234,176,92,.065) !important;
+}
+
+/* Mais clareza nos rodapes */
+
+.cs-diag-v70-board .cs-intel-v26-method {
+  padding-top: 13px !important;
+}
+
+@media (max-width: 640px) {
+  .cs-diag-v70-board
+  .cs-diag-v33-match-heading
+  .cs-diag-v71-primary > .cs-diag-v71-percent {
+    font-size: 35px !important;
+  }
+
+  .cs-diag-v70-board
+  .cs-diag-v30-carteira
+  .cs-diag-v30-metrics > div:nth-child(3)
+  > p:nth-of-type(2) {
+    font-size: 35px !important;
+    line-height: 40px !important;
+  }
+}
+
+
+
+
+
+
+
+/* cs-diag-v73-executive
+   Refinamento estrutural do Diagnostico Comercial
+   Barras comparativas e alinhamento dos indicadores
+*/
+
+/* Painel integrado, sem bordas duplicadas */
+
+.cs-intel-v25-diagnostics.cs-diag-v70-board {
+  gap: 0 !important;
+  align-items: stretch !important;
+  background: linear-gradient(
+    120deg,
+    #192331,
+    #101B29
+  ) !important;
+}
+
+.cs-intel-v25-diagnostics.cs-diag-v70-board
+> .cs-diag-exec-v70 {
+  align-self: stretch !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.cs-intel-v25-diagnostics.cs-diag-v70-board
+> .cs-diag-v30-vinculos {
+  border-right:
+    1px solid rgba(136,158,187,.18) !important;
+}
+
+/* Correspondencia: barra horizontal comparativa */
+
+.cs-diag-v70-board .cs-diag-v73-match-track {
+  display: flex !important;
+  align-items: stretch;
+  gap: 3px;
+  width: 100%;
+  height: 11px !important;
+  margin: 16px 0 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+  border-radius: 5px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v73-match-track > .cs-diag-v73-match-fill {
+  display: block !important;
+  flex: 0 0 auto;
+  height: 100% !important;
+  border-radius: 4px !important;
+  background: linear-gradient(
+    90deg,
+    #638CB9,
+    #8AB7E8
+  ) !important;
+  box-shadow: none !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v73-match-track > .cs-diag-v73-match-remainder {
+  display: block !important;
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto !important;
+  height: 100% !important;
+  border-radius: 4px !important;
+  background: #334357 !important;
+}
+
+.cs-diag-v70-board .cs-diag-v73-match-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 7px 14px;
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 16px;
+  color: #AFC2D8;
+}
+
+.cs-diag-v73-match-legend > span,
+.cs-diag-v73-quality-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.cs-diag-v73-key-dot {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: #758BA6;
+}
+
+.cs-diag-v73-key-dot.is-matched {
+  background: #8AB7E8;
+}
+.cs-diag-v73-key-dot.is-unmatched {
+  background: #45576E;
+}
+
+.cs-diag-v70-board
+.cs-diag-v30-vinculos .cs-diag-v33-match {
+  margin-top: 17px !important;
+  padding: 20px 22px 18px !important;
+  border-left: 2px solid #F7304E !important;
+  border-radius: 2px !important;
+  background: linear-gradient(
+    100deg,
+    rgba(247,48,78,.085),
+    rgba(19,33,49,.12)
+  ) !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v30-vinculos .cs-diag-v33-match > p {
+  margin-top: 12px !important;
+  font-size: 11px !important;
+  line-height: 17px !important;
+}
+
+/* Carteira: tres indicadores com a mesma linha-base */
+
+.cs-intel-v25-diagnostics.cs-diag-v70-board
+.cs-diag-v30-carteira.cs-diag-exec-v70
+.cs-diag-v30-metrics {
+  display: grid !important;
+  grid-template-columns:
+    repeat(3, minmax(0,1fr)) !important;
+  gap: 0 !important;
+  align-items: stretch !important;
+  margin-top: 20px !important;
+  padding: 17px 0 0 !important;
+}
+
+.cs-intel-v25-diagnostics.cs-diag-v70-board
+.cs-diag-v30-carteira.cs-diag-exec-v70
+.cs-diag-v30-metrics > div {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr);
+  grid-template-rows: 45px 58px minmax(36px,auto);
+  align-content: start;
+  justify-items: center;
+  align-items: start;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 4px 15px 0 !important;
+  text-align: center;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.cs-intel-v25-diagnostics.cs-diag-v70-board
+.cs-diag-v30-carteira.cs-diag-exec-v70
+.cs-diag-v30-metrics > div + div {
+  border-left:
+    1px solid rgba(139,163,193,.18) !important;
+}
+
+.cs-intel-v25-diagnostics.cs-diag-v70-board
+.cs-diag-v30-carteira
+.cs-diag-v30-metrics > div > p:first-child {
+  min-height: 0 !important;
+  max-width: 23ch;
+  margin: 0 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 17px !important;
+  text-align: center !important;
+  color: #B7C8DC !important;
+}
+
+.cs-intel-v25-diagnostics.cs-diag-v70-board
+.cs-diag-v30-carteira
+.cs-diag-v30-metrics > div > p:nth-of-type(2) {
+  margin: 0 !important;
+  font-family: Inter,system-ui,sans-serif;
+  font-size: clamp(28px,2.2vw,38px) !important;
+  font-weight: 750 !important;
+  line-height: 44px !important;
+  letter-spacing: -.04em;
+  text-align: center !important;
+  color: #F4F7FC !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-intel-v25-diagnostics.cs-diag-v70-board
+.cs-diag-v30-carteira
+.cs-diag-v30-metrics > div > p:nth-of-type(3) {
+  max-width: 25ch;
+  margin: 0 !important;
+  font-size: 11px !important;
+  line-height: 16px !important;
+  text-align: center !important;
+  color: #9FB3CA !important;
+}
+
+.cs-intel-v25-diagnostics.cs-diag-v70-board
+.cs-diag-v30-carteira
+.cs-diag-v30-metrics > div:nth-child(2)
+> p:first-child {
+  color: #E7B369 !important;
+}
+
+.cs-intel-v25-diagnostics.cs-diag-v70-board
+.cs-diag-v30-carteira
+.cs-diag-v30-metrics > div:nth-child(3)
+> p:first-child {
+  color: #E7B369 !important;
+}
+
+/* Qualidade: duas parcelas visuais e legenda */
+
+.cs-diag-v70-board
+.cs-diag-v73-quality-distribution {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  margin: 17px 0 15px;
+  padding: 0;
+}
+
+.cs-diag-v70-board
+.cs-diag-v73-quality-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 20px;
+  color: #B6C8DA;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.cs-diag-v73-quality-legend strong {
+  font-size: 13px;
+  font-weight: 750;
+  color: #EDF4FC;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-diag-v73-quality-legend
+.is-recorded {
+  background: #2CC4AD;
+}
+
+.cs-diag-v73-quality-legend
+.is-missing {
+  background: #E4A451;
+}
+
+.cs-diag-v70-board
+.cs-diag-v73-quality-rail {
+  display: flex !important;
+  align-items: stretch;
+  gap: 3px;
+  width: 100%;
+  height: 13px !important;
+  overflow: hidden;
+  border-radius: 5px;
+  background: transparent;
+}
+
+.cs-diag-v70-board
+.cs-diag-v73-quality-recorded {
+  display: block;
+  flex: 0 0 auto;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,#188D82,#32D2B8
+  );
+}
+
+.cs-diag-v70-board
+.cs-diag-v73-quality-missing {
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,#C98A43,#E9AD5B
+  );
+}
+
+/* Separacao entre dados principais e qualidade */
+
+.cs-diag-v70-board
+.cs-diag-v30-carteira .cs-diag-v30-quality {
+  margin-top: 15px !important;
+  padding-top: 19px !important;
+  border-top:
+    1px solid rgba(139,163,193,.20) !important;
+  background: transparent !important;
+}
+
+/* Legibilidade do alerta */
+
+.cs-diag-v70-board
+.cs-diag-v30-carteira [role="status"] {
+  border-left-color: #E4A451 !important;
+}
+
+/* Comportamento mobile */
+
+@media (max-width: 1120px) {
+  .cs-intel-v25-diagnostics.cs-diag-v70-board
+  > .cs-diag-v30-vinculos {
+    border-right: 0 !important;
+    border-bottom:
+      1px solid rgba(139,163,193,.19) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .cs-intel-v25-diagnostics.cs-diag-v70-board
+  .cs-diag-v30-carteira.cs-diag-exec-v70
+  .cs-diag-v30-metrics {
+    grid-template-columns: minmax(0,1fr) !important;
+    gap: 0 !important;
+  }
+
+  .cs-intel-v25-diagnostics.cs-diag-v70-board
+  .cs-diag-v30-carteira.cs-diag-exec-v70
+  .cs-diag-v30-metrics > div {
+    display: grid !important;
+    grid-template-columns: minmax(0,1fr) auto;
+    grid-template-rows: auto;
+    align-items: center;
+    justify-items: stretch;
+    gap: 4px 12px;
+    grid-column: auto !important;
+    min-height: 0 !important;
+    padding: 12px 0 !important;
+    text-align: left !important;
+    border-left: 0 !important;
+    border-top: 0 !important;
+    border-bottom:
+      1px solid rgba(139,163,193,.16) !important;
+  }
+
+  .cs-intel-v25-diagnostics.cs-diag-v70-board
+  .cs-diag-v30-carteira
+  .cs-diag-v30-metrics > div > p:first-child {
+    max-width: none;
+    text-align: left !important;
+  }
+
+  .cs-intel-v25-diagnostics.cs-diag-v70-board
+  .cs-diag-v30-carteira
+  .cs-diag-v30-metrics > div > p:nth-of-type(2) {
+    font-size: 29px !important;
+    text-align: right !important;
+  }
+
+  .cs-intel-v25-diagnostics.cs-diag-v70-board
+  .cs-diag-v30-carteira
+  .cs-diag-v30-metrics > div > p:nth-of-type(3) {
+    grid-column: 1/-1;
+    max-width: none;
+    text-align: left !important;
+  }
+
+  .cs-diag-v70-board
+  .cs-diag-v73-match-legend,
+  .cs-diag-v70-board
+  .cs-diag-v73-quality-legend {
+    justify-content: flex-start;
+    gap: 9px 17px;
+  }
+
+  .cs-diag-v70-board
+  .cs-diag-v73-quality-rail {
+    height: 11px !important;
+  }
+}
+
+/* cs-diag-v74-final
+   Acabamento executivo do Diagnostico Comercial
+   Dados e logica preservados
+*/
+
+.cs-diag-v70-board
+.cs-diag-v30-carteira .cs-diag-v30-quality {
+  margin-top: 15px !important;
+  padding-top: 18px !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v30-carteira
+.cs-diag-v30-quality .text-right > p:first-child {
+  font-family: Inter,system-ui,sans-serif !important;
+  font-size: 41px !important;
+  line-height: 45px !important;
+  font-weight: 750 !important;
+  letter-spacing: -.045em !important;
+  color: #F2C079 !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-diag-v70-board
+.cs-diag-v30-carteira
+.cs-diag-v30-quality .text-right > p:last-child {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #E5B77A !important;
+}
+
+/* Alerta metodologico menos dominante */
+
+.cs-diag-v70-board
+.cs-diag-v30-carteira
+.cs-diag-v30-quality
+> :nth-child(2):not(.cs-diag-v73-quality-distribution) {
+  margin: 12px 0 12px !important;
+  padding: 9px 12px !important;
+  border-left: 2px solid rgba(228,164,81,.65) !important;
+  border-radius: 3px !important;
+  background: rgba(228,164,81,.045) !important;
+  box-shadow: none !important;
+}
+
+/* Distribuicao: mesma informacao, acabamento melhor */
+
+.cs-diag-v70-board
+.cs-diag-v73-quality-distribution {
+  gap: 10px !important;
+  margin: 14px 0 13px !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v73-quality-legend {
+  align-items: center;
+  gap: 9px 18px;
+}
+
+.cs-diag-v70-board
+.cs-diag-v73-quality-rail {
+  height: 12px !important;
+  gap: 3px !important;
+  border-radius: 4px !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v73-quality-recorded {
+  background: linear-gradient(
+    90deg,#198F81,#2EC6B0
+  ) !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v73-quality-missing {
+  background: linear-gradient(
+    90deg,#B98245,#DEA354
+  ) !important;
+}
+
+/* Equilibrio vertical do painel */
+
+.cs-diag-v70-board
+.cs-diag-v30-carteira .cs-diag-v30-metrics {
+  margin-top: 17px !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v30-carteira .cs-intel-v26-method {
+  padding-top: 13px !important;
+}
+
+@media (max-width: 640px) {
+  .cs-diag-v70-board
+  .cs-diag-v30-carteira
+  .cs-diag-v30-quality .text-right > p:first-child {
+    font-size: 33px !important;
+    line-height: 37px !important;
+  }
+
+  .cs-diag-v70-board
+  .cs-diag-v73-quality-rail {
+    height: 11px !important;
+  }
+}
+
+/* cs-highlights-bars-v75
+   Exclusivo: Principais Destaques
+   Nao afeta Diagnostico Comercial
+*/
+
+/* Barras cujo preenchimento tem largura dinamica */
+
+.cs-intel-v28-highlights
+.cs-intel-v25-card
+:is(div,span):not(.cs-bars-v1-participation):has(
+  > :is(div,span)[style*="width"]
+) {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: 11px !important;
+  min-height: 11px !important;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 5px !important;
+  background: #2A3A4E !important;
+  box-shadow:
+    inset 0 1px 2px rgba(0,0,0,.18),
+    inset 0 0 0 1px rgba(153,179,209,.07);
+}
+
+/* Preenchimento: vermelho Costurando Sucesso */
+
+.cs-intel-v28-highlights
+.cs-intel-v25-card
+:is(div,span):not(.cs-bars-v1-participation):has(
+  > :is(div,span)[style*="width"]
+)
+> :is(div,span)[style*="width"] {
+  display: block;
+  flex: 0 0 auto;
+  max-width: 100%;
+  height: 100% !important;
+  min-height: 0 !important;
+  border-radius: 4px !important;
+  background: linear-gradient(
+    90deg,
+    #C92344 0%,
+    #F7304E 52%,
+    #FF5973 100%
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.14);
+}
+
+/* Quando a barra esta completa,
+   mantém preenchimento uniforme */
+
+.cs-intel-v28-highlights
+.cs-intel-v25-card
+:is(div,span):not(.cs-bars-v1-participation):has(
+  > :is(div,span)[style*="width: 100%"]
+)
+> :is(div,span)[style*="width"] {
+  border-radius: 4px !important;
+}
+
+/* Alternativa para barras sem estilo inline
+   que utilizam role=progressbar */
+
+.cs-intel-v28-highlights
+.cs-intel-v25-card
+[role="progressbar"]:has(> :is(div,span)) {
+  min-height: 11px;
+  border-radius: 5px;
+}
+
+/* Sem alteracoes em anel, mapa ou icones */
+
+@media (max-width: 640px) {
+  .cs-intel-v28-highlights
+  .cs-intel-v25-card
+  :is(div,span):not(.cs-bars-v1-participation):has(
+    > :is(div,span)[style*="width"]
+  ) {
+    height: 9px !important;
+    min-height: 9px !important;
+    margin-top: 9px;
+  }
+}
+
+/* cs-highlights-bars-v76-final
+   Acabamento exclusivo das barras de Principais Destaques
+*/
+
+/* Trilho dos indicadores proporcionais */
+
+.cs-intel-v28-highlights
+.cs-intel-v25-card
+:is(div,span):not(.cs-bars-v1-participation):has(> :is(div,span)[style*="width"]) {
+  height: 8px !important;
+  min-height: 8px !important;
+  border-radius: 5px !important;
+  background: #263548 !important;
+  box-shadow:
+    inset 0 1px 2px rgba(0,0,0,.16),
+    inset 0 0 0 1px rgba(145,170,200,.06) !important;
+}
+
+/* Preenchimento vermelho CS, sem brilho excessivo */
+
+.cs-intel-v28-highlights
+.cs-intel-v25-card
+:is(div,span):not(.cs-bars-v1-participation):has(> :is(div,span)[style*="width"])
+> :is(div,span)[style*="width"] {
+  height: 100% !important;
+  min-height: 0 !important;
+  border-radius: 4px !important;
+  background: linear-gradient(
+    90deg,
+    #DE2B49 0%,
+    #F7304E 55%,
+    #F74862 100%
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07) !important;
+}
+
+/* Mobile */
+
+@media (max-width: 640px) {
+  .cs-intel-v28-highlights
+  .cs-intel-v25-card
+  :is(div,span):not(.cs-bars-v1-participation):has(> :is(div,span)[style*="width"]) {
+    height: 7px !important;
+    min-height: 7px !important;
+  }
+}
+
+/* cs-highlights-layout-v77
+   Principais Destaques / Layout Executivo CS
+   Somente distribuicao e responsividade
+*/
+
+/* Container proprio: preserva queries cs-intel existentes */
+
+.cs-intel-v25-section.cs-intel-v28-section {
+  container-type: inline-size;
+  container-name: cs-intel cs-highlights-layout-v77;
+}
+
+/* Base: cinco cards com mesma largura */
+
+.cs-intel-v25-section.cs-intel-v28-section
+.cs-intel-v25-grid.cs-intel-v28-highlights {
+  display: grid !important;
+  grid-template-columns:
+    repeat(5, minmax(0, 1fr)) !important;
+  grid-auto-flow: row !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  gap: 12px !important;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Cada card ocupa exatamente uma celula */
+
+.cs-intel-v25-section.cs-intel-v28-section
+.cs-intel-v28-highlights > .cs-intel-v25-card {
+  grid-column: auto !important;
+  grid-row: auto !important;
+  justify-self: stretch !important;
+  align-self: stretch !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* Notebook: tres colunas */
+
+@container cs-highlights-layout-v77 (max-width: 1379px) {
+  .cs-intel-v25-grid.cs-intel-v28-highlights {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Tablet: duas colunas */
+
+@container cs-highlights-layout-v77 (max-width: 979px) {
+  .cs-intel-v25-grid.cs-intel-v28-highlights {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Celular: uma coluna */
+
+@container cs-highlights-layout-v77 (max-width: 619px) {
+  .cs-intel-v25-grid.cs-intel-v28-highlights {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+  }
+}
+
+/* Fallback responsivo para navegadores sem container queries */
+
+@supports not (container-type: inline-size) {
+  @media (max-width: 1450px) {
+    .cs-intel-v25-section.cs-intel-v28-section
+    .cs-intel-v25-grid.cs-intel-v28-highlights {
+      grid-template-columns:
+        repeat(3, minmax(0,1fr)) !important;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .cs-intel-v25-section.cs-intel-v28-section
+    .cs-intel-v25-grid.cs-intel-v28-highlights {
+      grid-template-columns:
+        repeat(2, minmax(0,1fr)) !important;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .cs-intel-v25-section.cs-intel-v28-section
+    .cs-intel-v25-grid.cs-intel-v28-highlights {
+      grid-template-columns:
+        minmax(0,1fr) !important;
+    }
+  }
+}
+
+/* cs-diag-metrics-center-v78
+   Centralizacao dos indicadores de Inteligencia por Oportunidade
+   Exclusivo do painel esquerdo
+*/
+
+/* Tres indicadores com mesma estrutura e alinhamento */
+
+.cs-diag-v70-board
+.cs-diag-v30-vinculos
+.cs-diag-v30-metrics > div {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr);
+  grid-template-rows:
+    minmax(40px,auto)
+    52px
+    minmax(28px,auto);
+  align-content: start !important;
+  justify-items: center !important;
+  align-items: start !important;
+  min-width: 0;
+  min-height: 130px !important;
+  padding: 10px 14px 8px !important;
+  text-align: center !important;
+}
+
+/* Titulos centralizados */
+
+.cs-diag-v70-board
+.cs-diag-v30-vinculos
+.cs-diag-v30-metrics > div > p:first-child {
+  width: 100%;
+  max-width: 220px;
+  margin: 0 !important;
+  font-size: 12px !important;
+  line-height: 17px !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  color: #B9CAE0 !important;
+}
+
+/* Numeros na mesma linha-base */
+
+.cs-diag-v70-board
+.cs-diag-v30-vinculos
+.cs-diag-v30-metrics > div > p:nth-child(2) {
+  width: 100%;
+  margin: 0 !important;
+  font-size: 38px !important;
+  line-height: 48px !important;
+  font-weight: 750 !important;
+  letter-spacing: -.04em !important;
+  text-align: center !important;
+  font-variant-numeric: tabular-nums;
+  color: #F4F7FC !important;
+}
+
+/* Observacao complementar centralizada */
+
+.cs-diag-v70-board
+.cs-diag-v30-vinculos
+.cs-diag-v30-metrics > div > p:nth-child(3) {
+  max-width: 230px;
+  margin: 0 auto !important;
+  font-size: 11px !important;
+  line-height: 16px !important;
+  text-align: center !important;
+  color: #9FB3CA !important;
+}
+
+/* Divisorias mantidas discretas */
+
+.cs-diag-v70-board
+.cs-diag-v30-vinculos
+.cs-diag-v30-metrics > div + div {
+  border-left-color: rgba(139,163,193,.18) !important;
+}
+
+/* Ajuste para celular */
+
+@media (max-width: 640px) {
+  .cs-diag-v70-board
+  .cs-diag-v30-vinculos
+  .cs-diag-v30-metrics > div {
+    grid-template-rows:
+      minmax(44px,auto)
+      48px
+      minmax(28px,auto);
+    min-height: 125px !important;
+    padding: 10px 8px !important;
+  }
+
+  .cs-diag-v70-board
+  .cs-diag-v30-vinculos
+  .cs-diag-v30-metrics > div > p:first-child {
+    font-size: 11px !important;
+    line-height: 16px !important;
+  }
+
+  .cs-diag-v70-board
+  .cs-diag-v30-vinculos
+  .cs-diag-v30-metrics > div > p:nth-child(2) {
+    font-size: 32px !important;
+    line-height: 44px !important;
+  }
+
+  .cs-diag-v70-board
+  .cs-diag-v30-vinculos
+  .cs-diag-v30-metrics > div > p:nth-child(3) {
+    font-size: 10px !important;
+  }
+}
+
+/* cs-diag-numbers-uniform-v79
+   Padronizacao dos tres numeros inferiores
+   Inteligencia por Oportunidade
+*/
+
+.cs-diag-v70-board
+.cs-diag-v30-vinculos
+.cs-diag-v30-metrics > div:nth-child(1) > p:nth-of-type(2),
+
+.cs-diag-v70-board
+.cs-diag-v30-vinculos
+.cs-diag-v30-metrics > div:nth-child(2) > p:nth-of-type(2),
+
+.cs-diag-v70-board
+.cs-diag-v30-vinculos
+.cs-diag-v30-metrics > div:nth-child(3) > p:nth-of-type(2) {
+  width: 100% !important;
+  margin: 0 !important;
+  font-family: Inter, system-ui, sans-serif !important;
+  font-size: 38px !important;
+  font-weight: 750 !important;
+  line-height: 48px !important;
+  letter-spacing: -0.04em !important;
+  color: #F4F7FC !important;
+  text-align: center !important;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+  .cs-diag-v70-board
+  .cs-diag-v30-vinculos
+  .cs-diag-v30-metrics > div:nth-child(1) > p:nth-of-type(2),
+
+  .cs-diag-v70-board
+  .cs-diag-v30-vinculos
+  .cs-diag-v30-metrics > div:nth-child(2) > p:nth-of-type(2),
+
+  .cs-diag-v70-board
+  .cs-diag-v30-vinculos
+  .cs-diag-v30-metrics > div:nth-child(3) > p:nth-of-type(2) {
+    font-size: 32px !important;
+    line-height: 42px !important;
+  }
+}
+
+/* cs-executive-kpis-center-v80
+   Centralizacao editorial dos indicadores.
+   Sem alterar grid, dados, cores ou tipografia.
+*/
+
+/* ====================================
+   KPIs DE CONVERSAO
+==================================== */
+
+.cs-v36-board {
+  text-align: center !important;
+}
+
+/* Cada coluna mantem sua largura original */
+
+.cs-v36-board > :is(div, article, section) {
+  text-align: center !important;
+}
+
+/* Titulos, valores e informacoes complementares */
+
+.cs-v36-board
+:is(h3, h4, p, span, strong, small) {
+  text-align: center !important;
+}
+
+.cs-v36-board
+:is([class*="label"], [class*="value"]) {
+  text-align: center !important;
+}
+
+/* ====================================
+   EFICIENCIA DE MARKETING
+==================================== */
+
+/* Preservar cabecalho e botao de recolher.
+   Centralizar somente o conteudo expandido. */
+
+.cs-overview-v29-marketing
+> :not(summary) {
+  text-align: center !important;
+}
+
+.cs-overview-v29-marketing
+> :not(summary)
+:is(h3, h4, p, span, strong, small) {
+  text-align: center !important;
+}
+
+/* Centralizar os dados dentro das colunas */
+
+.cs-overview-v29-marketing
+> :not(summary)
+:is([class*="metric"], [class*="kpi"]) {
+  text-align: center !important;
+}
+
+/* Numeros permanecem com tamanho original */
+
+.cs-v36-board,
+.cs-overview-v29-marketing {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mobile: manter a centralizacao sem
+   modificar a distribuicao responsiva */
+
+@media (max-width: 640px) {
+  .cs-v36-board
+  :is(h3, h4, p, span, strong, small),
+  .cs-overview-v29-marketing
+  > :not(summary)
+  :is(h3, h4, p, span, strong, small) {
+    text-align: center !important;
+  }
+}
+
+/* cs-period-stages-bars-v81
+   Visao Geral / Etapas do Periodo
+   Acabamento das quatro barras proporcionais
+*/
+
+/* Trilho das barras */
+
+.cs-v36-board
+:is(div,span):has(> :is(div,span)[style*="width"]) {
+  position: relative;
+  width: 100%;
+  height: 9px !important;
+  min-height: 9px !important;
+  overflow: hidden !important;
+  border-radius: 5px !important;
+  background: #263548 !important;
+  box-shadow:
+    inset 0 1px 2px rgba(0,0,0,.20),
+    inset 0 0 0 1px rgba(154,179,207,.06)
+    !important;
+}
+
+/* Preenchimento: preserva a cor de cada etapa */
+
+.cs-v36-board
+:is(div,span):has(> :is(div,span)[style*="width"])
+> :is(div,span)[style*="width"] {
+  display: block;
+  position: relative;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 4px !important;
+  background-image: linear-gradient(
+    180deg,
+    rgba(255,255,255,.13) 0%,
+    rgba(255,255,255,.02) 55%,
+    rgba(0,0,0,.08) 100%
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07)
+    !important;
+}
+
+/* Transicao discreta quando os filtros mudarem */
+
+@media (prefers-reduced-motion: no-preference) {
+  .cs-v36-board
+  :is(div,span):has(> :is(div,span)[style*="width"])
+  > :is(div,span)[style*="width"] {
+    transition: width .25s ease-out;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 640px) {
+  .cs-v36-board
+  :is(div,span):has(> :is(div,span)[style*="width"]) {
+    height: 8px !important;
+    min-height: 8px !important;
+  }
+}
+
+
+/*
+ cs-diagnostico-barras-composicao-v1
+ CS DASH - Diagnostico Comercial
+
+ Familia: COMPOSICAO
+ Altura desktop: 14px
+ Altura mobile: 12px
+
+ Sem alteracoes em dados, porcentagens e cores.
+*/
+
+/* Barra de correspondencia entre fontes */
+
+.cs-diag-v70-board
+.cs-diag-v30-vinculos
+.cs-diag-v33-match
+:is(div,span):has(> :is(div,span)[style*="width"]) {
+  display: flex !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+
+  box-sizing: border-box !important;
+  width: 100% !important;
+
+  height: 14px !important;
+  min-height: 14px !important;
+
+  overflow: hidden !important;
+  border-radius: 5px !important;
+
+  background: #33465B !important;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.15);
+}
+
+.cs-diag-v70-board
+.cs-diag-v30-vinculos
+.cs-diag-v33-match
+:is(div,span):has(> :is(div,span)[style*="width"])
+> :is(div,span) {
+  height: 100% !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* Saude da Carteira: composicao continua */
+
+.cs-diag-v70-board
+.cs-diag-v30-carteira
+.cs-diag-v73-quality-rail {
+  display: flex !important;
+  align-items: stretch !important;
+
+  gap: 0 !important;
+
+  width: 100% !important;
+  height: 14px !important;
+  min-height: 14px !important;
+
+  padding: 0 !important;
+
+  overflow: hidden !important;
+  border-radius: 5px !important;
+
+  background: transparent !important;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.12);
+}
+
+/* Segmentos preservam suas proporcoes e cores */
+
+.cs-diag-v70-board
+.cs-diag-v30-carteira
+.cs-diag-v73-quality-rail
+> .cs-diag-v73-quality-recorded {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+
+  height: 100% !important;
+  min-height: 0 !important;
+
+  border-radius: 0 !important;
+}
+
+.cs-diag-v70-board
+.cs-diag-v30-carteira
+.cs-diag-v73-quality-rail
+> .cs-diag-v73-quality-missing {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+
+  height: 100% !important;
+  min-height: 0 !important;
+
+  border-radius: 0 !important;
+}
+
+/* Responsividade */
+
+@media (max-width: 640px) {
+  .cs-diag-v70-board
+  .cs-diag-v30-vinculos
+  .cs-diag-v33-match
+  :is(div,span):has(> :is(div,span)[style*="width"]),
+
+  .cs-diag-v70-board
+  .cs-diag-v30-carteira
+  .cs-diag-v73-quality-rail {
+    height: 12px !important;
+    min-height: 12px !important;
+  }
+}
+
+/* /cs-diagnostico-barras-composicao-v1 */

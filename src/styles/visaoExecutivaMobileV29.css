@@ -1,0 +1,97 @@
+/*
+ * CS Dash V2.9
+ * Refinamento exclusivamente mobile.
+ * Preserva o desktop e todos os calculos.
+ */
+
+@media (max-width: 639px) {
+
+  /* CS Intelligence: leitura mais compacta */
+
+  .cs-overview-insights-v2 {
+    padding: 12px;
+  }
+
+  .cs-overview-insights-v2 > div:first-child {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .cs-overview-insights-v2
+  .cs-overview-insight-item {
+    gap: 8px;
+    padding: 10px 11px;
+  }
+
+  .cs-overview-insights-v2
+  .cs-overview-insight-item p {
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .cs-overview-insights-v2
+  .cs-overview-insight-item svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Visao executiva: hierarquia do faturamento */
+
+  .cs-overview-executive-v1 {
+    min-width: 0;
+  }
+
+  .cs-overview-executive-v1
+  .cs-overview-primary {
+    padding: 14px;
+  }
+
+  .cs-overview-executive-v1
+  .cs-overview-revenue {
+    font-size: clamp(27px, 8vw, 35px);
+    line-height: 1.13;
+    letter-spacing: -0.035em;
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Renovacao e ticket na primeira linha.
+     Total de vendas aproveita a linha seguinte. */
+
+  .cs-overview-executive-v1
+  .cs-overview-support-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .cs-overview-executive-v1
+  .cs-overview-support {
+    padding: 12px;
+    min-width: 0;
+  }
+
+  .cs-overview-executive-v1
+  .cs-overview-support-value {
+    margin-top: 10px;
+    font-size: clamp(18px, 5.2vw, 23px);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cs-overview-executive-v1
+  .cs-overview-support-grid
+  > .cs-overview-support:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .cs-overview-executive-v1
+  .cs-overview-support-grid
+  > .cs-overview-support
+  p {
+    overflow-wrap: anywhere;
+  }
+}

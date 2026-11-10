@@ -1,0 +1,89 @@
+/* PULSO COMERCIAL V20 — referência executiva aprovada, CSS exclusivo, sem herança antiga.
+   Prototipo Executivo CS: grafite profundo, brilho local, pontas sobrepostas.
+   A terceira linha permanece vazia quando nao existe comparativo historico real. */
+.cs-live-v2 .cs-pulso {
+  position: relative;
+  min-width: 0;
+  border: 1px solid rgba(118, 137, 165, .14);
+  border-radius: 12px;
+  background: #080b12;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.022);
+  padding: 13px 17px 12px;
+}
+.cs-pulso__header {
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  margin:0 2px; min-height:21px;
+}
+.cs-pulso__header h2 {
+  margin:0; color:#cfd5df; font-size:11px; font-weight:770;
+  line-height:1.2; letter-spacing:.105em;
+}
+.cs-pulso__header h2 span {color:#b8c1ce;}
+.cs-pulso__period {
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:6px 13px; min-width:58px; border:1px solid rgba(128,145,174,.24);
+  border-radius:6px; color:#ccd4e0; font-size:11px; line-height:1;
+  background:rgba(9,13,23,.65);
+}
+.cs-pulso__track {
+  display:grid; grid-template-columns:1.04fr .97fr 1.16fr .98fr .98fr;
+  gap:0; margin-top:11px; min-width:0; isolation:isolate;
+}
+.cs-pulso__stage {height:116px; min-width:0; position:relative; margin:0;}
+.cs-pulso__shape {
+  display:block; position:absolute; z-index:0; top:0; left:0;
+  width:calc(100% + 24px); height:100%; overflow:visible; pointer-events:none;
+}
+.cs-pulso__stage--last .cs-pulso__shape {width:100%;}
+.cs-pulso__content {
+  position:relative; z-index:1; height:100%;
+  display:flex; align-items:center; gap:16px;
+  padding:0 13px 0 42px; min-width:0; pointer-events:none;
+}
+.cs-pulso__icon {
+  flex:0 0 32px; display:flex; align-items:center; justify-content:center;
+  align-self:flex-start; margin-top:20px;
+  color:#ff365a; filter:drop-shadow(0 0 7px rgba(247,48,78,.30));
+}
+.cs-pulso__icon svg {display:block;width:32px;height:32px;}
+.cs-pulso__metric {
+  display:flex; flex-direction:column; justify-content:flex-start;
+  align-self:stretch; padding-top:16px; min-width:0; color:#fff;
+}
+.cs-pulso__metric strong {
+  color:#fff; font-weight:840; font-size:40px; line-height:1; letter-spacing:-.045em;
+  font-variant-numeric:tabular-nums;
+}
+.cs-pulso__metric-label {
+  color:#d6d9e1; font-size:14px; font-weight:450; line-height:1.2;
+  white-space:nowrap; margin-top:2px;
+}
+.cs-pulso__trend-slot {display:block;height:17px;min-height:17px;margin-top:7px;color:#66717f;font-size:12px;line-height:17px;font-weight:650;}
+.cs-pulso__source {
+  margin:9px 2px 0; color:#8c9db2; line-height:1.42;
+  font-size:10px; font-weight:400;
+}
+@media (min-width:1061px) and (max-width:1379px) {
+  .cs-pulso__content {gap:13px;padding-left:37px;padding-right:10px;}
+  .cs-pulso__icon {flex-basis:29px;}
+  .cs-pulso__icon svg {width:29px;height:29px;}
+  .cs-pulso__metric strong {font-size:39px;}
+  .cs-pulso__metric-label {font-size:13px;}
+}
+@media (max-width:1060px) {
+  .cs-live-v2 .cs-pulso {padding:12px 11px 10px;}
+  .cs-pulso__track {
+    display:flex; gap:0; overflow-x:auto;overflow-y:hidden;
+    padding:0 22px 5px 0; scroll-snap-type:x mandatory;
+    scrollbar-width:thin; scrollbar-color:#74243c #0b0d14;
+  }
+  .cs-pulso__stage {height:104px;flex:0 0 194px;scroll-snap-align:start;}
+  .cs-pulso__content {gap:13px;padding-left:27px;padding-right:8px;}
+  .cs-pulso__icon {flex-basis:25px;margin-top:18px;}
+  .cs-pulso__icon svg {width:25px;height:25px;}
+  .cs-pulso__metric {padding-top:14px;}
+  .cs-pulso__metric strong {font-size:34px;}
+  .cs-pulso__metric-label {font-size:11px;}
+  .cs-pulso__source {font-size:9px;}
+}
+@media (prefers-reduced-motion:reduce) {.cs-pulso__icon{filter:none;}}

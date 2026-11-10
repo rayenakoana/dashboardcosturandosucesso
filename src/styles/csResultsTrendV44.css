@@ -1,0 +1,145 @@
+/* cs-results-trend-v47
+   Executivo CS - Glass Sutil.
+   CSS consolidado, sem regras antigas acumuladas.
+*/
+
+.cs-overview-v28-results .cs-overview-support {
+  position: relative;
+  overflow: hidden;
+}
+
+.cs-overview-v28-results .cs-results-trend-v47 {
+  position: absolute;
+  left: 15px;
+  right: 13px;
+  bottom: 12px;
+
+  display: grid;
+  grid-template-columns:
+    minmax(0, .95fr)
+    minmax(0, 1.1fr);
+  align-items: end;
+  gap: 10px;
+}
+
+.cs-results-trend-v47 .cs-results-trend-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 0;
+  gap: 5px;
+  padding-bottom: 6px;
+}
+
+.cs-results-trend-v47 .cs-results-trend-copy strong {
+  font-size: clamp(16px, 1.15vw, 21px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -.025em;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-results-trend-v47 .cs-results-trend-copy strong span {
+  font-size: 1.06em;
+}
+
+.cs-results-trend-v47 .cs-results-trend-copy > span {
+  color: #B0BED0;
+  font-size: 10.5px;
+  line-height: 1.3;
+}
+
+.cs-results-trend-v47 .cs-results-no-base {
+  font-size: 11px !important;
+  color: #A9BACD;
+  white-space: normal !important;
+}
+
+.cs-results-v47-chart {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 0;
+  height: 84px;
+  gap: 2px;
+}
+
+.cs-overview-v28-results .cs-overview-support .cs-results-v47-chart svg {
+  display: block;
+  width: 100%;
+  height: 65px;
+  overflow: visible;
+}
+
+.cs-results-v47-caption {
+  color: #8091A6;
+  font-size: 9px;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.cs-results-v47-empty {
+  color: #91A2B6;
+  font-size: 10px;
+  text-align: right;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 1400px) {
+  .cs-overview-v28-results .cs-results-trend-v47 {
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .cs-results-v47-chart {
+    height: 76px;
+  }
+
+  .cs-overview-v28-results .cs-overview-support .cs-results-v47-chart svg {
+    height: 57px;
+  }
+}
+
+@media (max-width: 699px) {
+  .cs-overview-v28-results .cs-overview-support {
+    min-height: 174px !important;
+  }
+
+  .cs-results-trend-v47 .cs-results-trend-copy strong {
+    font-size: 16px;
+  }
+
+  .cs-results-v47-chart {
+    height: 68px;
+  }
+
+  .cs-overview-v28-results .cs-overview-support .cs-results-v47-chart svg {
+    height: 50px;
+  }
+}
+
+/* cs-results-svg-size-fix-v48
+   Corrige conflito com a regra global dos icones.
+*/
+
+.cs-overview-v28-results
+.cs-overview-support
+.cs-results-v47-chart svg {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: 65px;
+  min-width: 0;
+  overflow: visible;
+}
+
+@media (max-width: 1400px) {
+  .cs-overview-v28-results
+  .cs-overview-support
+  .cs-results-v47-chart svg {
+    height: 57px;
+  }
+}

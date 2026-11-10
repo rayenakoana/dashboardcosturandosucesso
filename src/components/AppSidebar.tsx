@@ -46,6 +46,7 @@ const NAV_GROUPS: NavGroupDef[] = [
     label: "Visão Geral",
     items: [
       { label: "Dashboard",       url: "/",     icon: BarChart3, end: true },
+      { label: "Análises e Detalhes", url: "/analises", icon: TrendingUp },
       { label: "Mapa Geográfico", url: "/mapa", icon: Map },
       { label: "CS Live",         url: "/live", icon: Radio },
     ],

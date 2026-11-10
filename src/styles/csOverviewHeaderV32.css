@@ -1,0 +1,441 @@
+
+/* CS DASH V3.2 — Cabecalho aprovado */
+
+.cs-v32-shell {
+  position: relative;
+}
+
+.cs-overview-v32-header {
+  position: relative;
+  min-height: 51px;
+  gap: 0 !important;
+  background: radial-gradient(
+    ellipse at 48% 0%,
+    rgba(24,65,110,.13),
+    transparent 72%
+  );
+}
+
+.cs-overview-v32-header h1 {
+  font-size: clamp(34px, 2.5vw, 40px) !important;
+  line-height: 1 !important;
+  font-weight: 850 !important;
+  letter-spacing: -.045em !important;
+}
+
+.cs-overview-v32-header .cs-v32-white {
+  color: #F5F6FA !important;
+  background: none !important;
+  -webkit-text-fill-color: #F5F6FA !important;
+}
+
+.cs-overview-v32-header .cs-v32-red {
+  color: #F7304E !important;
+  -webkit-text-fill-color: #F7304E !important;
+}
+
+.cs-overview-v32-header > p {
+  margin-top: 2px !important;
+  color: #A2B0C5;
+  font-size: 11px !important;
+  letter-spacing: .10em;
+}
+
+.cs-overview-v32-header .cs-overview-v32-date {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between;
+  height: 42px;
+  padding: 0 !important;
+  border-radius: 9px;
+  border: 1px solid rgba(126,151,182,.28);
+  background: rgba(13,24,37,.85);
+  color: #F4F6FC;
+  cursor: pointer;
+}
+
+.cs-overview-v32-date:hover,
+.cs-v32-filter-button:hover {
+  border-color: rgba(247,48,78,.60) !important;
+}
+
+.cs-overview-v32-date:focus-visible,
+.cs-v32-filter-button:focus-visible {
+  outline: 2px solid #F7304E;
+  outline-offset: 2px;
+}
+
+.cs-overview-v32-header .cs-overview-v32-date strong {
+  padding: 0 12px;
+  flex: 1;
+  text-align: center;
+  color: #F3F6FB;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-overview-v32-header .cs-v32-calendar {
+  display: flex;
+  width: 42px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid rgba(126,151,182,.22);
+  color: #B6CBE2;
+}
+
+.cs-overview-v32-header .cs-v32-chevron {
+  display: flex;
+  width: 32px;
+  align-items: center;
+  justify-content: center;
+  color: #DDE5EF;
+}
+
+.cs-v32-filter-button {
+  height: 42px !important;
+  border: 1px solid rgba(126,151,182,.28) !important;
+  border-radius: 9px !important;
+  background: rgba(13,24,37,.85) !important;
+  color: #F3F6FB;
+  font-weight: 600;
+}
+
+.cs-v32-filter-row {
+  margin-top: 7px !important;
+  position: static !important;
+}
+
+.cs-v32-filter-row .fchip {
+  min-height: 29px;
+  padding: 5px 13px;
+  border-radius: 999px;
+  font-size: 11px;
+}
+
+@media (min-width: 1024px) {
+  .cs-overview-v32-header {
+    padding-right: 440px !important;
+  }
+
+  .cs-overview-v32-header .cs-overview-v32-date {
+    position: absolute !important;
+    top: 2px !important;
+    right: 121px !important;
+    width: 305px !important;
+    min-width: 305px !important;
+    margin: 0 !important;
+  }
+
+  .cs-v32-filter-button {
+    position: absolute !important;
+    top: 2px;
+    right: 0;
+    width: 109px;
+    margin: 0 !important;
+    z-index: 5;
+  }
+}
+
+@media (max-width: 1023px) {
+  .cs-overview-v32-header {
+    padding-right: 0 !important;
+  }
+
+  .cs-overview-v32-header .cs-overview-v32-date {
+    position: static !important;
+    width: fit-content !important;
+    max-width: 100%;
+    min-width: 0 !important;
+    margin-top: 10px !important;
+  }
+
+  .cs-v32-filter-button {
+    position: static !important;
+    width: auto;
+  }
+}
+
+
+/* cs-overview-header-v33-final
+   Acabamento desktop fiel ao prototipo.
+*/
+
+/* A barra global fica oculta somente na Visao Geral. */
+@media (min-width: 1024px) {
+  body:has(.cs-v32-shell)
+  [data-cs-overview-topbar="true"] {
+    display: none !important;
+  }
+}
+
+/* Iluminacao azulada do cabecalho */
+.cs-v32-shell {
+  isolation: isolate;
+}
+
+.cs-v32-shell::before {
+  content: "";
+  position: absolute;
+  top: -22px;
+  left: -20px;
+  right: -20px;
+  height: 142px;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 60% 95% at 46% 0%,
+      rgba(20, 60, 105, .17),
+      transparent 78%
+    );
+}
+
+/* Hierarquia da marca VISÃO GERAL */
+.cs-v32-shell .cs-overview-v32-header {
+  min-height: 58px;
+  background: transparent;
+}
+
+.cs-v32-shell .cs-overview-v32-header h1 {
+  font-size: clamp(36px, 2.55vw, 41px) !important;
+  line-height: 1.02 !important;
+  letter-spacing: -.045em !important;
+  margin: 0 !important;
+}
+
+.cs-v32-shell .cs-overview-v32-header > p {
+  margin-top: 3px !important;
+  font-size: 11px !important;
+  letter-spacing: .11em !important;
+  line-height: 1.35;
+}
+
+/* Calendario e filtros */
+@media (min-width: 1024px) {
+  .cs-v32-shell .cs-overview-v32-header
+  .cs-overview-v32-date {
+    top: 4px !important;
+  }
+
+  .cs-v32-shell .cs-v32-filter-button {
+    top: 4px !important;
+  }
+}
+
+/* Espacamento entre titulo e funis */
+.cs-v32-shell .cs-v32-filter-row {
+  margin-top: 2px !important;
+}
+
+.cs-v32-shell .cs-v32-filter-row .fchip {
+  min-height: 29px;
+  padding: 5px 14px;
+  font-size: 11px;
+}
+
+/* Preservar a navegacao superior em telas menores. */
+@media (max-width: 1023px) {
+  .cs-v32-shell::before {
+    height: 105px;
+  }
+
+  .cs-v32-shell .cs-overview-v32-header h1 {
+    font-size: 34px !important;
+  }
+}
+
+
+/*
+ cs-overview-header-premium-v34
+
+ CS DASH - VISAO GERAL
+ Identidade: Executivo CS / Glass Sutil
+
+ Refinamento editorial exclusivo do cabecalho.
+ Nao altera filtros, calendario ou navegacao.
+*/
+
+/* Superficie editorial */
+
+.cs-v32-shell .cs-overview-v32-header,
+.cs-overview-v32-header {
+  position: relative !important;
+
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+
+  padding: 13px 18px 14px 21px !important;
+
+  background: linear-gradient(
+    90deg,
+    rgba(247,48,78,.055) 0%,
+    rgba(31,42,59,.035) 44%,
+    transparent 85%
+  ) !important;
+
+  border-bottom: 1px solid rgba(
+    135,158,190,.16
+  ) !important;
+}
+
+/* Assinatura vertical CS */
+
+.cs-overview-v32-header::before {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  top: 13px;
+  bottom: 13px;
+
+  width: 3px;
+
+  border-radius: 3px;
+
+  background: #F7304E;
+
+  box-shadow: 0 0 12px rgba(
+    247,48,78,.12
+  );
+
+  pointer-events: none;
+}
+
+/* Titulo executivo */
+
+.cs-v32-shell .cs-overview-v32-header h1,
+.cs-overview-v32-header h1 {
+  margin: 0 !important;
+  padding: 0 !important;
+
+  font-family:
+    Inter,
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    sans-serif !important;
+
+  font-size: clamp(
+    29px,
+    2.25vw,
+    39px
+  ) !important;
+
+  font-weight: 800 !important;
+  line-height: 1.06 !important;
+
+  letter-spacing: -.045em !important;
+
+  text-transform: none !important;
+
+  text-shadow: none !important;
+}
+
+/* Paleta do titulo */
+
+.cs-v32-shell
+.cs-overview-v32-header h1 .cs-v32-white,
+.cs-overview-v32-header h1 .cs-v32-white {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+
+  letter-spacing: inherit !important;
+
+  color: #F1F5FA !important;
+  text-shadow: none !important;
+}
+
+.cs-v32-shell
+.cs-overview-v32-header h1 .cs-v32-red,
+.cs-overview-v32-header h1 .cs-v32-red {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+
+  letter-spacing: inherit !important;
+
+  color: #F7304E !important;
+  text-shadow: none !important;
+}
+
+/* Subtitulo informativo */
+
+.cs-v32-shell .cs-overview-v32-header > p,
+.cs-overview-v32-header > p {
+  margin-top: 6px !important;
+  margin-bottom: 0 !important;
+
+  font-family:
+    Inter,
+    "Segoe UI",
+    system-ui,
+    sans-serif !important;
+
+  font-size: 11px !important;
+  font-weight: 500 !important;
+
+  line-height: 1.5 !important;
+  letter-spacing: .075em !important;
+
+  color: #9EADC1 !important;
+
+  text-shadow: none !important;
+}
+
+/* Notebook e tablet */
+
+@media (max-width: 1024px) {
+  .cs-overview-v32-header {
+    padding: 12px 15px 13px 19px !important;
+  }
+
+  .cs-v32-shell .cs-overview-v32-header h1,
+  .cs-overview-v32-header h1 {
+    font-size: clamp(
+      28px,
+      3.4vw,
+      35px
+    ) !important;
+  }
+}
+
+/* Celular */
+
+@media (max-width: 640px) {
+  .cs-overview-v32-header {
+    padding: 11px 10px 13px 17px !important;
+  }
+
+  .cs-overview-v32-header::before {
+    top: 11px;
+    bottom: 12px;
+    width: 3px;
+  }
+
+  .cs-v32-shell .cs-overview-v32-header h1,
+  .cs-overview-v32-header h1 {
+    font-size: clamp(
+      27px,
+      7.5vw,
+      33px
+    ) !important;
+
+    letter-spacing: -.04em !important;
+  }
+
+  .cs-v32-shell .cs-overview-v32-header > p,
+  .cs-overview-v32-header > p {
+    font-size: 10px !important;
+    letter-spacing: .045em !important;
+    line-height: 1.45 !important;
+  }
+}
+
+/* /cs-overview-header-premium-v34 */

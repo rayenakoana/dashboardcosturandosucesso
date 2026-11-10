@@ -33,7 +33,7 @@ export function Topbar() {
   if (!meta) return null;
 
   return (
-    <header
+    <header data-cs-overview-topbar="true"
       className={cn(
         "h-10 shrink-0 flex items-center px-4 border-b border-border/60",
         "bg-background/80 backdrop-blur-sm sticky top-0 z-20"

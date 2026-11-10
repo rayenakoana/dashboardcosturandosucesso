@@ -1,0 +1,2888 @@
+
+/*
+ CS DASH - ANALISES E DETALHES PREMIUM V1
+
+ Identidade: Executivo CS - Glass Sutil.
+ Escopo exclusivo: Analises e Detalhes.
+ Preserva logica, filtros e navegacao.
+*/
+
+/* ===== CABECALHO ===== */
+
+.cs-analises-premium-v1
+.cs-analises-header-v1 {
+  position: relative;
+  min-width: 0;
+
+  padding: 13px 18px 15px 22px;
+
+  
+/* cabecalho transparente - reflexo na pagina */
+/* cs-header-unificado-referencia-real */
+background: linear-gradient(
+      90deg,
+      rgba(247,48,78,.055) 0%,
+      rgba(31,42,59,.035) 44%,
+      transparent 85%
+    ) !important;
+
+
+  border-bottom:
+    1px solid rgba(135,158,190,.14);
+}
+
+.cs-analises-premium-v1
+.cs-analises-header-v1::before {
+  content: "";
+  position: absolute;
+
+  left: 0;
+  top: 13px;
+  bottom: 13px;
+
+  width: 3px;
+  border-radius: 3px;
+
+  background: #F7304E;
+}
+
+.cs-analises-premium-v1
+.cs-analises-header-v1 h1 {
+  margin: 0;
+
+  font-family:
+    Inter, "Segoe UI", system-ui, sans-serif;
+
+  font-size: clamp(29px, 2.25vw, 39px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -.045em;
+
+  text-transform: none;
+}
+
+.cs-analises-premium-v1
+.cs-analises-title-white {
+  color: #F1F5FA;
+}
+
+.cs-analises-premium-v1
+.cs-analises-title-red {
+  color: #F7304E;
+}
+
+.cs-analises-premium-v1
+.cs-analises-header-v1 p {
+  margin: 6px 0 0;
+
+  font-family:
+    Inter, "Segoe UI", system-ui, sans-serif;
+
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: .075em;
+
+  color: #9EADC1;
+}
+
+
+
+
+
+/* ===== ABAS PRINCIPAIS ===== */
+
+.cs-analises-premium-v1
+> .cs-analises-tabs-v1
+> [role="tablist"] {
+  display: flex;
+  flex-wrap: wrap;
+
+  align-items: center;
+  gap: 8px;
+
+  width: fit-content;
+  max-width: 100%;
+
+  padding: 0 0 2px;
+
+  background: transparent;
+  border-bottom:
+    1px solid rgba(135,158,190,.13);
+}
+
+.cs-analises-premium-v1
+> .cs-analises-tabs-v1
+> [role="tablist"]
+> [role="tab"] {
+  min-height: 38px;
+  padding: 0 15px;
+
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 8px 8px 0 0;
+
+  background: transparent;
+  color: #A7BAD0;
+
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: .01em;
+
+  transition:
+    background .18s ease,
+    color .18s ease;
+}
+
+.cs-analises-premium-v1
+> .cs-analises-tabs-v1
+> [role="tablist"]
+> [role="tab"]:hover {
+  color: #F0F4FA;
+  background: rgba(139,166,202,.07);
+}
+
+.cs-analises-premium-v1
+> .cs-analises-tabs-v1
+> [role="tablist"]
+> [role="tab"][data-state="active"] {
+  color: #FFFFFF !important;
+
+  background:
+    rgba(247,48,78,.065) !important;
+
+  border-bottom-color:
+    #F7304E !important;
+
+  box-shadow: none !important;
+}
+
+/* ===== FUNIL COMERCIAL / TOPO ===== */
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1 {
+  padding-top: 3px;
+  padding-bottom: 14px;
+
+  border-bottom:
+    1px solid rgba(135,158,190,.12);
+}
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1 h1 {
+  font-family:
+    Inter, "Segoe UI", system-ui, sans-serif;
+
+  font-size: clamp(20px, 1.65vw, 25px) !important;
+  font-weight: 750 !important;
+  line-height: 1.2;
+  letter-spacing: -.025em;
+
+  color: #F0F5FB;
+}
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1 p {
+  font-size: 12px;
+  line-height: 1.55;
+
+  color: #A9BBCE;
+}
+
+/* Preservar os controles e a rolagem existente */
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1
+> div:last-child {
+  min-width: 0;
+  gap: 8px;
+  scrollbar-width: thin;
+}
+
+/* ===== SEIS INDICADORES ===== */
+
+/* Mantem a geometria, a hierarquia
+   e as cores semanticas existentes. */
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1 {
+  gap: 12px;
+  min-width: 0;
+}
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1 > :nth-child(-n + 6) {
+  min-width: 0;
+  border-radius: 13px !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(230,240,255,.055),
+    0 10px 24px rgba(0,0,0,.075);
+}
+
+/* ===== EFICIENCIA DE AQUISICAO ===== */
+
+.cs-analises-premium-v1
+.cs-aquisicao-executiva-v2 {
+  border-radius: 13px !important;
+
+  border-color:
+    rgba(125,153,190,.20) !important;
+
+  background: linear-gradient(
+    115deg,
+    rgba(30,43,60,.78),
+    rgba(17,29,44,.84)
+  ) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.035),
+    0 9px 22px rgba(0,0,0,.07);
+}
+
+.cs-analises-premium-v1
+.cs-aquisicao-executiva-v2 > * {
+  min-width: 0;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+
+@media (max-width: 1024px) {
+  .cs-analises-premium-v1
+  .cs-analises-header-v1 {
+    padding: 12px 15px 14px 19px;
+  }
+}
+
+@media (max-width: 640px) {
+  .cs-analises-premium-v1
+  .cs-analises-header-v1 {
+    padding: 12px 10px 13px 17px;
+  }
+
+  .cs-analises-premium-v1
+  .cs-analises-header-v1 h1 {
+    font-size: clamp(26px, 7vw, 32px);
+  }
+
+  .cs-analises-premium-v1
+  .cs-analises-header-v1 p {
+    font-size: 10px;
+    letter-spacing: .045em;
+  }
+
+  .cs-analises-premium-v1
+  .cs-filtros-executivo-v1 {
+    padding-bottom: 12px;
+  }
+
+  .cs-analises-premium-v1
+  .cs-kpis-executivo-v1 {
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-analises-premium-v1
+  > .cs-analises-tabs-v1
+  > [role="tablist"]
+  > [role="tab"] {
+    transition: none !important;
+  }
+}
+
+/* /cs-analises-funil-premium-v1 */
+
+
+/* cs-funil-superior-premium-v2
+   Funil XPTO - area superior
+   Identidade Executivo CS / Glass Sutil
+*/
+
+/* CABECALHO COMERCIAL */
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1 {
+  min-width: 0;
+  gap: 16px !important;
+  padding-top: 4px !important;
+  padding-bottom: 18px !important;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(139,163,195,.14);
+}
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1 h1 {
+  font-family: Inter, "Segoe UI", system-ui, sans-serif !important;
+  font-size: clamp(21px,1.55vw,25px) !important;
+  font-weight: 780 !important;
+  letter-spacing: -.035em !important;
+  line-height: 1.15 !important;
+}
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1 p {
+  max-width: 490px;
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+  color: #A7BAD0 !important;
+}
+
+/* FILTROS - preservar comportamento */
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1 > div:last-child {
+  gap: 7px !important;
+}
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1 > div:last-child button {
+  min-height: 34px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: .015em;
+  transition: background-color .18s ease, border-color .18s ease;
+}
+
+/* SEIS KPIs */
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1 {
+  gap: 12px !important;
+  align-items: stretch !important;
+  min-width: 0;
+}
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1 > :nth-child(-n + 6) {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  min-height: 172px !important;
+  height: auto !important;
+
+  padding: 15px 16px !important;
+  border-radius: 12px !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(235,243,255,.05),
+    0 8px 22px rgba(0,0,0,.07) !important;
+
+  font-variant-numeric: tabular-nums;
+}
+
+/* Manter os estados semanticos:
+   vermelho, verde, neutro e marcador de meta.
+   Nao sobrescrever background, cores ou larguras. */
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1 > :nth-child(-n + 6) :is(h3,h4,strong) {
+  letter-spacing: -.025em;
+}
+
+/* EFICIENCIA DE AQUISICAO */
+
+.cs-analises-premium-v1
+.cs-aquisicao-executiva-v2 {
+  margin-top: 3px;
+  border-radius: 12px !important;
+  border-color: rgba(120,148,183,.20) !important;
+
+  background: linear-gradient(
+    115deg,
+    rgba(26,40,57,.82),
+    rgba(16,28,44,.88)
+  ) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+
+.cs-analises-premium-v1
+.cs-aquisicao-executiva-v2 > * {
+  box-sizing: border-box;
+  min-width: 0;
+  padding-top: 13px !important;
+  padding-bottom: 13px !important;
+}
+
+/* Responsividade - manter seis colunas no desktop amplo */
+
+@media (min-width: 1481px) {
+  .cs-analises-premium-v1
+  .cs-kpis-executivo-v1 {
+    grid-template-columns: repeat(6,minmax(0,1fr)) !important;
+  }
+}
+
+@media (min-width: 961px) and (max-width: 1480px) {
+  .cs-analises-premium-v1
+  .cs-kpis-executivo-v1 {
+    grid-template-columns: repeat(3,minmax(0,1fr)) !important;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 960px) {
+  .cs-analises-premium-v1
+  .cs-kpis-executivo-v1 {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .cs-analises-premium-v1
+  .cs-kpis-executivo-v1 {
+    grid-template-columns: minmax(0,1fr) !important;
+    gap: 10px !important;
+  }
+
+  .cs-analises-premium-v1
+  .cs-kpis-executivo-v1 > :nth-child(-n + 6) {
+    min-height: 158px !important;
+    padding: 14px !important;
+  }
+
+  .cs-analises-premium-v1
+  .cs-filtros-executivo-v1 {
+    padding-bottom: 13px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-analises-premium-v1
+  .cs-filtros-executivo-v1 button {
+    transition: none !important;
+  }
+}
+
+/* /cs-funil-superior-premium-v2 */
+
+
+/* cs-funil-color-system-v3
+   Ajuste cromatico do Funil XPTO
+   Base alinhada com a Visao Geral
+*/
+
+.cs-analises-premium-v1 {
+  --cs-funil-bg-main:
+    linear-gradient(
+      180deg,
+      rgba(7,15,25,.96) 0%,
+      rgba(8,18,31,.985) 100%
+    );
+
+  --cs-funil-surface:
+    linear-gradient(
+      115deg,
+      rgba(21,34,50,.88) 0%,
+      rgba(12,25,41,.90) 58%,
+      rgba(8,23,39,.94) 100%
+    );
+
+  --cs-funil-surface-soft:
+    linear-gradient(
+      115deg,
+      rgba(24,39,58,.76) 0%,
+      rgba(13,26,41,.82) 100%
+    );
+
+  --cs-funil-border:
+    rgba(86,120,161,.30);
+
+  --cs-funil-border-strong:
+    rgba(104,146,194,.36);
+
+  --cs-funil-line:
+    rgba(111,145,188,.16);
+
+  --cs-funil-glow:
+    rgba(36,87,154,.10);
+
+  --cs-funil-text-soft:
+    #9fb2c8;
+}
+
+/* base da pagina */
+
+
+/*
+ cs-analises-fundo-unificado-v20
+
+ CS DASH - ANALISES E DETALHES
+
+ O container utiliza o mesmo fundo global
+ da Visao Geral.
+
+ As superficies premium internas continuam
+ independentes e preservadas.
+*/
+
+.cs-analises-premium-v1 {
+  background: transparent !important;
+}
+
+/* /cs-analises-fundo-unificado-v20 */
+
+
+.cs-analises-premium-v1 section,
+.cs-analises-premium-v1 article,
+.cs-analises-premium-v1 .cs-filtros-executivo-v1 {
+  border-color: var(--cs-funil-line);
+}
+
+/* cabecalho comercial */
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1 {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(247,48,78,.025) 0%,
+      rgba(20,40,65,.10) 38%,
+      transparent 80%
+    );
+  border-bottom-color: var(--cs-funil-line) !important;
+}
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1 p {
+  color: var(--cs-funil-text-soft) !important;
+}
+
+/* filtros/chips */
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1 > div:last-child button {
+  border-color: var(--cs-funil-border) !important;
+  background: rgba(14,24,39,.70) !important;
+  color: #b8c8da !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
+}
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1 > div:last-child button:hover {
+  border-color: var(--cs-funil-border-strong) !important;
+  background: rgba(20,33,50,.84) !important;
+  color: #eef4fb !important;
+}
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1 > div:last-child button[aria-pressed="true"],
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1 > div:last-child button[data-state="active"] {
+  color: #fff !important;
+}
+
+/* seis cards KPI: base azul premium */
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1 > :nth-child(-n + 6) {
+  background: var(--cs-funil-surface) !important;
+  border: 1px solid var(--cs-funil-border) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(240,246,255,.04),
+    0 0 0 1px rgba(15,27,42,.20),
+    0 12px 28px rgba(0,0,0,.12) !important;
+}
+
+/* remover predominio do contorno vermelho/verde como borda principal,
+   mantendo a semantica nos elementos internos */
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1 > :nth-child(-n + 6)::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+}
+
+/* tipografia dos cards */
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1 > :nth-child(-n + 6) p {
+  color: #aab8c8;
+}
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1 > :nth-child(-n + 6) h3,
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1 > :nth-child(-n + 6) h4,
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1 > :nth-child(-n + 6) strong {
+  color: #eef4fb;
+}
+
+/* caixa do icone mais alinhada ao dashboard */
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1 > :nth-child(-n + 6) [class*="icon"],
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1 > :nth-child(-n + 6) [class*="Icon"],
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1 > :nth-child(-n + 6) svg {
+  filter: none;
+}
+
+
+/*
+ cs-aquisicao-premium-v16
+
+ CS DASH - EFICIENCIA DE AQUISICAO
+
+ Identidade Executivo CS / Glass Sutil.
+
+ Mantem:
+ - Faixa executiva unica
+ - CPL e CAC
+ - Dados e formulas
+ - Estrutura responsiva
+*/
+
+/* SUPERFICIE PRINCIPAL */
+
+.cs-analises-premium-v1
+.cs-aquisicao-executiva-v2 {
+  position: relative;
+
+  border: 1px solid
+    rgba(104,141,184,.27) !important;
+
+  border-radius: 12px !important;
+
+  background:
+    radial-gradient(
+      ellipse 340px 150px at 5% 0%,
+      rgba(62,110,168,.055),
+      transparent 82%
+    ),
+    linear-gradient(
+      115deg,
+      #182431 0%,
+      #15202D 46%,
+      #101B27 100%
+    ) !important;
+
+  box-shadow:
+    inset 0 1px 0
+      rgba(240,247,255,.055),
+    0 9px 24px
+      rgba(0,0,0,.10) !important;
+}
+
+/* ESPACAMENTO INTERNO */
+
+.cs-analises-premium-v1
+.cs-aquisicao-executiva-v2 > div {
+  min-width: 0;
+
+  padding-top: 15px !important;
+  padding-bottom: 15px !important;
+}
+
+/* DIVISORIAS VERTICAIS MAIS DISCRETAS */
+
+.cs-analises-premium-v1
+.cs-aquisicao-executiva-v2 > div + div {
+  border-left-color:
+    rgba(112,148,190,.15) !important;
+}
+
+/* VALORES FINANCEIROS */
+
+/* Atua apenas nos elementos de valor com
+   classes tipograficas de destaque. */
+
+.cs-analises-premium-v1
+.cs-aquisicao-executiva-v2
+> div:nth-child(n+2)
+:is(
+  .text-xl,
+  .text-2xl,
+  [class*="text-[18px]"],
+  [class*="text-[19px]"],
+  [class*="text-[20px]"],
+  [class*="text-[21px]"],
+  [class*="text-[22px]"],
+  [class*="text-[23px]"],
+  [class*="text-[24px]"]
+) {
+  font-size: clamp(
+    22px,
+    1.45vw,
+    25px
+  ) !important;
+
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+
+  letter-spacing: -.035em !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ICONES FINANCEIROS */
+
+/* Refinamento da caixa que contem o SVG.
+   Preserva a cor dourada original. */
+
+.cs-analises-premium-v1
+.cs-aquisicao-executiva-v2
+> div:nth-child(n+2)
+:is(div,span):has(> svg) {
+  border-color:
+    rgba(245,182,54,.27) !important;
+
+  background: linear-gradient(
+    145deg,
+    rgba(245,182,54,.105),
+    rgba(245,182,54,.025)
+  ) !important;
+
+  box-shadow:
+    inset 0 1px 0
+      rgba(255,215,125,.065),
+    0 0 13px
+      rgba(245,182,54,.045) !important;
+}
+
+/* MOBILE: preservar empilhamento original */
+
+@media (max-width: 640px) {
+  .cs-analises-premium-v1
+  .cs-aquisicao-executiva-v2 > div {
+    padding-top: 13px !important;
+    padding-bottom: 13px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-analises-premium-v1
+  .cs-aquisicao-executiva-v2 {
+    transition: none !important;
+  }
+}
+
+/* /cs-aquisicao-premium-v16 */
+
+/* linha explicativa da meta */
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1 + div,
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1 ~ p {
+  color: #9db0c6 !important;
+}
+
+/* mobile */
+
+@media (max-width: 640px) {
+  .cs-analises-premium-v1
+  .cs-filtros-executivo-v1 > div:last-child button {
+    font-size: 10.5px !important;
+  }
+}
+
+/* /cs-funil-color-system-v3 */
+
+
+/* cs-funil-faixa-compacta-v4
+   Compactacao da faixa abaixo dos seis KPIs.
+   Nao altera barras, metas ou indicadores.
+*/
+
+/* Elementos adicionais ao grid nao sao cards KPI */
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1
+> :nth-child(n+7) {
+  grid-column: 1 / -1 !important;
+
+  box-sizing: border-box !important;
+
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Espacamento entre KPIs e legenda */
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1 {
+  column-gap: 12px !important;
+  row-gap: 8px !important;
+}
+
+/* Legenda compacta */
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1
+> :nth-child(n+7) {
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+  color: #9FB3CA !important;
+}
+
+/* Mobile */
+
+@media (max-width: 640px) {
+  .cs-analises-premium-v1
+  .cs-kpis-executivo-v1 {
+    row-gap: 10px !important;
+  }
+}
+
+/* /cs-funil-faixa-compacta-v4 */
+
+
+
+/*
+ cs-kpi-estado-premium-v6
+
+ Funil XPTO - Executivo CS Glass Sutil
+
+ Superficie azul-grafite.
+ Acento cromatico derivado do desempenho real.
+ Sem alteracao de formulas, metas ou barras.
+*/
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1
+> [style*="--cs-kpi-accent"] {
+  position: relative !important;
+
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--cs-kpi-accent) 64%,
+      #516A88
+    ) !important;
+
+  border-radius: 12px !important;
+
+  background: linear-gradient(
+    135deg,
+    color-mix(
+      in srgb,
+      var(--cs-kpi-accent) 15%,
+      #1A2B3F
+    ) 0%,
+    #142335 48%,
+    #0D1B2A 100%
+  ) !important;
+
+  box-shadow:
+    inset 0 2px 0
+      color-mix(
+        in srgb,
+        var(--cs-kpi-accent) 85%,
+        transparent
+      ),
+    inset 0 1px 0 rgba(255,255,255,.04),
+    0 10px 25px rgba(0,0,0,.12) !important;
+
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease !important;
+}
+
+/* Reforco visual discreto no hover */
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1
+> [style*="--cs-kpi-accent"]:hover {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--cs-kpi-accent) 78%,
+      #7085A0
+    ) !important;
+
+  box-shadow:
+    inset 0 2px 0 var(--cs-kpi-accent),
+    0 12px 28px rgba(0,0,0,.16) !important;
+}
+
+/* Indicadores permanecem brancos */
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1
+> [style*="--cs-kpi-accent"]
+.text-foreground {
+  color: #F1F5FA;
+}
+
+
+/*
+ cs-filtros-selecao-funis-v7
+
+ Padrao Visao Geral:
+ - Inativo: azul-grafite
+ - Selecionado: vermelho Costurando Sucesso
+ - Multisselecao preservada
+*/
+
+/* Todos os chips de selecao */
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1
+> div:last-child
+button[data-cs-funil-chip="true"] {
+  min-height: 34px !important;
+  padding: 0 12px !important;
+
+  border: 1px solid
+    rgba(103,132,169,.29) !important;
+
+  border-radius: 999px !important;
+
+  background: rgba(19,31,47,.82) !important;
+  color: #B7C8DC !important;
+
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  letter-spacing: .01em !important;
+  text-transform: none !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.025)
+    !important;
+}
+
+/* Estado selecionado */
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1
+> div:last-child
+button[data-cs-funil-chip="true"][aria-pressed="true"] {
+  background: #F7304E !important;
+  border-color: #F7304E !important;
+  color: #FFFFFF !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12)
+    !important;
+}
+
+/* Hover somente em chips inativos */
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1
+> div:last-child
+button[data-cs-funil-chip="true"][aria-pressed="false"]:hover {
+  background: rgba(31,49,72,.90) !important;
+  border-color: rgba(124,160,203,.46) !important;
+  color: #F1F6FC !important;
+}
+
+/* Foco acessivel */
+
+.cs-analises-premium-v1
+.cs-filtros-executivo-v1
+> div:last-child
+button[data-cs-funil-chip="true"]:focus-visible {
+  outline: 2px solid #F7304E !important;
+  outline-offset: 3px;
+}
+
+/* /cs-filtros-selecao-funis-v7 */
+
+/* Mobile */
+
+@media (max-width: 640px) {
+  .cs-analises-premium-v1
+  .cs-kpis-executivo-v1
+  > [style*="--cs-kpi-accent"] {
+    box-shadow:
+      inset 0 2px 0 var(--cs-kpi-accent),
+      0 6px 18px rgba(0,0,0,.10) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-analises-premium-v1
+  .cs-kpis-executivo-v1
+  > [style*="--cs-kpi-accent"] {
+    transition: none !important;
+  }
+}
+
+
+/*
+ cs-acento-topo-premium-v12
+
+ Acabamento editorial de iluminacao.
+ Escopo: seis KPIs do Funil XPTO.
+*/
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1
+> [style*="--cs-kpi-accent"]
+> div:first-child {
+  top: 0 !important;
+  left: 0 !important;
+  right: auto !important;
+
+  width: min(68%, 190px) !important;
+  height: 2px !important;
+
+  opacity: .88 !important;
+
+  background: linear-gradient(
+    90deg,
+    var(--cs-kpi-accent) 0%,
+    color-mix(
+      in srgb,
+      var(--cs-kpi-accent) 65%,
+      transparent
+    ) 40%,
+    color-mix(
+      in srgb,
+      var(--cs-kpi-accent) 20%,
+      transparent
+    ) 75%,
+    transparent 100%
+  ) !important;
+
+  box-shadow:
+    0 2px 10px
+    color-mix(
+      in srgb,
+      var(--cs-kpi-accent) 22%,
+      transparent
+    ) !important;
+
+  pointer-events: none;
+}
+
+/* /cs-acento-topo-premium-v12 */
+
+/* /cs-kpi-estado-premium-v6 */
+
+
+/*
+ cs-funil-conversao-premium-v8
+
+ CS DASH - FUNIL XPTO
+
+ Identidade: Executivo CS - Glass Sutil
+ Escopo: Funil de Conversao e Principais Insights
+
+ Mantem o SVG, as seis cores, os calculos,
+ as metas e os controles funcionais.
+*/
+
+/* ===== PAINEL PRINCIPAL ===== */
+
+.cs-analises-premium-v1
+.cs-executive-panel {
+  position: relative;
+
+  border: 1px solid
+    rgba(95,132,174,.34) !important;
+
+  border-radius: 14px !important;
+
+  background: linear-gradient(
+    125deg,
+    rgba(24,36,49,.97) 0%,
+    rgba(21,32,45,.985) 50%,
+    rgba(16,27,39,.99) 100%
+  ) !important;
+
+  box-shadow:
+    inset 3px 0 0 rgba(247,48,78,.76),
+    inset 0 1px 0 rgba(235,245,255,.045),
+    0 14px 30px rgba(0,0,0,.12)
+    !important;
+}
+
+/* Cabecalho do funil */
+
+.cs-analises-premium-v1
+.cs-executive-panel > div:first-child {
+  border-bottom-color:
+    rgba(112,151,195,.20) !important;
+}
+
+.cs-analises-premium-v1
+.cs-executive-panel > div:first-child h3 {
+  font-family:
+    Inter, "Segoe UI", system-ui, sans-serif
+    !important;
+
+  font-size: 16px !important;
+  font-weight: 750 !important;
+
+  letter-spacing: -.025em !important;
+  line-height: 1.35 !important;
+
+  text-transform: none !important;
+  color: #F1F5FA !important;
+}
+
+/* ===== MODOS DO FUNIL ===== */
+
+/* Controles Quantidade / Conversao / Receita */
+
+.cs-analises-premium-v1
+.cs-executive-panel > div:nth-child(2) {
+  border-color:
+    rgba(103,135,175,.22) !important;
+
+  background:
+    rgba(10,21,36,.44) !important;
+
+  border-radius: 9px !important;
+}
+
+.cs-analises-premium-v1
+.cs-executive-panel > div:nth-child(2)
+button[aria-pressed] {
+  min-height: 34px;
+
+  border-radius: 7px !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+}
+
+.cs-analises-premium-v1
+.cs-executive-panel > div:nth-child(2)
+button[aria-pressed="true"] {
+  background: #F7304E !important;
+  color: #FFFFFF !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12)
+    !important;
+}
+
+/* ===== PAINEL DE INSIGHTS ===== */
+
+.cs-analises-premium-v1
+.cs-insights-dual-theme-v1 {
+  border: 1px solid
+    rgba(95,132,174,.34) !important;
+
+  border-radius: 14px !important;
+
+  background: linear-gradient(
+    145deg,
+    rgba(24,36,49,.97),
+    rgba(16,27,39,.99)
+  ) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(235,245,255,.045),
+    0 12px 26px rgba(0,0,0,.10)
+    !important;
+}
+
+/* Cards internos dos insights */
+
+
+/*
+ cs-insights-semanticos-v11
+
+ CS DASH / Executivo CS - Glass Sutil
+
+ Estados semanticos identificados pelo data-insight.
+ A classificacao continua sendo calculada no React.
+*/
+
+/* Base compartilhada dos tres insights */
+
+.cs-analises-premium-v1
+.cs-insights-executivo-v1
+> [data-insight] {
+  position: relative !important;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(122,140,165,.14) !important;
+  border-radius: 12px !important;
+  background: var(--cs-analises-card) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+/* Pequeno detalhe superior */
+
+
+.cs-analises-premium-v1
+.cs-insights-executivo-v1
+> [data-insight]::before {
+  /* Sem filete luminoso: mesmo acabamento silencioso dos mini-cards SDR. */
+  content: none !important;
+  display: none !important;
+}
+
+
+/* GARGALO PRINCIPAL - vermelho */
+
+.cs-analises-premium-v1
+.cs-insights-executivo-v1
+> [data-insight="Gargalo principal"] {
+  --cs-insight-accent: #F87171;
+  --cs-insight-edge: rgba(248,113,113,.30);
+  --cs-insight-wash: rgba(220,38,38,.16);
+  --cs-insight-hover: rgba(248,113,113,.82);
+}
+
+/* PONTO CRITICO - laranja */
+
+.cs-analises-premium-v1
+.cs-insights-executivo-v1
+> [data-insight="Ponto crítico"] {
+  --cs-insight-accent: #FB923C;
+  --cs-insight-edge: rgba(251,146,60,.28);
+  --cs-insight-wash: rgba(234,88,12,.13);
+  --cs-insight-hover: rgba(251,146,60,.80);
+}
+
+/* OPORTUNIDADE - dourado */
+
+.cs-analises-premium-v1
+.cs-insights-executivo-v1
+> [data-insight="Oportunidade"] {
+  --cs-insight-accent: #FBBF24;
+  --cs-insight-edge: rgba(251,191,36,.26);
+  --cs-insight-wash: rgba(217,119,6,.11);
+  --cs-insight-hover: rgba(251,191,36,.78);
+}
+
+/* Caixa de icone */
+
+.cs-analises-premium-v1
+.cs-insights-executivo-v1
+> [data-insight]
+> div:first-child > div:first-child {
+  background: var(--cs-insight-wash) !important;
+
+  border: 1px solid
+    var(--cs-insight-edge) !important;
+
+  border-radius: 9px !important;
+}
+
+/* Acao de investigacao */
+
+.cs-analises-premium-v1
+.cs-insights-executivo-v1
+> [data-insight]
+.cs-insight-action-v1 {
+  background: var(--cs-insight-wash) !important;
+
+  border: 1px solid
+    var(--cs-insight-edge) !important;
+
+  color: var(--cs-insight-accent) !important;
+
+  border-radius: 8px !important;
+  min-height: 34px;
+  font-weight: 650;
+}
+
+/* Interacao */
+
+.cs-analises-premium-v1
+.cs-insights-executivo-v1
+> [data-insight]:hover {
+  border-color: rgba(122,140,165,.27) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035) !important;
+}
+
+.cs-analises-premium-v1
+.cs-insights-executivo-v1
+> [data-insight]
+.cs-insight-action-v1:hover {
+  border-color: var(--cs-insight-hover) !important;
+  filter: brightness(1.13);
+}
+
+/* Tema claro */
+
+html.light
+.cs-analises-premium-v1
+.cs-insights-executivo-v1
+> [data-insight] {
+  background: linear-gradient(
+    120deg,
+    var(--cs-insight-wash),
+    #F8FAFD 48%,
+    #EFF4F9 100%
+  ) !important;
+}
+
+html.light
+.cs-analises-premium-v1
+.cs-insights-executivo-v1
+> [data-insight]
+.cs-insight-description-v1 {
+  color: #40566F !important;
+}
+
+/* Movimento reduzido */
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-analises-premium-v1
+  .cs-insights-executivo-v1
+  > [data-insight] {
+    transition: none !important;
+  }
+}
+
+/* /cs-insights-semanticos-v11 */
+/* cs-insights-acabamento-v13 */
+
+
+
+/* Tipografia dos insights */
+
+.cs-analises-premium-v1
+.cs-insights-executivo-v1 {
+  color: #D8E5F3;
+}
+
+.cs-analises-premium-v1
+.cs-insights-executivo-v1
+.cs-insight-description-v1 {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  letter-spacing: 0 !important;
+  color: #A5B8CD !important;
+}
+
+/* Botoes de investigacao:
+   preservar a cor semantica existente */
+
+.cs-analises-premium-v1
+.cs-insights-executivo-v1
+.cs-insight-action-v1 {
+  border-radius: 8px !important;
+  min-height: 32px;
+  font-weight: 650;
+}
+
+
+/* cs-insights-gramatica-sdr-consolidada-v1
+   Cards internos replicam o acabamento dos cards laterais da Performance SDR.
+   Cores semânticas preservadas no rótulo, ícone e ação. */
+.cs-analises-premium-v1 .cs-insights-executivo-v1 > div:first-child > span {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 16px !important;
+  letter-spacing: .065em !important;
+  color: #A7B5C7 !important;
+}
+.cs-analises-premium-v1 .cs-insights-executivo-v1 > [data-insight] > p:first-of-type {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  line-height: 18px !important;
+  letter-spacing: -.01em !important;
+  text-transform: none !important;
+  color: #E5EEF9 !important;
+}
+.cs-analises-premium-v1 .cs-insights-executivo-v1 > [data-insight] .cs-insight-label-v1 {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: .055em !important;
+  line-height: 16px !important;
+  /* Cor é fornecida pelo estado semântico em React. */
+}
+.cs-analises-premium-v1 .cs-insights-executivo-v1 > [data-insight] .cs-insight-action-v1 {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  line-height: 16px !important;
+  letter-spacing: 0 !important;
+  min-height: 32px !important;
+}
+/* Tema claro: preservar a família da fonte sem forçar valores de cor escuros. */
+html.light .cs-analises-premium-v1 .cs-insights-executivo-v1 > [data-insight] > p:first-of-type {
+  color: #182B42 !important;
+}
+/* ===== RESPONSIVIDADE ===== */
+
+@media (max-width: 640px) {
+  .cs-analises-premium-v1
+  .cs-executive-panel {
+    border-radius: 12px !important;
+
+    box-shadow:
+      inset 3px 0 0 rgba(247,48,78,.65),
+      inset 0 1px 0 rgba(255,255,255,.035)
+      !important;
+  }
+
+  .cs-analises-premium-v1
+  .cs-insights-dual-theme-v1 {
+    border-radius: 12px !important;
+  }
+
+  .cs-analises-premium-v1
+  .cs-executive-panel > div:first-child h3 {
+    font-size: 15px !important;
+  }
+}
+
+
+/*
+ cs-conversao-resumo-premium-v9
+
+ CS DASH - FUNIL XPTO
+ Identidade Executivo CS / Glass Sutil
+
+ Escopo: modo Conversao.
+ Dados, metas e status preservados.
+*/
+
+/* Tres indicadores executivos */
+
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-conversao-v9-kpis {
+  display: grid !important;
+
+  grid-template-columns:
+    repeat(3,minmax(0,1fr)) !important;
+
+  gap: 12px !important;
+
+  width: 100% !important;
+  min-width: 0 !important;
+
+  padding: 0 !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  background: transparent !important;
+  overflow: visible !important;
+}
+
+/* Cada indicador possui sua superficie */
+
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-conversao-v9-kpis > * {
+
+  position: relative !important;
+  min-width: 0 !important;
+  min-height: 118px !important;
+  padding: 16px 17px !important;
+  border: 1px solid rgba(122,140,165,.14) !important;
+  border-radius: 12px !important;
+  background: var(--cs-analises-card) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important;
+}
+
+/* Identidade comum, sem impor status
+   positivo ou negativo aos valores */
+
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-conversao-v9-kpis > *::before {
+
+  content: none !important;
+  display: none !important;
+}
+
+/* Titulos e valores dos mini-cards seguem os cards laterais da Performance SDR. */
+.cs-analises-premium-v1 .cs-executive-panel .cs-conversao-v9-kpis > * > p:first-child {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif !important;
+  color: #E5EEF9 !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  line-height: 18px !important;
+  letter-spacing: -.01em !important;
+  text-transform: none !important;
+}
+.cs-analises-premium-v1 .cs-executive-panel .cs-conversao-v9-kpis > * > p:nth-child(2) {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif !important;
+  font-size: clamp(27px, 2vw, 30px) !important;
+  font-weight: 750 !important;
+  line-height: 1.12 !important;
+  letter-spacing: -.035em !important;
+  /* preservar vermelho funcional na classe text-red-* */
+}
+.cs-analises-premium-v1 .cs-executive-panel .cs-conversao-v9-kpis > * > p:nth-child(3) {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif !important;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+  color: #A5B8CD !important;
+}
+
+/* Numeros e proporcoes */
+
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-conversao-v9-kpis .tabular-nums {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.035em;
+}
+
+/* Textos secundarios */
+
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-conversao-v9-kpis .text-muted-foreground {
+
+  color: #A5B8CD;
+}
+
+/* Titulo e subtitulo do diagnostico */
+
+/* cs-receita-tipografia-espelho-conversao */
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-conversao-titulo-v3,
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-receita-titulo-executivo-v1 {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif !important;
+  color: #F0F5FB !important;
+
+  font-size: 15px !important;
+  font-weight: 750 !important;
+  line-height: 1.3 !important;
+
+  letter-spacing: -.015em !important;
+  text-transform: none !important;
+}
+
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-conversao-subtitulo-v3,
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-receita-subtitulo-executivo-v1 {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif !important;
+  color: #A9BDD2 !important;
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+}
+
+/* Leitura executiva */
+
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-conversao-leitura-v3 {
+  color: #B7C9DC;
+  line-height: 1.6;
+}
+
+/* cs-tipografia-leitura-inter-v1 */
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-conversao-leitura-v3 h4 {
+  font-family: "Inter", "Segoe UI",
+    system-ui, sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  line-height: 18px !important;
+  letter-spacing: -.01em !important;
+  text-transform: none !important;
+}
+
+
+/* Notebook / tablet */
+
+@media (min-width: 641px) and (max-width: 1000px) {
+  .cs-analises-premium-v1
+  .cs-executive-panel
+  .cs-conversao-v9-kpis {
+    grid-template-columns:
+      repeat(2,minmax(0,1fr)) !important;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 640px) {
+  .cs-analises-premium-v1
+  .cs-executive-panel
+  .cs-conversao-v9-kpis {
+    grid-template-columns:
+      minmax(0,1fr) !important;
+    gap: 10px !important;
+  }
+
+  .cs-analises-premium-v1
+  .cs-executive-panel
+  .cs-conversao-v9-kpis > * {
+    min-height: 0;
+    padding: 15px 16px !important;
+  }
+}
+
+/* /cs-conversao-resumo-premium-v9 */
+
+/* /cs-funil-conversao-premium-v8 */
+
+
+/*
+ cs-receita-executiva-premium-v10
+
+ CS DASH - FUNIL XPTO
+ Modo Receita
+
+ Identidade: Executivo CS / Glass Sutil
+ Sem alteracoes de dados, logica ou JSX.
+*/
+
+/* Grade dos dois indicadores */
+
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-receita-perola-v1 {
+  display: grid !important;
+
+  grid-template-columns:
+    minmax(0, 1.85fr)
+    minmax(0, 1fr) !important;
+
+  gap: 12px !important;
+
+  width: 100% !important;
+  min-width: 0 !important;
+
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  background: transparent !important;
+  overflow: visible !important;
+}
+
+/* Superficies individuais */
+
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-receita-perola-v1 > div {
+
+  position: relative !important;
+  grid-column: auto !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  min-height: 118px !important;
+  padding: 16px 17px !important;
+  border: 1px solid rgba(122,140,165,.14) !important;
+  border-radius: 12px !important;
+  background: var(--cs-analises-card) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important;
+}
+
+/* Detalhe editorial superior */
+
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-receita-perola-v1 > div::before {
+
+  content: none !important;
+  display: none !important;
+}
+
+/* Cartao principal: destaque sutil */
+
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-receita-perola-v1 > div:first-child {
+
+  background: var(--cs-analises-card) !important;
+}
+
+/* Titulos dos indicadores */
+
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-receita-perola-v1 > div > p:first-child {
+
+  margin: 0 !important;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif !important;
+  color: #E5EEF9 !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  line-height: 18px !important;
+  letter-spacing: -.01em !important;
+  text-transform: none !important;
+}
+
+/* Valores financeiros e quantidade */
+
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-receita-perola-v1 > div > p:nth-child(2) {
+
+  margin-top: 12px !important;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif !important;
+  font-size: clamp(28px, 2.2vw, 34px) !important;
+  font-weight: 750 !important;
+  line-height: 1.14 !important;
+  letter-spacing: -.035em !important;
+  color: #F2F6FC !important;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* Nota informativa abaixo dos cards */
+
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-receita-perola-v1 + div {
+  margin-top: 16px !important;
+  padding-top: 12px !important;
+
+  border-top-color:
+    rgba(115,151,192,.18) !important;
+
+  color: #A8BBD0 !important;
+
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+}
+
+/* Tablet e celular */
+
+@media (max-width: 720px) {
+  .cs-analises-premium-v1
+  .cs-executive-panel
+  .cs-receita-perola-v1 {
+    grid-template-columns:
+      minmax(0,1fr) !important;
+
+    gap: 10px !important;
+  }
+
+  .cs-analises-premium-v1
+  .cs-executive-panel
+  .cs-receita-perola-v1 > div {
+    min-height: 0 !important;
+    padding: 16px !important;
+  }
+
+  .cs-analises-premium-v1
+  .cs-executive-panel
+  .cs-receita-perola-v1 > div > p:nth-child(2) {
+    font-size: clamp(
+      27px,
+      7vw,
+      35px
+    ) !important;
+  }
+}
+
+/* Compatibilidade com tema claro */
+
+html.light
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-receita-perola-v1 > div {
+  background: linear-gradient(
+    145deg,
+    #FFFFFF,
+    #EDF3FA
+  ) !important;
+
+  border-color:
+    rgba(83,120,165,.25) !important;
+}
+
+html.light
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-receita-perola-v1 > div:first-child {
+  background: linear-gradient(
+    135deg,
+    #F7FAFE,
+    #EAF2FA
+  ) !important;
+}
+
+html.light
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-receita-perola-v1 > div > p:first-child {
+  color: #53677E !important;
+}
+
+html.light
+.cs-analises-premium-v1
+.cs-executive-panel
+.cs-receita-perola-v1 > div > p:nth-child(2) {
+  color: #182B42 !important;
+}
+
+/* /cs-receita-executiva-premium-v10 */
+
+
+
+/*
+ CS DASH - KPIS PREMIUM V15
+
+ Acabamento cromatico inspirado nos Insights.
+ Usa a cor real do desempenho via barColor.
+ Escopo exclusivo: seis KPIs do Funil XPTO.
+*/
+
+/* SUPERFICIE EXECUTIVA */
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1
+> .cs-kpi-insight-surface-v15 {
+  position: relative !important;
+  isolation: isolate;
+
+  overflow: hidden !important;
+
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--cs-kpi-accent) 38%,
+      #536B88
+    ) !important;
+
+  border-radius: 12px !important;
+
+  background:
+    radial-gradient(
+      ellipse 300px 170px at -8% -20%,
+      color-mix(
+        in srgb,
+        var(--cs-kpi-accent) 26%,
+        transparent
+      ) 0%,
+      color-mix(
+        in srgb,
+        var(--cs-kpi-accent) 10%,
+        transparent
+      ) 48%,
+      transparent 85%
+    ),
+    linear-gradient(
+      135deg,
+      #1B2A3E 0%,
+      #132237 52%,
+      #0D1B2B 100%
+    ) !important;
+
+  box-shadow:
+    inset 2px 0 0
+      var(--cs-kpi-accent),
+    inset 0 1px 0
+      rgba(255,255,255,.055),
+    0 8px 22px
+      rgba(0,0,0,.12) !important;
+
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease !important;
+}
+
+/* LINHA SUPERIOR - DEGRADE PROGRESSIVO */
+
+/* Atua diretamente no elemento decorativo
+   que ja existe dentro do KpiCard. */
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1
+> .cs-kpi-insight-surface-v15
+> div:first-child {
+  position: absolute !important;
+
+  top: 0 !important;
+  left: 2px !important;
+  right: auto !important;
+
+  width: min(75%, 240px) !important;
+  height: 2px !important;
+
+  opacity: 1 !important;
+
+  background: linear-gradient(
+    90deg,
+    var(--cs-kpi-accent) 0%,
+    color-mix(
+      in srgb,
+      var(--cs-kpi-accent) 85%,
+      transparent
+    ) 28%,
+    color-mix(
+      in srgb,
+      var(--cs-kpi-accent) 35%,
+      transparent
+    ) 68%,
+    transparent 100%
+  ) !important;
+
+  box-shadow:
+    0 2px 11px
+      color-mix(
+        in srgb,
+        var(--cs-kpi-accent) 24%,
+        transparent
+      ) !important;
+
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* HOVER CONTROLADO */
+
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1
+> .cs-kpi-insight-surface-v15:hover {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--cs-kpi-accent) 52%,
+      #617C9D
+    ) !important;
+
+  box-shadow:
+    inset 2px 0 0
+      var(--cs-kpi-accent),
+    inset 0 1px 0
+      rgba(255,255,255,.065),
+    0 10px 26px
+      rgba(0,0,0,.15) !important;
+}
+
+/* TEMA CLARO */
+
+html.light
+.cs-analises-premium-v1
+.cs-kpis-executivo-v1
+> .cs-kpi-insight-surface-v15 {
+  background:
+    radial-gradient(
+      ellipse 300px 170px at -8% -20%,
+      color-mix(
+        in srgb,
+        var(--cs-kpi-accent) 12%,
+        transparent
+      ),
+      transparent 85%
+    ),
+    linear-gradient(
+      135deg,
+      #FFFFFF,
+      #EDF3FA
+    ) !important;
+}
+
+/* RESPONSIVIDADE */
+
+@media (max-width: 640px) {
+  .cs-analises-premium-v1
+  .cs-kpis-executivo-v1
+  > .cs-kpi-insight-surface-v15
+  > div:first-child {
+    width: min(72%, 190px) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-analises-premium-v1
+  .cs-kpis-executivo-v1
+  > .cs-kpi-insight-surface-v15 {
+    transition: none !important;
+  }
+}
+
+/* /cs-kpi-acabamento-premium-v15 */
+
+
+/*
+ cs-graficos-executivos-premium-v17
+
+ CS DASH / Funil XPTO
+ Executivo CS - Glass Sutil
+
+ Escopo:
+ Evolucao do Funil
+ Conversao por Etapa
+ Origem dos Leads
+
+ Preserva dados, SVGs, cores e interacoes.
+*/
+
+/* GRID ORIGINAL */
+
+.cs-analises-premium-v1
+.cs-analises-graficos-premium-v17 {
+  min-width: 0;
+  align-items: stretch;
+}
+
+/* WRAPPERS DOS TRES GRAFICOS */
+
+.cs-analises-premium-v1
+.cs-analises-graficos-premium-v17
+> .cs-analises-chart-slot-v17 {
+  position: relative;
+  min-width: 0;
+  isolation: isolate;
+}
+
+/* SUPERFICIES DOS PAINEIS */
+
+.cs-analises-premium-v1
+.cs-analises-chart-slot-v17
+> :first-child {
+  box-sizing: border-box !important;
+
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 100%;
+
+  border: 1px solid
+    rgba(105,143,188,.30) !important;
+
+  border-radius: 13px !important;
+
+  background:
+    radial-gradient(
+      ellipse 340px 160px at 0% 0%,
+      rgba(73,124,190,.055) 0%,
+      transparent 82%
+    ),
+    linear-gradient(
+      135deg,
+      #182431 0%,
+      #15202D 52%,
+      #101B27 100%
+    ) !important;
+
+  box-shadow:
+    inset 0 1px 0
+      rgba(242,248,255,.055),
+    0 10px 25px
+      rgba(0,0,0,.10) !important;
+}
+
+/* ASSINATURA SUPERIOR AZUL */
+
+
+/* cs-graficos-acabamento-v18
+   Luz continua e transicao suave.
+*/
+
+.cs-analises-premium-v1
+.cs-analises-chart-slot-v17::before {
+  content: "";
+
+  position: absolute;
+  z-index: 2;
+
+  top: 1px;
+  left: 0;
+  right: 0;
+
+  width: auto;
+  height: 2px;
+
+  border-radius: 13px 13px 0 0;
+
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(126,180,240,.22) 8%,
+    rgba(126,180,240,.65) 20%,
+    rgba(126,180,240,.42) 38%,
+    rgba(126,180,240,.20) 62%,
+    rgba(126,180,240,.07) 82%,
+    transparent 100%
+  );
+
+  box-shadow: none;
+  pointer-events: none;
+}
+
+
+/* TITULOS DOS GRAFICOS */
+
+.cs-analises-premium-v1
+.cs-analises-chart-slot-v17
+> :first-child :is(h2,h3) {
+  color: #EFF5FC !important;
+  letter-spacing: -.02em;
+  line-height: 1.3;
+}
+
+/* HOVER DISCRETO */
+
+@media (hover: hover) {
+  .cs-analises-premium-v1
+  .cs-analises-chart-slot-v17
+  > :first-child:hover {
+    border-color:
+      rgba(122,163,210,.42) !important;
+
+    box-shadow:
+      inset 0 1px 0 rgba(242,248,255,.065),
+      0 12px 28px rgba(0,0,0,.13)
+      !important;
+  }
+}
+
+/* RESPONSIVIDADE
+   Mantem o grid original.
+   Evita largura minima indevida. */
+
+@media (max-width: 1279px) {
+  .cs-analises-premium-v1
+  .cs-analises-chart-slot-v17 {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* TEMA CLARO */
+
+html.light
+.cs-analises-premium-v1
+.cs-analises-chart-slot-v17
+> :first-child {
+  border-color:
+    rgba(83,120,165,.25) !important;
+
+  background:
+    radial-gradient(
+      ellipse 340px 160px at 0% 0%,
+      rgba(75,130,194,.075),
+      transparent 82%
+    ),
+    linear-gradient(
+      135deg,
+      #FFFFFF,
+      #EFF4FA
+    ) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.6),
+    0 8px 22px rgba(15,35,60,.06)
+    !important;
+}
+
+html.light
+.cs-analises-premium-v1
+.cs-analises-chart-slot-v17
+> :first-child :is(h2,h3) {
+  color: #1B2D44 !important;
+}
+
+/* /cs-graficos-executivos-premium-v17 */
+
+
+/*
+ cs-performance-sdr-premium-v19
+
+ CS DASH - PERFORMANCE POR SDR
+ Executivo CS / Glass Sutil
+
+ Preserva dados, calculos, tabelas,
+ filtros e responsividade original.
+*/
+
+/* ===== PAINEL PRINCIPAL ===== */
+
+.cs-analises-premium-v1
+.cs-sdr-executive-unified {
+  position: relative !important;
+  isolation: isolate;
+
+  min-width: 0;
+
+  border: 1px solid
+    rgba(103,143,188,.30) !important;
+
+  border-radius: 14px !important;
+
+  background:
+    radial-gradient(
+      ellipse 480px 230px at 0% 0%,
+      rgba(73,124,190,.055),
+      transparent 85%
+    ),
+    linear-gradient(
+      135deg,
+      #182431 0%,
+      #15202D 52%,
+      #101B27 100%
+    ) !important;
+
+  box-shadow:
+    inset 0 1px 0
+      rgba(245,250,255,.055),
+    0 10px 28px
+      rgba(0,0,0,.10) !important;
+}
+
+/* Iluminacao superior suave */
+
+.cs-analises-premium-v1
+.cs-sdr-executive-unified::before {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 2px;
+
+  border-radius: 14px 14px 0 0;
+
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(117,173,237,.24) 8%,
+    rgba(117,173,237,.65) 22%,
+    rgba(117,173,237,.35) 46%,
+    rgba(117,173,237,.10) 76%,
+    transparent 100%
+  );
+
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ===== CABECALHOS ===== */
+
+.cs-analises-premium-v1
+.cs-sdr-executive-unified h2 {
+  font-family:
+    Inter, "Segoe UI", system-ui, sans-serif
+    !important;
+
+  font-weight: 750 !important;
+  letter-spacing: -.025em !important;
+
+  color: #F1F5FB !important;
+}
+
+.cs-analises-premium-v1
+.cs-sdr-executive-unified h3 {
+  color: #E5EEF9;
+  line-height: 1.35;
+}
+
+/* ===== TABELA SDR ===== */
+
+/* Moldura da tabela */
+
+.cs-analises-premium-v1
+.cs-sdr-executive-unified
+div:has(> table) {
+  border-color:
+    rgba(110,148,190,.20) !important;
+
+  border-radius: 10px !important;
+}
+
+/* Cabecalho */
+
+.cs-analises-premium-v1
+.cs-sdr-executive-unified thead {
+  background:
+    rgba(86,122,166,.115) !important;
+}
+
+.cs-analises-premium-v1
+.cs-sdr-executive-unified thead th {
+  color: #AFC2D8 !important;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  letter-spacing: .035em;
+
+  border-bottom-color:
+    rgba(115,150,191,.17) !important;
+}
+
+/* Linhas */
+
+.cs-analises-premium-v1
+.cs-sdr-executive-unified tbody tr {
+  border-bottom-color:
+    rgba(113,148,188,.12) !important;
+
+  transition: background-color .18s ease;
+}
+
+.cs-analises-premium-v1
+.cs-sdr-executive-unified tbody tr:hover {
+  background:
+    rgba(95,143,201,.065) !important;
+}
+
+.cs-analises-premium-v1
+.cs-sdr-executive-unified tbody td {
+  border-color:
+    rgba(113,148,188,.10) !important;
+}
+
+/* ===== LEITURA EXECUTIVA ===== */
+
+.cs-analises-premium-v1
+.cs-sdr-reading-v9 {
+  border-top-color:
+    rgba(116,152,192,.18) !important;
+}
+
+.cs-analises-premium-v1
+.cs-sdr-reading-v9
+p.text-muted-foreground {
+  color: #A8BBD0;
+  line-height: 1.6;
+}
+
+/* ===== CARDS LATERAIS ===== */
+
+.cs-analises-premium-v1
+.cs-sdr-compacto-v3 > section {
+  position: relative;
+
+  min-width: 0;
+
+  border: 1px solid
+    rgba(106,144,188,.25) !important;
+
+  border-radius: 12px !important;
+
+  background:
+    radial-gradient(
+      ellipse 180px 100px at 0% 0%,
+      rgba(76,125,184,.075),
+      transparent 85%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(27,43,62,.88),
+      rgba(15,30,47,.96)
+    ) !important;
+
+  box-shadow:
+    inset 0 1px 0
+      rgba(245,250,255,.04),
+    0 7px 20px
+      rgba(0,0,0,.07) !important;
+}
+
+/* Preservar a hierarquia numerica */
+
+.cs-analises-premium-v1
+.cs-sdr-compacto-v3
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Textos secundarios */
+
+.cs-analises-premium-v1
+.cs-sdr-compacto-v3
+.text-muted-foreground {
+  color: #A5B8CD;
+}
+
+/* ===== CONTROLES DE VISUALIZACAO ===== */
+
+.cs-analises-premium-v1
+.cs-sdr-mobile-v10 {
+  border-color:
+    rgba(105,142,185,.24) !important;
+
+  background:
+    rgba(12,25,42,.48) !important;
+}
+
+/* Preservar o vermelho do controle ativo */
+
+.cs-analises-premium-v1
+.cs-sdr-executive-unified
+button[aria-pressed="true"] {
+  background: #F7304E !important;
+  color: #FFFFFF !important;
+
+  border-color: #F7304E !important;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+
+/* Nao redefinir colunas ou alturas.
+   Preservar os breakpoints do componente. */
+
+@media (max-width: 640px) {
+  .cs-analises-premium-v1
+  .cs-sdr-executive-unified {
+    border-radius: 12px !important;
+  }
+
+  .cs-analises-premium-v1
+  .cs-sdr-compacto-v3 > section {
+    border-radius: 10px !important;
+  }
+}
+
+/* ===== TEMA CLARO ===== */
+
+html.light
+.cs-analises-premium-v1
+.cs-sdr-executive-unified {
+  background:
+    radial-gradient(
+      ellipse 480px 230px at 0% 0%,
+      rgba(73,124,190,.06),
+      transparent 85%
+    ),
+    linear-gradient(
+      135deg,
+      #FFFFFF,
+      #EDF3FA
+    ) !important;
+
+  border-color:
+    rgba(83,120,165,.25) !important;
+}
+
+html.light
+.cs-analises-premium-v1
+.cs-sdr-executive-unified h2,
+html.light
+.cs-analises-premium-v1
+.cs-sdr-executive-unified h3 {
+  color: #182B42 !important;
+}
+
+html.light
+.cs-analises-premium-v1
+.cs-sdr-compacto-v3 > section {
+  background:
+    linear-gradient(
+      145deg,
+      #FFFFFF,
+      #F0F5FA
+    ) !important;
+}
+
+/* ===== ACESSIBILIDADE ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-analises-premium-v1
+  .cs-sdr-executive-unified tbody tr {
+    transition: none !important;
+  }
+}
+
+/* /cs-performance-sdr-premium-v19 */
+
+/* cs-paleta-fundos-v22: superficies harmonizadas */
+
+/* cs-analises-identidade-executiva-unificada-20261105
+   Referencias: Visao Geral V34 / Resultados V41 / CS Intelligence V34.
+   Uma superficie por funcao, SEM degradê vinho aplicado indiscriminadamente.
+   Sem mudar funil, consultas, dados ou estados de interacao. */
+
+.cs-analises-premium-v1 {
+  /* Painel de secao: copia do painel Resultados do Periodo (V41). */
+  --cs-analises-painel:
+    radial-gradient(ellipse 60% 145% at 0% 0%, rgba(112,35,57,.16), transparent 76%),
+    radial-gradient(ellipse 65% 140% at 85% 0%, rgba(20,52,83,.10), transparent 78%),
+    linear-gradient(115deg, #191B25, #0D1723);
+  /* Cartao interno: copia do card CS Intelligence (V34). */
+  --cs-analises-card:
+    linear-gradient(130deg, rgba(27,31,43,.91), rgba(16,24,36,.93));
+  /* cs-refino-graficos-referencia-performance: referencia exata dos
+     indicadores internos da Performance Comercial, Visao Geral V52. */
+  --cs-analises-grafico:
+    radial-gradient(ellipse at 100% 0%, rgba(24,61,99,.09), transparent 75%),
+    linear-gradient(130deg, rgba(25,33,45,.90), rgba(13,23,35,.94));
+  --cs-analises-borda-painel: rgba(117,143,172,.14);
+  --cs-analises-borda-card: rgba(122,140,165,.20);
+  --cs-analises-titulo: #F0F5FB;
+  --cs-analises-subtitulo: #BECBDD;
+  --cs-analises-legenda: #A0B3C9;
+  position: relative;
+  isolation: isolate;
+  background: transparent !important;
+}
+
+html.light .cs-analises-premium-v1 {
+  --cs-analises-titulo: #182B42;
+  --cs-analises-subtitulo: #53677E;
+  --cs-analises-legenda: #53677E;
+}
+
+/* Reflexo continuo: geometria identica ao shell da Visao Geral.
+   Topo -22px compensa o padding superior do main (20px). */
+html:not(.light) .cs-analises-premium-v1::before {
+  content: "" !important;
+  display: block !important;
+  position: absolute;
+  top: -22px;
+  left: -20px;
+  right: -20px;
+  height: 142px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse 60% 95% at 46% 0%, rgba(20,60,105,.17), transparent 78%);
+}
+@media (max-width: 1023px) {
+  html:not(.light) .cs-analises-premium-v1::before { height: 105px; }
+}
+
+/* Cabecalho V34: titulo, subtitulo, assinatura e superficie editorial. */
+.cs-analises-premium-v1 .cs-analises-header-v1 {
+  min-height: 58px;
+  padding: 13px 18px 14px 21px;
+  background: linear-gradient(90deg, rgba(247,48,78,.055) 0%, rgba(31,42,59,.035) 44%, transparent 85%) !important;
+  border-bottom: 1px solid rgba(135,158,190,.16) !important;
+  box-shadow: none !important;
+}
+.cs-analises-premium-v1 .cs-analises-header-v1::before {
+  box-shadow: 0 0 12px rgba(247,48,78,.12);
+}
+.cs-analises-premium-v1 .cs-analises-header-v1 h1 {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif !important;
+  font-size: clamp(29px, 2.25vw, 39px) !important;
+  font-weight: 800 !important;
+  line-height: 1.06 !important;
+  letter-spacing: -.045em !important;
+  text-transform: none !important;
+}
+.cs-analises-premium-v1 .cs-analises-header-v1 > p {
+  margin: 6px 0 0 !important;
+  font-family: "Inter", sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  letter-spacing: .075em !important;
+  color: #9EADC1 !important;
+}
+
+/* Sistema tipografico da Visao Geral: secao 16/22, subtitulo 12/18. */
+.cs-analises-premium-v1 .cs-filtros-executivo-v1 h1 {
+  font-family: "Inter", sans-serif !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  letter-spacing: -.02em !important;
+  text-transform: none !important;
+}
+.cs-analises-premium-v1 .cs-filtros-executivo-v1 p,
+.cs-analises-premium-v1 .cs-sdr-executive-unified > div:first-child > div:first-child p {
+  font-family: "Inter", sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 18px !important;
+  letter-spacing: 0 !important;
+  color: var(--cs-analises-subtitulo) !important;
+}
+.cs-analises-premium-v1 .cs-executive-panel > div:first-child > h3,
+.cs-analises-premium-v1 .cs-sdr-executive-unified > div:first-child h2 {
+  font-family: "Inter", sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  line-height: 22px !important;
+  letter-spacing: -.012em !important;
+  text-transform: none !important;
+  color: var(--cs-analises-titulo) !important;
+}
+.cs-analises-premium-v1 .cs-executive-panel > div:first-child > span {
+  font-family: "Inter", sans-serif;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  letter-spacing: .025em !important;
+  color: var(--cs-analises-legenda) !important;
+}
+
+/* Somente a variante escura: preservar todo o tema claro existente. */
+html:not(.light) .cs-analises-premium-v1 .cs-executive-panel,
+html:not(.light) .cs-analises-premium-v1 .cs-aquisicao-executiva-v2 {
+  background: var(--cs-analises-painel) !important;
+  border-color: var(--cs-analises-borda-painel) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 6px 22px rgba(0,0,0,.10) !important;
+}
+/* cs-sdr-refino-especifico-v1
+   Superficie derivada do painel Performance Comercial da Visao Geral V52.
+   Apenas o reflexo vinho foi reduzido (14% -> 7%). */
+html:not(.light) .cs-analises-premium-v1 .cs-sdr-executive-unified {
+  background:
+    radial-gradient(ellipse 58% 125% at 0% 0%, rgba(107,32,56,.07), transparent 77%),
+    radial-gradient(ellipse 55% 110% at 90% 0%, rgba(17,51,81,.11), transparent 78%),
+    linear-gradient(112deg, #1B1D27 0%, #121A26 55%, #0C1723 100%) !important;
+  border-color: var(--cs-analises-borda-painel) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03), 0 6px 20px rgba(0,0,0,.09) !important;
+}
+/* A assinatura lateral diferencia secao principal de cartao interno. */
+html:not(.light) .cs-analises-premium-v1 .cs-executive-panel,
+html:not(.light) .cs-analises-premium-v1 .cs-sdr-executive-unified {
+  border-left: 3px solid #F7304E !important;
+}
+
+/* Seis KPIs, sem atingir a legenda de meta (setimo filho). */
+html:not(.light) .cs-analises-premium-v1 .cs-kpis-executivo-v1 > .cs-kpi-insight-surface-v15 {
+  background:
+    radial-gradient(ellipse 200px 115px at 0% 0%, color-mix(in srgb, var(--cs-kpi-accent) 7%, transparent), transparent 85%),
+    var(--cs-analises-card) !important;
+}
+.cs-analises-premium-v1 .cs-kpis-executivo-v1 > .cs-kpi-insight-surface-v15 > div:nth-child(2) > span:first-child {
+  font-family: "Inter", sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 16px !important;
+  letter-spacing: .025em !important;
+}
+.cs-analises-premium-v1 .cs-kpis-executivo-v1 > .cs-kpi-insight-surface-v15 > div:nth-child(3) > div:first-child > span {
+  font-family: "Inter", sans-serif !important;
+  font-size: clamp(28px, 1.9vw, 34px) !important;
+  line-height: 1.08 !important;
+  letter-spacing: -.04em !important;
+}
+
+/* Graficos: superficie de apoio da Performance Comercial (Visao Geral V52).
+   Nao alterar o tratamento dos cards menores da Performance SDR. */
+html:not(.light) .cs-analises-premium-v1 .cs-analises-chart-slot-v17 > :first-child {
+  background: var(--cs-analises-grafico) !important;
+  border-color: rgba(112,139,171,.19) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03) !important;
+}
+html:not(.light) .cs-analises-premium-v1 .cs-analises-chart-slot-v17 > :first-child::before {
+  background: none !important; /* sem pelicula acinzentada do glass-card legado */
+}
+html:not(.light) .cs-analises-premium-v1 .cs-sdr-compacto-v3 > section {
+  background: var(--cs-analises-card) !important;
+  border-color: rgba(122,140,165,.14) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important;
+}
+/* Mesa SDR: neutralizar vazamento do vinho por transparencia.
+   Sem selecionar tbody td individualmente e sem afetar o tema claro. */
+html:not(.light) .cs-analises-premium-v1 .cs-sdr-executive-unified div:has(> table) {
+  background: var(--cs-analises-grafico) !important;
+  border-color: rgba(122,140,165,.16) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important;
+}
+html:not(.light) .cs-analises-premium-v1 .cs-sdr-executive-unified thead {
+  background: rgba(86,122,166,.08) !important;
+}
+/* Escala numerica, apenas cards laterais (nao na tabela). */
+html:not(.light) .cs-analises-premium-v1 .cs-sdr-compacto-v3 > section:first-child strong.tabular-nums {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+html:not(.light) .cs-analises-premium-v1 .cs-sdr-compacto-v3 > section:nth-child(2) > div.mt-3 > p.tabular-nums {
+  font-size: 23px !important;
+  font-weight: 700 !important;
+}
+html:not(.light) .cs-analises-premium-v1 .cs-sdr-compacto-v3 > section:nth-child(3) > div.grid > div > p.tabular-nums {
+  font-size: 21px !important;
+  font-weight: 700 !important;
+}
+/* Remover o filete azul decorativo que deixava os graficos com aspecto mais pesado. */
+.cs-analises-premium-v1 .cs-analises-chart-slot-v17::before {
+  content: none !important;
+  display: none !important;
+}
+.cs-analises-premium-v1 .cs-sdr-executive-unified::before {
+  content: none !important;
+  display: none !important;
+}
+.cs-analises-premium-v1 .cs-analises-chart-slot-v17 > :first-child > div:first-child h3 {
+  /* Referencia: cs-intel-v34-heading h2, Visao Geral. */
+  font-family: "Inter", sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 750 !important;
+  line-height: 1.3 !important;
+  letter-spacing: .015em !important;
+  text-transform: none !important;
+  color: var(--cs-analises-titulo) !important;
+}
+.cs-analises-premium-v1 .cs-sdr-compacto-v3 > section h3 {
+  /* Hierarquia secundaria; titulo da secao continua com 16px. */
+  font-family: "Inter", sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  line-height: 18px !important;
+  letter-spacing: -.01em !important;
+  text-transform: none !important;
+  color: var(--cs-analises-titulo) !important;
+}
+.cs-analises-premium-v1 .cs-analises-chart-slot-v17 > :first-child > div:first-child p {
+  /* Referencia: cs-intel-v34-heading p, Visao Geral. */
+  font-family: "Inter", sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0 !important;
+  color: #A2AEC0 !important;
+}
+.cs-analises-premium-v1 .cs-sdr-compacto-v3 > section > p {
+  /* Escala dos subtitulos da CS Intelligence aprovada. */
+  font-family: "Inter", sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0 !important;
+  color: #A2AEC0 !important;
+}
+/* Legendas neutras: nao tocar no verde, vermelho, amarelo ou seis cores dos dados. */
+html:not(.light) .cs-analises-premium-v1 .cs-analises-graficos-premium-v17 .text-muted-foreground {
+  color: #A2AEC0 !important;
+}
+.cs-analises-premium-v1 .cs-sdr-executive-unified .text-muted-foreground {
+  color: var(--cs-analises-legenda) !important;
+}
+/* Detalhes neutros do eixo e titulo auxiliar de Evolucao, sem tocar nas series. */
+html:not(.light) .cs-analises-premium-v1 .cs-evolucao-ux-v4 > div:first-child > span {
+  font-family: "Inter", sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #A2AEC0 !important;
+}
+html:not(.light) .cs-analises-premium-v1 .cs-evolucao-ux-v4 .recharts-cartesian-axis-tick text {
+  font-family: "Inter", sans-serif !important;
+  font-size: 11px !important;
+  fill: #A2AEC0 !important;
+}
+.cs-analises-premium-v1 .cs-evolucao-ux-v4 .cs-mobile-ux-v5 button {
+  font-family: "Inter", sans-serif;
+  font-size: 11px !important;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0;
+}
+
+/* cs-cards-conversao-receita-gramatica-sdr-v1 */
+/* Modalidades Conversao e Receita: cards internos menores e silenciosos. */
+html:not(.light) .cs-analises-premium-v1 .cs-conversao-v9-kpis > *,
+html:not(.light) .cs-analises-premium-v1 .cs-receita-perola-v1 > div {
+  background: var(--cs-analises-card) !important;
+  border-color: rgba(122,140,165,.14) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important;
+}
+/* Faturamento principal: a Visao Geral diferencia o card destacado do apoio (V41). */
+html:not(.light) .cs-analises-premium-v1 .cs-receita-perola-v1 > div:first-child {
+  background: var(--cs-analises-card) !important;
+  border-color: rgba(122,140,165,.14) !important;
+  border-left: 1px solid rgba(122,140,165,.14) !important;
+}
+/* Preserva as cores semanticas e o texto do insight (nao altera data-insight). */
+
+/* Legibilidade responsiva, sem alterar grid nem altura dos componentes. */
+@media (max-width: 640px) {
+  .cs-analises-premium-v1 .cs-analises-header-v1 h1 {
+    font-size: clamp(27px, 7.5vw, 33px) !important;
+  }
+  .cs-analises-premium-v1 .cs-executive-panel > div:first-child > h3,
+  .cs-analises-premium-v1 .cs-sdr-executive-unified > div:first-child h2 {
+    font-size: 15px !important;
+    line-height: 21px !important;
+  }
+}
+/* cs-auditoria-final-tipo-layout-20261106
+   Refinamento final: tipografia de metadados + responsividade intermediaria.
+   Superficies/cromia e a semantica dos dados permanecem inalteradas. */
+
+/* Igualar o metadado do grafico Evolucao ("Acumulado no periodo")
+   a escala de legendas executivas, sem modificar as seis series. */
+.cs-analises-premium-v1 .cs-evolucao-ux-v4 > div:first-child > span {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 16px !important;
+  letter-spacing: 0 !important;
+  color: var(--cs-analises-legenda) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tablets horizontais e notebooks: tres graficos em duas linhas,
+   garantindo largura suficiente para eixo, legenda e rosca.
+   Desktops largos (>=1536px) seguem EXATAMENTE como estavam. */
+@media (min-width: 1280px) and (max-width: 1535px) {
+  .cs-analises-premium-v1 .cs-analises-graficos-premium-v17 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: stretch;
+  }
+  .cs-analises-premium-v1 .cs-analises-graficos-premium-v17 > .cs-analises-chart-slot-v17:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Evitar que seis KPIs de leitura densa fiquem espremidos
+   na largura de um notebook pequeno. Muda somente o grid. */
+@media (min-width: 1280px) and (max-width: 1399px) {
+  .cs-analises-premium-v1 .cs-kpis-executivo-v1 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+/* A tabela SDR tem largura minima de 790px e rolagem horizontal.
+   Nesta faixa, empilhar tabela e cards evita uma coluna estreita;
+   acima de 1680px o layout aprovado de duas colunas e preservado. */
+@media (min-width: 1450px) and (max-width: 1679px) {
+  .cs-analises-premium-v1 .cs-sdr-executive-unified {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  /* Todos os filhos ocupam a unica coluna.
+     Evita que o col-span-2 do JSX crie coluna implicita. */
+  .cs-analises-premium-v1 .cs-sdr-executive-unified > * {
+    grid-column: 1 / -1 !important;
+    min-width: 0;
+  }
+}
+
+/* Reduzir riscos de overflow no cabecalho mobile sem mudar
+   o titulo, espacamentos ou a assinatura lateral CS. */
+@media (max-width: 640px) {
+  .cs-analises-premium-v1 .cs-analises-header-v1 > p {
+    overflow-wrap: break-word;
+  }
+  .cs-analises-premium-v1 .cs-analises-chart-slot-v17 > :first-child > div:first-child {
+    min-width: 0;
+  }
+}
+
+/* cs-evolucao-altura-compacta-1366
+   Compacta somente o primeiro grafico no layout 1+2.
+   Nao altera SVG, series, cores ou outros painéis. */
+
+@media (min-width: 1280px) and (max-width: 1535px) {
+
+  .cs-analises-premium-v1
+  .cs-analises-graficos-premium-v17
+  > .cs-analises-chart-slot-v17:first-child
+  > .cs-evolucao-ux-v4 {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .cs-analises-premium-v1
+  .cs-analises-graficos-premium-v17
+  > .cs-analises-chart-slot-v17:first-child
+  .cs-evolucao-dual-v1 {
+    flex: 0 0 auto !important;
+    height: clamp(300px, 23vw, 340px) !important;
+    min-height: 0 !important;
+  }
+
+}
+/* /cs-evolucao-altura-compacta-1366 */
+
+/* /cs-auditoria-final-tipo-layout-20261106 */
+
+/* /cs-analises-identidade-executiva-unificada-20261105 */

@@ -1,0 +1,272 @@
+
+/* cs-performance-balanced-v59
+   Executivo CS — Performance Comercial.
+*/
+
+/* Mesma geometria do XPTO em formato compacto */
+.cs-overview-v29-performance
+.cs-performance-v55-svg {
+  width: 100%;
+  min-width: 0 !important;
+  max-width: 100%;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v55-svg svg[role="img"] {
+  display: block !important;
+  width: 100% !important;
+  height: 120px !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+/* Os valores continuam no motor SVG,
+   mas sao exibidos na legenda para leitura completa. */
+/* cs-performance-compact-finish-v60
+   Textos originais do Funil XPTO novamente visiveis.
+   A legenda externa identifica todas as etapas. */
+
+/* Legenda compacta com seis fases */
+.cs-performance-v59-legend-scroll {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.cs-performance-v59-legend {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 2px;
+  margin-top: 1px;
+}
+
+.cs-performance-v59-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 3px 2px 5px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.cs-performance-v59-color {
+  display: none;
+}
+
+.cs-performance-v59-name {
+  display: block;
+  max-width: 100%;
+  color: #B9C9DE;
+  font-size: 10.5px;
+  font-weight: 650;
+  line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-performance-v59-stage strong {
+  display: none;
+}
+
+.cs-performance-v59-stage small {
+  display: block;
+  margin-top: 3px;
+  color: #9FB2CA;
+  font-size: 9px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Equilibrio de alturas e proporcoes */
+.cs-overview-v29-performance
+.cs-overview-v29-performance-grid {
+  gap: 12px !important;
+  align-items: center !important;
+  margin-top: 6px !important;
+  margin-bottom: 6px !important;
+}
+
+.cs-overview-v29-performance
+.cs-overview-v29-indicators {
+  height: auto !important;
+  min-height: 124px !important;
+  align-self: center !important;
+}
+
+/* Estado funcional do indicador */
+.cs-overview-v29-performance
+.cs-performance-v57-kpi.cs-performance-v59-ok {
+  --kpi-accent: #12D995;
+  --kpi-accent-soft: rgba(18,217,149,.18);
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-kpi.cs-performance-v59-below {
+  --kpi-accent: #F7304E;
+  --kpi-accent-soft: rgba(247,48,78,.18);
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-kpi.cs-performance-v59-below
+.cs-performance-v57-icon {
+  color: #F7304E !important;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-kpi.cs-performance-v59-ok
+.cs-performance-v57-icon {
+  color: #12D995 !important;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-kpi.cs-performance-v59-below
+.cs-performance-v57-detail {
+  color: #F3A1AF !important;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-kpi.cs-performance-v59-ok
+.cs-performance-v57-detail {
+  color: #A5D8C3 !important;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v57-kpi {
+  justify-content: center !important;
+  min-height: 92px !important;
+}
+
+/* Indicadores responsivos */
+@container (max-width: 560px) {
+  .cs-overview-v29-indicators-grid {
+    grid-template-columns:
+      repeat(2, minmax(0,1fr)) !important;
+    row-gap: 10px !important;
+  }
+
+  .cs-performance-v57-kpi:nth-child(3) {
+    border-left: 0 !important;
+  }
+}
+
+@media (max-width: 800px) {
+  .cs-overview-v29-performance
+  .cs-performance-v55-svg svg[role="img"] {
+    height: 110px !important;
+  }
+
+  .cs-performance-v59-legend {
+    min-width: 600px;
+  }
+
+  .cs-overview-v29-performance
+  .cs-overview-v29-indicators {
+    min-height: 0 !important;
+  }
+}
+
+
+/* cs-performance-proporcao-v64
+   SVG compacto com tipografia independente.
+*/
+
+.cs-overview-v29-performance
+.cs-performance-v64-graphic {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Esconde apenas os textos SVG deformados.
+   O desenho colorido e a geometria continuam intactos. */
+.cs-overview-v29-performance
+.cs-performance-v64-graphic svg[role="img"] text,
+.cs-overview-v29-performance
+.cs-performance-v64-graphic svg[role="img"] foreignObject {
+  visibility: hidden !important;
+}
+
+/* Numeros posicionados sobre os seis segmentos. */
+.cs-overview-v29-performance
+.cs-performance-v64-numbers {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 120px;
+
+  pointer-events: none;
+  z-index: 2;
+}
+
+.cs-overview-v29-performance
+.cs-performance-v64-number {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+
+  display: block;
+  max-width: 15%;
+  overflow: hidden;
+  text-overflow: clip;
+
+  color: #FFFFFF;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(17px, 1.45vw, 25px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -.025em;
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+
+  text-shadow: 0 1px 3px rgba(0,0,0,.16);
+}
+
+/* Nas etapas finais a altura e menor. */
+.cs-overview-v29-performance
+.cs-performance-v64-number:nth-child(n+5) {
+  font-size: clamp(13px, 1.1vw, 18px);
+}
+
+/* Legenda com nomes e percentuais continua abaixo. */
+.cs-overview-v29-performance
+.cs-performance-v59-legend {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+@media (max-width: 800px) {
+  .cs-overview-v29-performance
+  .cs-performance-v64-numbers {
+    height: 110px;
+  }
+
+  .cs-overview-v29-performance
+  .cs-performance-v64-number {
+    font-size: 18px;
+  }
+
+  .cs-overview-v29-performance
+  .cs-performance-v64-number:nth-child(n+5) {
+    font-size: 14px;
+  }
+}
+
+
+/* cs-performance-proporcao-v66
+   Compactacao executiva da Performance Comercial.
+
+   SVG e numeros sobrepostos compartilham
+   exatamente a mesma altura.
+
+   Nenhuma alteracao de calculos ou status.
+*/
+
+/* cs-performance-acabamento-v67 */

@@ -1,0 +1,117 @@
+/* cs-live-prototipo-animacoes-v1 | exclusivo /live */
+.cs-live-animacao {
+  position: fixed; inset: 0; isolation: isolate; overflow: hidden;
+  z-index: 150; pointer-events: none; display: grid; place-items: center;
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  animation: cs-live-entrada-saida 4.6s both;
+}
+.cs-live-animacao--goal { animation-duration: 8.5s; }
+.cs-live-animacao__ambiente { position: absolute; inset: 0; z-index: -2; }
+.cs-live-animacao--sale .cs-live-animacao__ambiente {
+  background:
+    radial-gradient(ellipse 58% 56% at 49% 46%, rgba(220, 10, 51, .42), transparent 80%),
+    radial-gradient(ellipse 47% 67% at 7% 22%, rgba(247, 48, 78, .24), transparent 78%),
+    linear-gradient(115deg, rgba(9, 11, 19, .93), rgba(16, 22, 34, .91));
+  backdrop-filter: blur(5px);
+}
+.cs-live-animacao--goal .cs-live-animacao__ambiente {
+  background:
+    radial-gradient(ellipse 56% 55% at 50% 48%, rgba(255, 184, 45, .37), transparent 76%),
+    radial-gradient(ellipse 54% 55% at 8% 30%, rgba(199, 125, 20, .19), transparent 78%),
+    linear-gradient(110deg, rgba(10, 12, 17, .97), rgba(19, 21, 28, .96));
+  backdrop-filter: blur(5px);
+}
+.cs-live-animacao__raios { position: absolute; inset: -60%; z-index: -1; opacity: .35;
+  background: repeating-conic-gradient(from 10deg at 50% 50%, transparent 0deg 10deg, currentColor 11deg 11.8deg, transparent 13deg 25deg);
+  -webkit-mask-image: radial-gradient(circle at center, #000 0%, transparent 44%);
+  mask-image: radial-gradient(circle at center, #000 0%, transparent 44%);
+  animation: cs-live-raios 11s linear infinite;
+}
+.cs-live-animacao--sale { color: #ff3458; }
+.cs-live-animacao--goal { color: #ffd575; }
+.cs-live-animacao__centro {
+  width: min(91vw, 1020px); display: flex; flex-direction: column;
+  align-items: center; text-align: center; gap: clamp(8px, 1.1vw, 18px);
+  padding: clamp(20px, 4vw, 52px); transform: translateZ(0);
+  animation: cs-live-placa 4.6s both;
+}
+.cs-live-animacao__centro--meta { animation-duration: 8.5s; }
+.cs-live-animacao__icone { display: grid; place-items: center;
+  width: clamp(46px, 6.2vw, 78px); height: clamp(46px, 6.2vw, 78px);
+  filter: drop-shadow(0 0 18px currentColor);
+}
+.cs-live-animacao__icone svg { width: 100%; height: 100%; }
+.cs-live-animacao__titulo {
+  display: block; font-weight: 950; font-style: italic; text-transform: uppercase;
+  font-size: clamp(64px, 10.4vw, 176px); line-height: .95; letter-spacing: -.065em;
+  color: #fff; transform: skewX(-5deg);
+  text-shadow: 0 3px 0 rgba(70, 0, 16, .7), 0 0 22px currentColor, 0 0 95px currentColor;
+}
+.cs-live-animacao--goal .cs-live-animacao__titulo {
+  font-size: clamp(46px, 7.6vw, 136px); color: #ffe9a3;
+  -webkit-text-stroke: .7px rgba(255, 190, 66, .7);
+  text-shadow: 0 3px 0 rgba(87, 48, 3, .7), 0 0 24px rgba(255, 191, 47, .78), 0 0 90px rgba(248, 170, 22, .51);
+}
+.cs-live-animacao__valor {
+  width: fit-content; max-width: 100%; padding: 10px 25px 12px;
+  border: 1px solid currentColor; border-radius: 14px;
+  background: linear-gradient(110deg, rgba(75, 15, 28, .91), rgba(19, 26, 38, .96));
+  box-shadow: 0 0 35px rgba(247, 48, 78, .28), inset 0 1px 0 rgba(255,255,255,.18);
+  font-size: clamp(29px, 5.4vw, 78px); font-weight: 900; letter-spacing: -.04em;
+  color: #fff; line-height: 1.1;
+}
+.cs-live-animacao--goal .cs-live-animacao__valor {
+  border: 0; background: transparent; box-shadow: none;
+  color: #ffdc79; text-shadow: 0 0 25px rgba(255, 181, 36, .6);
+}
+.cs-live-animacao__produto { display: flex; align-items: center; gap: 9px;
+  font-size: clamp(16px, 1.9vw, 28px); color: #fff;
+  font-weight: 650; max-width: min(82vw, 750px); overflow-wrap: anywhere;
+  text-shadow: 0 2px 12px rgba(0,0,0,.75);
+}
+.cs-live-animacao--goal .cs-live-animacao__produto { color: #ffcf67; text-transform: uppercase; letter-spacing: .13em; font-size: clamp(12px, 1.2vw, 18px); }
+.cs-live-animacao__meta-barra { margin-top: 12px; width: min(600px, 74vw); height: 17px;
+  border-radius: 99px; border: 1px solid rgba(255, 217, 126, .65);
+  background: rgba(255, 209, 81, .11); box-shadow: 0 0 32px rgba(255, 181, 30, .23);
+  overflow: hidden;
+}
+.cs-live-animacao__meta-barra span { display: block; height: 100%; width: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, #9d661c, #ffd76c 80%, #fff0ab); transform-origin: left;
+  animation: cs-live-meta-preencher 1.7s ease-out both;
+}
+.cs-live-animacao__porcentagem { color: #ffe6a2; letter-spacing: .18em; font-size: 13px; font-weight: 750; }
+.cs-live-animacao__particulas { position: absolute; inset: 0; z-index: -1; }
+.cs-live-animacao__particulas i { position: absolute; width: 4px; height: 4px;
+  border-radius: 50%; background: currentColor; box-shadow: 0 0 12px 3px currentColor;
+  animation: cs-live-brilho 1.45s ease-in-out infinite alternate;
+}
+.cs-live-meta-persistente { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(ellipse 65% 45% at 47% -5%, rgba(186, 126, 26, .08), transparent 80%);
+}
+.cs-live-after-goal { isolation: isolate; }
+.cs-live-after-goal .cs-live-revenue-value { text-shadow: 0 0 36px rgba(229, 178, 64, .25); }
+.cs-live-after-goal .cs-live-animacao__meta-barra { box-shadow: 0 0 25px rgba(255, 188, 46, .25); }
+.cs-live-value-flash { animation: cs-live-contador-entrada .65s ease-out; }
+@keyframes cs-live-entrada-saida {
+  0% { opacity: 0; } 7% { opacity: 1; }
+  83% { opacity: 1; } 100% { opacity: 0; }
+}
+@keyframes cs-live-placa {
+  0% { opacity: 0; transform: translateY(35px) scale(.65) rotate(-5deg); filter: blur(12px); }
+  13% { opacity: 1; transform: translateY(-5px) scale(1.06) rotate(1deg); filter: blur(0); }
+  22% { transform: scale(1); }
+  84% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: translateY(-35px) scale(1.05); }
+}
+@keyframes cs-live-meta-preencher { from { transform: scaleX(.05); } to { transform: scaleX(1); } }
+@keyframes cs-live-raios { to { transform: rotate(360deg); } }
+@keyframes cs-live-brilho { from { opacity: .15; transform: scale(.4); } to { opacity: .85; transform: scale(1.35); } }
+@keyframes cs-live-contador-entrada { 0% { transform: scale(1); } 38% { transform: scale(1.055); } 100% { transform: scale(1); } }
+@media (max-width: 640px) {
+  .cs-live-animacao__valor { padding: 8px 14px; }
+  .cs-live-animacao__centro { gap: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cs-live-animacao *, .cs-live-animacao, .cs-live-value-flash { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  .cs-live-animacao { animation: none !important; }
+}

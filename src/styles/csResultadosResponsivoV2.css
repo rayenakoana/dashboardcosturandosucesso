@@ -1,0 +1,179 @@
+
+/*
+ CS DASH - RESULTADOS DO PERIODO V5
+ Refinamento de dimensoes e responsividade.
+
+ Preserva:
+ - Grid original 5/7
+ - Tres cards secundarios
+ - Minigraficos
+ - Setas individuais
+ - Dados e interacoes
+*/
+
+/* Cartoes proporcionais ao conteudo */
+
+.cs-overview-v28-results
+.cs-overview-primary,
+.cs-overview-v28-results
+.cs-overview-support {
+  box-sizing: border-box !important;
+
+  height: auto !important;
+  min-height: 194px !important;
+  max-height: none !important;
+
+  padding-bottom: 34px !important;
+
+  overflow: hidden !important;
+}
+
+/* Faturamento */
+
+.cs-overview-v28-results
+.cs-overview-primary {
+  min-height: 198px !important;
+  padding-bottom: 25px !important;
+}
+
+/* Preservar o grid dos tres indicadores */
+
+.cs-overview-v28-results
+.cs-overview-support-grid {
+  min-width: 0 !important;
+  align-items: stretch !important;
+}
+
+/* Tipografia sem compressao */
+
+.cs-overview-v28-results
+.cs-overview-revenue {
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.15 !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-overview-v28-results
+.cs-overview-support-value {
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.15 !important;
+  font-variant-numeric: tabular-nums;
+}
+
+
+/* Ajustes internos de espacamento - V5 */
+
+.cs-overview-v28-results
+.cs-overview-primary > .mt-3 {
+  margin-top: 8px !important;
+}
+
+.cs-overview-v28-results
+.cs-overview-primary > p.mt-2 {
+  margin-top: 6px !important;
+}
+
+.cs-overview-v28-results
+.cs-overview-support
+.cs-overview-support-value {
+  margin-top: 8px !important;
+}
+
+/* Preservar a leitura dos valores */
+
+.cs-overview-v28-results
+.cs-overview-revenue,
+.cs-overview-v28-results
+.cs-overview-support-value {
+  line-height: 1.12 !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Minigraficos mantidos dentro dos cards */
+
+.cs-overview-v28-results
+.cs-overview-support
+.cs-results-trend-v47 {
+  max-width: 100%;
+}
+
+/* Setas individuais */
+
+.cs-overview-v28-results
+.cs-results-v50-nav {
+  right: 9px !important;
+  bottom: 9px !important;
+}
+
+/*
+ Desktop amplo:
+ layout original preservado.
+ Faturamento a esquerda, tres indicadores a direita.
+*/
+
+/*
+ Notebook intermediario:
+ evitar tres cards comprimidos dentro de 7 colunas.
+*/
+
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .cs-overview-v28-results
+  > div.grid {
+    grid-template-columns:
+      repeat(12, minmax(0, 1fr)) !important;
+  }
+
+  .cs-overview-v28-results
+  .cs-overview-primary,
+  .cs-overview-v28-results
+  .cs-overview-support-grid {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+/* Tablet */
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .cs-overview-v28-results
+  .cs-overview-support-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 639px) {
+  .cs-overview-v28-results
+  .cs-overview-primary,
+  .cs-overview-v28-results
+  .cs-overview-support {
+    height: auto !important;
+    min-height: 194px !important;
+    max-height: none !important;
+
+    padding-bottom: 36px !important;
+  }
+
+  .cs-overview-v28-results
+  .cs-overview-support-grid {
+    grid-template-columns:
+      minmax(0, 1fr) !important;
+  }
+
+  .cs-overview-v28-results
+  .cs-overview-revenue {
+    font-size: clamp(27px, 7vw, 34px) !important;
+  }
+
+  .cs-overview-v28-results
+  .cs-overview-support-value {
+    font-size: clamp(24px, 6vw, 30px) !important;
+  }
+}
+
+/* /cs-resultados-refino-v5 */
