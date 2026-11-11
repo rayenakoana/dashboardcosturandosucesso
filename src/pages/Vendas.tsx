@@ -10,8 +10,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { useVendas, useAddVenda, useUpdateVenda, useDeleteVenda } from "@/hooks/useVendas";
 import { useConfiguracoes } from "@/hooks/useConfiguracoes";
+import { useRdCatalogo } from "@/hooks/useRdCatalogo";
 import { sendToWebhook } from "@/hooks/useWebhook";
-import { Plus, Trash2, Pencil, ArrowUpDown, ArrowUp, ArrowDown, Search, X, Filter } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Plus, Trash2, Pencil, ArrowUpDown, ArrowUp, ArrowDown, Search, X, Filter, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 
 const STATUS_OPTIONS = ["Lead", "MQL", "Reunião", "Fechado", "Perdido"];
@@ -56,16 +59,21 @@ export default function Vendas() {
   const addMutation = useAddVenda();
   const updateMutation = useUpdateVenda();
   const deleteMutation = useDeleteVenda();
+  // useConfiguracoes: mantido para o painel de filtros (funis, produtos) e motivos
   const { data: funis = [] } = useConfiguracoes("Funil");
   const { data: produtos = [] } = useConfiguracoes("Produto");
-  const { data: campanhas = [] } = useConfiguracoes("Campanha");
-  const { data: origens = [] } = useConfiguracoes("Origem");
-  const { data: segmentos = [] } = useConfiguracoes("Segmento");
   const { data: motivos = [] } = useConfiguracoes("Motivo de Perda");
+  // rd_catalogos: alimenta exclusivamente os 5 selects do formulário Nova Venda
+  const { data: rdFunis = [] }     = useRdCatalogo("Funil");
+  const { data: rdProdutos = [] }  = useRdCatalogo("Produto");
+  const { data: rdCampanhas = [] } = useRdCatalogo("Campanha");
+  const { data: rdOrigens = [] }   = useRdCatalogo("Origem");
+  const { data: rdSegmentos = [] } = useRdCatalogo("Segmento");
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(initialForm);
+  const [origenOpen, setOrigenOpen] = useState(false);
 
   // Filtros
   const [search, setSearch] = useState("");
@@ -291,35 +299,93 @@ export default function Vendas() {
                 <div><Label>Segmento</Label>
                   <Select value={form.segmento} onValueChange={v => set("segmento", v)}>
                     <SelectTrigger className="bg-muted/50"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>{segmentos.map(s => <SelectItem key={s.id} value={s.valor}>{s.valor}</SelectItem>)}</SelectContent>
+                    <SelectContent>
+                      {/* valor histórico não encontrado no catálogo */}
+                      {form.segmento && !rdSegmentos.some(s => s.valor === form.segmento) && (
+                        <SelectItem value={form.segmento}>{form.segmento}</SelectItem>
+                      )}
+                      {rdSegmentos.map(s => <SelectItem key={s.rd_id} value={s.valor}>{s.valor}</SelectItem>)}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div><Label>Produto</Label>
                   <Select value={form.produto} onValueChange={v => set("produto", v)}>
                     <SelectTrigger className="bg-muted/50"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>{produtos.map(s => <SelectItem key={s.id} value={s.valor}>{s.valor}</SelectItem>)}</SelectContent>
+                    <SelectContent>
+                      {form.produto && !rdProdutos.some(s => s.valor === form.produto) && (
+                        <SelectItem value={form.produto}>{form.produto}</SelectItem>
+                      )}
+                      {rdProdutos.map(s => <SelectItem key={s.rd_id} value={s.valor}>{s.valor}</SelectItem>)}
+                    </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Funil</Label>
+                  {/* Exibe nome do RD; salva valor_canonico (nome CS Dash) para preservar indicadores */}
                   <Select value={form.funil} onValueChange={v => set("funil", v)}>
                     <SelectTrigger className="bg-muted/50"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>{funis.filter((f: any) => f.visivel !== false).map(s => <SelectItem key={s.id} value={s.valor}>{s.valor}</SelectItem>)}</SelectContent>
+                    <SelectContent>
+                      {form.funil && !rdFunis.some(f => (f.valor_canonico ?? f.valor) === form.funil) && (
+                        <SelectItem value={form.funil}>{form.funil}</SelectItem>
+                      )}
+                      {rdFunis.map(f => (
+                        <SelectItem key={f.rd_id} value={f.valor_canonico ?? f.valor}>
+                          {f.valor}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div><Label>Fonte / Origem</Label>
-                  <Select value={form.origem} onValueChange={v => set("origem", v)}>
-                    <SelectTrigger className="bg-muted/50"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>{origens.map(s => <SelectItem key={s.id} value={s.valor}>{s.valor}</SelectItem>)}</SelectContent>
-                  </Select>
+                  {/* Combobox com busca — 200 opções sincronizadas do RD CRM */}
+                  <Popover open={origenOpen} onOpenChange={setOrigenOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={origenOpen}
+                        className="w-full justify-between bg-muted/50 border-input font-normal h-10 px-3"
+                      >
+                        <span className="truncate text-sm">{form.origem || <span className="text-muted-foreground">Selecione</span>}</span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[280px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar origem..." />
+                        <CommandEmpty>Nenhuma origem encontrada.</CommandEmpty>
+                        <CommandGroup className="max-h-56 overflow-y-auto">
+                          {rdOrigens.map(o => (
+                            <CommandItem
+                              key={o.rd_id}
+                              value={o.valor}
+                              onSelect={() => { set("origem", o.valor); setOrigenOpen(false); }}
+                            >
+                              <Check className={`mr-2 h-4 w-4 shrink-0 ${form.origem === o.valor ? "opacity-100" : "opacity-0"}`} />
+                              {o.valor}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Campanha</Label>
                   <Select value={form.campanha} onValueChange={v => set("campanha", v)}>
                     <SelectTrigger className="bg-muted/50"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>{campanhas.map(s => <SelectItem key={s.id} value={s.valor}>{s.valor}</SelectItem>)}</SelectContent>
+                    <SelectContent>
+                      {form.campanha && !rdCampanhas.some(s => s.valor === form.campanha) && (
+                        <SelectItem value={form.campanha}>{form.campanha}</SelectItem>
+                      )}
+                      {/* deduplicado por valor — evita duplicatas de exibição */}
+                      {Array.from(new Map(rdCampanhas.map(s => [s.valor, s])).values()).map(s => (
+                        <SelectItem key={s.rd_id} value={s.valor}>{s.valor}</SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div><Label>Valor Total (R$)</Label>
