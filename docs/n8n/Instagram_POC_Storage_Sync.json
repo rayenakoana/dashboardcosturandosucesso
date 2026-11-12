@@ -1,6 +1,12 @@
 {
   "_instrucoes": "POC de persistência de capas no Supabase Storage. Importar no n8n e NÃO ativar agendamento. Antes de executar: (1) OBRIGATÓRIO: abrir o nó 'Config' e preencher SUPABASE_URL (ex: https://xxxx.supabase.co, sem barra no final) e SUPABASE_SERVICE_KEY (service_role key); (2) criar credencial HTTP Query Auth 'Instagram CS' com Name=access_token e token da conta costurandosucesso; (3) criar credencial HTTP Query Auth 'Instagram EC' com Name=access_token e token da conta eduardocristianoriginal; (4) vincular cada credencial nos nós Buscar IMAGE (CS) e Buscar VIDEO / Buscar CAROUSEL (EC).",
-  "_versao": "1.2.0",
+  "_versao": "1.3.0",
+  "_correcoes_v1_3": [
+    "continueOnFail: true adicionado nos 3 nós Validar Download",
+    "Sem continueOnFail, exceção em Validar Download parava o pipeline antes do Resultado Falha",
+    "Merge recebia 0 itens desses pipelines e disparava prematuramente com apenas 1 item (CAROUSEL)",
+    "Agora falha em Validar Download vira item de erro → Upload falha sem binário → upload_ok=false → Resultado Falha → Merge recebe 3 itens"
+  ],
   "_correcoes_v1_2": [
     "Substituição de $vars por nó Config (Set) — plano n8n não inclui Variables",
     "SUPABASE_URL e SUPABASE_SERVICE_KEY agora vêm de $('Config').item.json.X",
@@ -334,6 +340,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [1520, 100],
+      "continueOnFail": true,
       "parameters": {
         "mode": "runOnceForEachItem",
         "jsCode": "const prep   = $('Preparar Download IMAGE').item.json;\nconst item   = $input.item;\nif (item.json?.error) throw new Error('[IMAGE] Download falhou: ' + JSON.stringify(item.json.error));\nconst binary = item.binary?.data;\nif (!binary) throw new Error('[IMAGE] Download não retornou dados binários');\nconst mime = (binary.mimeType || '').toLowerCase();\nconst MIMES_ACEITOS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };\nconst ext = MIMES_ACEITOS[mime];\nif (!ext) throw new Error('[IMAGE] MIME não aceito: ' + mime + ' — aceitos: image/jpeg, image/png, image/webp, image/gif');\n// Medir tamanho real: binary.data é string base64 em n8n Code nodes\nconst size = Buffer.isBuffer(binary.data)\n  ? binary.data.length\n  : Buffer.byteLength(binary.data, 'base64');\nconst MAX = 5 * 1024 * 1024;\nif (size > MAX) throw new Error('[IMAGE] Arquivo muito grande: ' + size + ' bytes (limite 5 MB)');\nconst storagePath = prep.username + '/' + prep.post_id + '.' + ext;\nreturn {\n  json: {\n    post_id:          prep.post_id,\n    username:         prep.username,\n    media_type:       prep.media_type,\n    cover_strategy:   prep.cover_strategy,\n    mime_type:        mime,\n    ext:              ext,\n    file_size_bytes:  size,\n    storage_path:     storagePath,\n    upload_url:       $('Config').item.json.SUPABASE_URL + '/storage/v1/object/instagram-covers/' + storagePath,\n    public_url:       $('Config').item.json.SUPABASE_URL + '/storage/v1/object/public/instagram-covers/' + storagePath,\n    metricas_antes:   prep.metricas_antes\n  },\n  binary: { data: binary }\n};"
@@ -346,6 +353,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [1520, 500],
+      "continueOnFail": true,
       "parameters": {
         "mode": "runOnceForEachItem",
         "jsCode": "const prep   = $('Preparar Download VIDEO').item.json;\nconst item   = $input.item;\nif (item.json?.error) throw new Error('[VIDEO] Download falhou: ' + JSON.stringify(item.json.error));\nconst binary = item.binary?.data;\nif (!binary) throw new Error('[VIDEO] Download não retornou dados binários');\nconst mime = (binary.mimeType || '').toLowerCase();\nconst MIMES_ACEITOS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };\nconst ext = MIMES_ACEITOS[mime];\nif (!ext) throw new Error('[VIDEO] thumbnail_url retornou MIME não aceito: ' + mime + ' — se retornou video/* o campo está apontando para .mp4; aceitos: image/jpeg, image/png, image/webp, image/gif');\n// Medir tamanho real: binary.data é string base64 em n8n Code nodes\nconst size = Buffer.isBuffer(binary.data)\n  ? binary.data.length\n  : Buffer.byteLength(binary.data, 'base64');\nconst MAX = 5 * 1024 * 1024;\nif (size > MAX) throw new Error('[VIDEO] Arquivo muito grande: ' + size + ' bytes (limite 5 MB)');\nconst storagePath = prep.username + '/' + prep.post_id + '.' + ext;\nreturn {\n  json: {\n    post_id:          prep.post_id,\n    username:         prep.username,\n    media_type:       prep.media_type,\n    cover_strategy:   prep.cover_strategy,\n    mime_type:        mime,\n    ext:              ext,\n    file_size_bytes:  size,\n    storage_path:     storagePath,\n    upload_url:       $('Config').item.json.SUPABASE_URL + '/storage/v1/object/instagram-covers/' + storagePath,\n    public_url:       $('Config').item.json.SUPABASE_URL + '/storage/v1/object/public/instagram-covers/' + storagePath,\n    metricas_antes:   prep.metricas_antes\n  },\n  binary: { data: binary }\n};"
@@ -358,6 +366,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [1520, 900],
+      "continueOnFail": true,
       "parameters": {
         "mode": "runOnceForEachItem",
         "jsCode": "const prep   = $('Preparar Download CAROUSEL').item.json;\nconst item   = $input.item;\nif (item.json?.error) throw new Error('[CAROUSEL] Download falhou: ' + JSON.stringify(item.json.error));\nconst binary = item.binary?.data;\nif (!binary) throw new Error('[CAROUSEL] Download não retornou dados binários');\nconst mime = (binary.mimeType || '').toLowerCase();\nconst MIMES_ACEITOS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };\nconst ext = MIMES_ACEITOS[mime];\nif (!ext) throw new Error('[CAROUSEL] MIME não aceito: ' + mime + ' — aceitos: image/jpeg, image/png, image/webp, image/gif');\n// Medir tamanho real: binary.data é string base64 em n8n Code nodes\nconst size = Buffer.isBuffer(binary.data)\n  ? binary.data.length\n  : Buffer.byteLength(binary.data, 'base64');\nconst MAX = 5 * 1024 * 1024;\nif (size > MAX) throw new Error('[CAROUSEL] Arquivo muito grande: ' + size + ' bytes (limite 5 MB)');\nconst storagePath = prep.username + '/' + prep.post_id + '.' + ext;\nreturn {\n  json: {\n    post_id:          prep.post_id,\n    username:         prep.username,\n    media_type:       prep.media_type,\n    cover_strategy:   prep.cover_strategy,\n    total_filhos:     prep.total_filhos,\n    filho0_tipo:      prep.filho0_tipo,\n    mime_type:        mime,\n    ext:              ext,\n    file_size_bytes:  size,\n    storage_path:     storagePath,\n    upload_url:       $('Config').item.json.SUPABASE_URL + '/storage/v1/object/instagram-covers/' + storagePath,\n    public_url:       $('Config').item.json.SUPABASE_URL + '/storage/v1/object/public/instagram-covers/' + storagePath,\n    metricas_antes:   prep.metricas_antes\n  },\n  binary: { data: binary }\n};"
