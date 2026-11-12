@@ -1,0 +1,369 @@
+{
+  "_instrucoes": "Workflow de produção para sincronizar capas de posts do Instagram com o Supabase Storage. Disparado diariamente às 06:45 (após o sync de métricas) e disponível para execução manual. Antes de usar: preencher o nó Config com SUPABASE_URL (https://xxxx.supabase.co, sem barra final), SUPABASE_SERVICE_KEY (Secret key sb_secret_...), TOKEN_CS (access_token da conta costurandosucesso) e TOKEN_EC (access_token da conta eduardocristianoriginal — os mesmos tokens usados no workflow Instagram_Profile__Impressions_Sync). Processa até 20 posts por execução priorizando os mais recentes sem cover_url. Posts com falha ficam com cover_url NULL e são reprocessados na próxima execução.",
+  "_versao": "1.0.1",
+
+  "name": "Instagram Cover Sync Produção v1.0",
+  "nodes": [
+
+    {
+      "id": "nd-schedule",
+      "name": "Agendamento 06:45",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 200],
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "cronExpression", "expression": "45 6 * * *" }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": "nd-trigger",
+      "name": "Executar Manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 400],
+      "parameters": {}
+    },
+
+    {
+      "id": "nd-config",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [220, 300],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg-url",
+              "name": "SUPABASE_URL",
+              "value": "PREENCHER: https://xxxx.supabase.co",
+              "type": "string"
+            },
+            {
+              "id": "cfg-key",
+              "name": "SUPABASE_SERVICE_KEY",
+              "value": "PREENCHER: sua-secret-key sb_secret_...",
+              "type": "string"
+            },
+            {
+              "id": "cfg-token-cs",
+              "name": "TOKEN_CS",
+              "value": "PREENCHER: access_token da conta costurandosucesso (mesmo do Instagram_Profile__Impressions_Sync)",
+              "type": "string"
+            },
+            {
+              "id": "cfg-token-ec",
+              "name": "TOKEN_EC",
+              "value": "PREENCHER: access_token da conta eduardocristianoriginal (mesmo do Instagram_Profile__Impressions_Sync)",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+
+    {
+      "id": "nd-nulls",
+      "name": "Buscar Sem Capa",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [440, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Config').item.json.SUPABASE_URL + '/rest/v1/instagram_post_insights?cover_url=is.null&order=timestamp.desc&limit=20&select=post_id,username,media_type,timestamp' }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey",         "value": "={{ $('Config').item.json.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization",  "value": "=Bearer {{ $('Config').item.json.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Accept-Profile", "value": "wpp" },
+            { "name": "Accept",         "value": "application/json" }
+          ]
+        },
+        "options": {}
+      }
+    },
+
+    {
+      "id": "nd-split",
+      "name": "Split Posts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const all = $input.all();\nconst rows = all.flatMap(item => {\n  const d = item.json;\n  return Array.isArray(d) ? d : [d];\n});\nif (rows.length === 0) {\n  // Nenhum post sem capa — execução termina aqui\n  return [];\n}\nreturn rows.map(row => ({ json: row }));"
+      }
+    },
+
+    {
+      "id": "nd-if-conta",
+      "name": "IF Conta",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-conta-cs",
+              "leftValue": "={{ $json.username }}",
+              "rightValue": "costurandosucesso",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+
+    {
+      "id": "nd-meta-cs",
+      "name": "Buscar Meta CS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1100, 100],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://graph.facebook.com/v19.0/' + $json.post_id }}",
+        "authentication": "none",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "fields",       "value": "id,media_type,media_url,thumbnail_url,children{id,media_type,media_url,thumbnail_url}" },
+            { "name": "access_token", "value": "={{ $('Config').item.json.TOKEN_CS }}" }
+          ]
+        },
+        "options": {}
+      }
+    },
+
+    {
+      "id": "nd-meta-ec",
+      "name": "Buscar Meta EC",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1100, 500],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://graph.facebook.com/v19.0/' + $json.post_id }}",
+        "authentication": "none",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "fields",       "value": "id,media_type,media_url,thumbnail_url,children{id,media_type,media_url,thumbnail_url}" },
+            { "name": "access_token", "value": "={{ $('Config').item.json.TOKEN_EC }}" }
+          ]
+        },
+        "options": {}
+      }
+    },
+
+    {
+      "id": "nd-merge-meta",
+      "name": "Merge Meta",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [1320, 300],
+      "parameters": { "mode": "append", "numberInputs": 2 }
+    },
+
+    {
+      "id": "nd-cover",
+      "name": "Extrair Cover URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 300],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const meta   = $input.item.json;\nconst dbRow  = $('IF Conta').item.json;\nif (meta.error) throw new Error('Meta API error post_id=' + dbRow.post_id + ': ' + JSON.stringify(meta.error));\nconst post_id   = String(dbRow.post_id);\nconst username  = dbRow.username;\nconst mediaType = meta.media_type || dbRow.media_type;\nlet coverSourceUrl, coverStrategy;\nif (mediaType === 'IMAGE') {\n  coverSourceUrl = meta.media_url || null;\n  if (!coverSourceUrl) throw new Error('IMAGE sem media_url: ' + post_id);\n  coverStrategy = 'IMAGE → media_url';\n} else if (mediaType === 'VIDEO') {\n  coverSourceUrl = meta.thumbnail_url || null;\n  if (!coverSourceUrl) throw new Error('VIDEO sem thumbnail_url: ' + post_id);\n  coverStrategy = 'VIDEO → thumbnail_url';\n} else if (mediaType === 'CAROUSEL_ALBUM') {\n  const child = (meta.children?.data || [])[0] || null;\n  if (!child) throw new Error('CAROUSEL sem filhos: ' + post_id);\n  if (child.media_type === 'VIDEO') {\n    coverSourceUrl = child.thumbnail_url || null;\n    if (!coverSourceUrl) throw new Error('CAROUSEL filho VIDEO sem thumbnail_url: ' + post_id);\n    coverStrategy = 'CAROUSEL → filho[0] VIDEO → thumbnail_url';\n  } else {\n    coverSourceUrl = child.media_url || null;\n    if (!coverSourceUrl) throw new Error('CAROUSEL filho IMAGE sem media_url: ' + post_id);\n    coverStrategy = 'CAROUSEL → filho[0] IMAGE → media_url';\n  }\n} else {\n  throw new Error('media_type desconhecido: ' + mediaType + ' post_id=' + post_id);\n}\nreturn { json: { post_id, username, media_type: mediaType, cover_source_url: coverSourceUrl, cover_strategy: coverStrategy }};"
+      }
+    },
+
+    {
+      "id": "nd-download",
+      "name": "Download Capa",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1760, 300],
+      "continueOnFail": true,
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.cover_source_url }}",
+        "authentication": "none",
+        "options": {
+          "response": {
+            "response": { "responseFormat": "file", "outputPropertyName": "data" }
+          },
+          "timeout": 30000
+        }
+      }
+    },
+
+    {
+      "id": "nd-validar",
+      "name": "Validar Download",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1980, 300],
+      "continueOnFail": true,
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cover  = $('Extrair Cover URL').item.json;\nconst item   = $input.item;\nif (item.json?.error) throw new Error('Download falhou post_id=' + cover.post_id + ': ' + JSON.stringify(item.json.error));\nconst binary = item.binary?.data;\nif (!binary) throw new Error('Sem binário post_id=' + cover.post_id);\nconst mime = (binary.mimeType || '').toLowerCase();\nconst MIMES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };\nconst ext = MIMES[mime];\nif (!ext) throw new Error('MIME inválido: ' + mime + ' post_id=' + cover.post_id);\nconst size = Buffer.isBuffer(binary.data) ? binary.data.length : Buffer.byteLength(binary.data, 'base64');\nif (size > 5 * 1024 * 1024) throw new Error('Arquivo > 5MB: ' + size + ' bytes, post_id=' + cover.post_id);\nconst supabaseUrl = $('Config').item.json.SUPABASE_URL;\nconst storagePath = cover.username + '/' + cover.post_id + '.' + ext;\nreturn {\n  json: {\n    post_id:      cover.post_id,\n    username:     cover.username,\n    media_type:   cover.media_type,\n    cover_strategy: cover.cover_strategy,\n    mime_type:    mime,\n    storage_path: storagePath,\n    upload_url:   supabaseUrl + '/storage/v1/object/instagram-covers/' + storagePath,\n    public_url:   supabaseUrl + '/storage/v1/object/public/instagram-covers/' + storagePath\n  },\n  binary: { data: binary }\n};"
+      }
+    },
+
+    {
+      "id": "nd-upload",
+      "name": "Upload Storage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2200, 300],
+      "continueOnFail": true,
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.upload_url }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey",        "value": "={{ $('Config').item.json.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $('Config').item.json.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Content-Type",  "value": "={{ $json.mime_type }}" },
+            { "name": "x-upsert",      "value": "true" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": { "timeout": 30000 }
+      }
+    },
+
+    {
+      "id": "nd-verificar",
+      "name": "Verificar Upload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2420, 300],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const valid = $('Validar Download').item.json;\nconst resp  = $input.item.json;\nconst httpError = resp?.error;\nconst uploadOk  = !httpError && !!(resp.Key || resp.Id || resp.id || resp.key);\nreturn { json: {\n  post_id:        valid.post_id,\n  username:       valid.username,\n  media_type:     valid.media_type,\n  cover_strategy: valid.cover_strategy,\n  storage_path:   valid.storage_path,\n  public_url:     valid.public_url,\n  upload_ok:      uploadOk,\n  upload_error:   uploadOk ? null : (resp.message || resp.error || JSON.stringify(resp))\n}};"
+      }
+    },
+
+    {
+      "id": "nd-guard",
+      "name": "Guard Upload",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2640, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-upload-ok",
+              "leftValue": "={{ $json.upload_ok }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+
+    {
+      "id": "nd-patch",
+      "name": "PATCH cover_url",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2860, 100],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $('Config').item.json.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.' + $json.post_id }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey",          "value": "={{ $('Config').item.json.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization",   "value": "=Bearer {{ $('Config').item.json.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Content-Profile", "value": "wpp" },
+            { "name": "Accept-Profile",  "value": "wpp" },
+            { "name": "Prefer",          "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ cover_url: $json.public_url, cover_synced_at: new Date().toISOString() }) }}",
+        "options": {}
+      }
+    },
+
+    {
+      "id": "nd-falha",
+      "name": "Log Falha",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2860, 500],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const v = $input.item.json;\nreturn { json: {\n  post_id:     v.post_id     || 'unknown',\n  username:    v.username    || 'unknown',\n  media_type:  v.media_type  || null,\n  status:      'FALHA',\n  upload_ok:   false,\n  upload_error: v.upload_error || 'upload falhou',\n  timestamp:   new Date().toISOString(),\n  _nota:       'cover_url mantido NULL — será reprocessado na próxima execução'\n}};"
+      }
+    }
+
+  ],
+
+  "connections": {
+    "Agendamento 06:45":   { "main": [[{ "node": "Config", "type": "main", "index": 0 }]] },
+    "Executar Manualmente": { "main": [[{ "node": "Config", "type": "main", "index": 0 }]] },
+
+    "Config":          { "main": [[{ "node": "Buscar Sem Capa", "type": "main", "index": 0 }]] },
+    "Buscar Sem Capa": { "main": [[{ "node": "Split Posts",     "type": "main", "index": 0 }]] },
+    "Split Posts":     { "main": [[{ "node": "IF Conta",        "type": "main", "index": 0 }]] },
+
+    "IF Conta": {
+      "main": [
+        [{ "node": "Buscar Meta CS", "type": "main", "index": 0 }],
+        [{ "node": "Buscar Meta EC", "type": "main", "index": 0 }]
+      ]
+    },
+
+    "Buscar Meta CS": { "main": [[{ "node": "Merge Meta", "type": "main", "index": 0 }]] },
+    "Buscar Meta EC": { "main": [[{ "node": "Merge Meta", "type": "main", "index": 1 }]] },
+
+    "Merge Meta":          { "main": [[{ "node": "Extrair Cover URL",  "type": "main", "index": 0 }]] },
+    "Extrair Cover URL":   { "main": [[{ "node": "Download Capa",      "type": "main", "index": 0 }]] },
+    "Download Capa":       { "main": [[{ "node": "Validar Download",   "type": "main", "index": 0 }]] },
+    "Validar Download":    { "main": [[{ "node": "Upload Storage",     "type": "main", "index": 0 }]] },
+    "Upload Storage":      { "main": [[{ "node": "Verificar Upload",   "type": "main", "index": 0 }]] },
+    "Verificar Upload":    { "main": [[{ "node": "Guard Upload",       "type": "main", "index": 0 }]] },
+
+    "Guard Upload": {
+      "main": [
+        [{ "node": "PATCH cover_url", "type": "main", "index": 0 }],
+        [{ "node": "Log Falha",       "type": "main", "index": 0 }]
+      ]
+    }
+  },
+
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+
+  "tags": ["instagram", "covers", "storage", "producao", "v1.0"]
+}
