@@ -1,0 +1,260 @@
+{
+  "_instrucoes": "Workflow de POC isolado para validar entregas de imagem da Meta Graph API. Importar no n8n e executar manualmente. NÃO contém agendamento. NÃO faz UPSERT. NÃO grava no Storage. NÃO altera o workflow principal. Antes de executar: (1) substitua os valores de 'credentialName' nos três nós HTTP pelo nome exato da credencial salva no seu n8n para cada conta; (2) verifique a versão da API em graph.facebook.com/vXX.X (padrão v19.0 — alinhar com o workflow principal).",
+  "_versao": "1.0.0",
+  "_objetivo": "Confirmar que a Meta Graph API entrega media_url / thumbnail_url / children para os 3 post_ids da POC antes de autorizar a persistência no Storage.",
+  "_posts_poc": [
+    { "post_id": "18115485343992680", "username": "costurandosucesso",         "media_type_esperado": "IMAGE"         },
+    { "post_id": "18082958183373773", "username": "eduardocristianoriginal",    "media_type_esperado": "VIDEO"         },
+    { "post_id": "18066040568539014", "username": "eduardocristianoriginal",    "media_type_esperado": "CAROUSEL_ALBUM"}
+  ],
+
+  "name": "Instagram POC Image Validation v1",
+  "nodes": [
+
+    {
+      "id": "nd-trigger",
+      "name": "Executar Manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [100, 300],
+      "parameters": {}
+    },
+
+    {
+      "id": "nd-fetch-image",
+      "name": "Buscar IMAGE (costurandosucesso)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [320, 160],
+      "parameters": {
+        "method": "GET",
+        "url": "https://graph.facebook.com/v19.0/18115485343992680",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,media_type,media_url,thumbnail_url,permalink,timestamp"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "__SUBSTITUIR_ID_CREDENCIAL_CS__",
+          "name": "__SUBSTITUIR_NOME_CREDENCIAL_CS__ (access_token da conta costurandosucesso)"
+        }
+      }
+    },
+
+    {
+      "id": "nd-fetch-video",
+      "name": "Buscar VIDEO (eduardocristianoriginal)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [320, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "https://graph.facebook.com/v19.0/18082958183373773",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,media_type,media_url,thumbnail_url,permalink,timestamp"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "__SUBSTITUIR_ID_CREDENCIAL_EC__",
+          "name": "__SUBSTITUIR_NOME_CREDENCIAL_EC__ (access_token da conta eduardocristianoriginal)"
+        }
+      }
+    },
+
+    {
+      "id": "nd-fetch-carousel",
+      "name": "Buscar CAROUSEL (eduardocristianoriginal)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [320, 440],
+      "parameters": {
+        "method": "GET",
+        "url": "https://graph.facebook.com/v19.0/18066040568539014",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,media_type,media_url,thumbnail_url,permalink,timestamp,children{id,media_type,media_url,thumbnail_url}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "__SUBSTITUIR_ID_CREDENCIAL_EC__",
+          "name": "__SUBSTITUIR_NOME_CREDENCIAL_EC__ (access_token da conta eduardocristianoriginal)"
+        }
+      }
+    },
+
+    {
+      "id": "nd-analisar-image",
+      "name": "Analisar IMAGE",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [560, 160],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const p = $input.item.json;\n\nconst coverSourceUrl = p.media_url || null;\nconst status = coverSourceUrl ? 'OK' : 'SEM_URL';\n\nreturn {\n  json: {\n    post_id:          p.id,\n    username:         'costurandosucesso',\n    media_type:       p.media_type || 'DESCONHECIDO',\n    permalink:        p.permalink || null,\n    timestamp:        p.timestamp || null,\n    thumbnail_url:    p.thumbnail_url || null,\n    media_url:        p.media_url || null,\n    cover_source_url: coverSourceUrl,\n    cover_strategy:   'IMAGE → media_url',\n    status:           status,\n    erro:             p.error ? JSON.stringify(p.error) : null\n  }\n};"
+      }
+    },
+
+    {
+      "id": "nd-analisar-video",
+      "name": "Analisar VIDEO",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [560, 300],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const p = $input.item.json;\n\n// Reels/Vídeos: thumbnail_url é mais estável que media_url\nconst coverSourceUrl = p.thumbnail_url || p.media_url || null;\nconst status = coverSourceUrl ? 'OK' : 'SEM_URL';\n\nreturn {\n  json: {\n    post_id:          p.id,\n    username:         'eduardocristianoriginal',\n    media_type:       p.media_type || 'DESCONHECIDO',\n    permalink:        p.permalink || null,\n    timestamp:        p.timestamp || null,\n    thumbnail_url:    p.thumbnail_url || null,\n    media_url:        p.media_url || null,\n    cover_source_url: coverSourceUrl,\n    cover_strategy:   'VIDEO → thumbnail_url || media_url',\n    status:           status,\n    erro:             p.error ? JSON.stringify(p.error) : null\n  }\n};"
+      }
+    },
+
+    {
+      "id": "nd-analisar-carousel",
+      "name": "Analisar CAROUSEL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [560, 440],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const p = $input.item.json;\n\n// Carrossel: primeiro filho determina a capa\nconst firstChild = p.children?.data?.[0] || null;\nlet coverSourceUrl = null;\nlet coverStrategy  = 'CAROUSEL → nenhum filho encontrado';\nlet firstChildInfo = null;\n\nif (firstChild) {\n  firstChildInfo = {\n    child_id:        firstChild.id,\n    child_media_type: firstChild.media_type,\n    child_media_url: firstChild.media_url || null,\n    child_thumb_url: firstChild.thumbnail_url || null\n  };\n\n  if (firstChild.media_type === 'VIDEO') {\n    coverSourceUrl = firstChild.thumbnail_url || firstChild.media_url || null;\n    coverStrategy  = 'CAROUSEL → filho[0] é VIDEO → thumbnail_url || media_url';\n  } else {\n    // IMAGE ou tipo desconhecido\n    coverSourceUrl = firstChild.media_url || null;\n    coverStrategy  = 'CAROUSEL → filho[0] é IMAGE → media_url';\n  }\n\n  // Fallback: media_url do próprio álbum\n  if (!coverSourceUrl) {\n    coverSourceUrl = p.media_url || null;\n    coverStrategy  += ' (fallback: media_url do álbum)';\n  }\n}\n\nconst totalFilhos = p.children?.data?.length || 0;\nconst status = coverSourceUrl ? 'OK' : 'SEM_URL';\n\nreturn {\n  json: {\n    post_id:          p.id,\n    username:         'eduardocristianoriginal',\n    media_type:       p.media_type || 'DESCONHECIDO',\n    permalink:        p.permalink || null,\n    timestamp:        p.timestamp || null,\n    thumbnail_url:    p.thumbnail_url || null,\n    media_url:        p.media_url || null,\n    cover_source_url: coverSourceUrl,\n    cover_strategy:   coverStrategy,\n    total_filhos:     totalFilhos,\n    primeiro_filho:   firstChildInfo,\n    status:           status,\n    erro:             p.error ? JSON.stringify(p.error) : null\n  }\n};"
+      }
+    },
+
+    {
+      "id": "nd-merge",
+      "name": "Consolidar Resultados",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [800, 300],
+      "parameters": {
+        "mode": "append",
+        "numberInputs": 3
+      }
+    },
+
+    {
+      "id": "nd-relatorio",
+      "name": "Relatório Final POC",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1020, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\n\nconst ok     = items.filter(i => i.json.status === 'OK').length;\nconst semUrl = items.filter(i => i.json.status === 'SEM_URL').length;\nconst erros  = items.filter(i => i.json.erro).length;\n\n// Resumo por post (sem expor tokens ou URLs internas)\nconst detalhes = items.map(i => {\n  const j = i.json;\n  return {\n    post_id:          j.post_id,\n    username:         j.username,\n    media_type:       j.media_type,\n    cover_strategy:   j.cover_strategy,\n    cover_disponivel: !!j.cover_source_url,\n    thumbnail_url_ok: !!j.thumbnail_url,\n    media_url_ok:     !!j.media_url,\n    total_filhos:     j.total_filhos ?? null,\n    primeiro_filho_tipo: j.primeiro_filho?.child_media_type ?? null,\n    primeiro_filho_ok:   j.primeiro_filho ? !!j.primeiro_filho.child_media_url || !!j.primeiro_filho.child_thumb_url : null,\n    status:           j.status,\n    erro:             j.erro || null\n  };\n});\n\nreturn {\n  json: {\n    poc_summary: {\n      total:    items.length,\n      ok:       ok,\n      sem_url:  semUrl,\n      com_erro: erros,\n      resultado_geral: ok === items.length ? 'APROVADO — todas as capas disponíveis' : (erros > 0 ? 'ERRO — verificar campos erro' : 'PARCIAL — algumas capas ausentes')\n    },\n    detalhes: detalhes\n  }\n};"
+      }
+    }
+
+  ],
+
+  "connections": {
+    "Executar Manualmente": {
+      "main": [
+        [
+          { "node": "Buscar IMAGE (costurandosucesso)",       "type": "main", "index": 0 },
+          { "node": "Buscar VIDEO (eduardocristianoriginal)", "type": "main", "index": 0 },
+          { "node": "Buscar CAROUSEL (eduardocristianoriginal)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Buscar IMAGE (costurandosucesso)": {
+      "main": [[ { "node": "Analisar IMAGE", "type": "main", "index": 0 } ]]
+    },
+    "Buscar VIDEO (eduardocristianoriginal)": {
+      "main": [[ { "node": "Analisar VIDEO", "type": "main", "index": 0 } ]]
+    },
+    "Buscar CAROUSEL (eduardocristianoriginal)": {
+      "main": [[ { "node": "Analisar CAROUSEL", "type": "main", "index": 0 } ]]
+    },
+    "Analisar IMAGE": {
+      "main": [[ { "node": "Consolidar Resultados", "type": "main", "index": 0 } ]]
+    },
+    "Analisar VIDEO": {
+      "main": [[ { "node": "Consolidar Resultados", "type": "main", "index": 1 } ]]
+    },
+    "Analisar CAROUSEL": {
+      "main": [[ { "node": "Consolidar Resultados", "type": "main", "index": 2 } ]]
+    },
+    "Consolidar Resultados": {
+      "main": [[ { "node": "Relatório Final POC", "type": "main", "index": 0 } ]]
+    }
+  },
+
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+
+  "tags": ["instagram", "poc", "validacao-imagens", "v1"],
+
+  "_instrucoes_credenciais": {
+    "tipo": "httpQueryAuth",
+    "descricao": "O n8n 'httpQueryAuth' envia o valor configurado como query parameter 'access_token'. Criar uma credencial desse tipo para cada conta com o respectivo Page Access Token de longa duração.",
+    "conta_cs": {
+      "credencial_sugerida": "Instagram CS — access_token",
+      "nos_que_usam": ["Buscar IMAGE (costurandosucesso)"]
+    },
+    "conta_ec": {
+      "credencial_sugerida": "Instagram EC — access_token",
+      "nos_que_usam": ["Buscar VIDEO (eduardocristianoriginal)", "Buscar CAROUSEL (eduardocristianoriginal)"]
+    },
+    "substituicao": "Após importar o workflow, abrir cada nó HTTP → aba 'Authentication' → selecionar a credencial correta salva no n8n. Os campos __SUBSTITUIR_* serão substituídos automaticamente ao vincular a credencial."
+  },
+
+  "_resultado_esperado": {
+    "IMAGE_18115485343992680": {
+      "cover_disponivel": true,
+      "strategy": "media_url",
+      "observacao": "Imagens publicadas normalmente têm media_url disponível via API básica"
+    },
+    "VIDEO_18082958183373773": {
+      "cover_disponivel": true,
+      "strategy": "thumbnail_url",
+      "observacao": "Reels/Vídeos retornam thumbnail_url estável; media_url pode estar ausente ou expirar"
+    },
+    "CAROUSEL_18066040568539014": {
+      "cover_disponivel": true,
+      "strategy": "children.data[0].media_url ou .thumbnail_url",
+      "observacao": "Carrosséis retornam children com IDs; a API de children requer permissão instagram_basic ou pages_read_engagement"
+    }
+  },
+
+  "_limitacoes_conhecidas": [
+    "media_url de vídeos pode não estar disponível com tokens de API básica (instagram_basic) — thumbnail_url é o fallback seguro",
+    "children de CAROUSEL_ALBUM requer que o token tenha scope 'instagram_basic' e que a publicação pertença à conta autenticada",
+    "URLs da Meta CDN expiram (geralmente em 1-2 horas para vídeos, mais para imagens) — por isso devem ser persistidas no Storage imediatamente",
+    "A API retorna erro #100 se o post_id não pertencer à conta autenticada pelo token"
+  ]
+}
