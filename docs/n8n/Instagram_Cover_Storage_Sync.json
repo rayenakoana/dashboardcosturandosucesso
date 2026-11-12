@@ -1,20 +1,22 @@
 {
-  "_instrucoes": "Workflow completo para importar no n8n. Faz o download das capas dos posts do Instagram e as armazena no Supabase Storage. Executar APÓS o workflow principal de Insights já ter sido atualizado e os campos de imagem populados na tabela. Requer variáveis de ambiente no n8n: SUPABASE_URL e SUPABASE_SERVICE_KEY (Settings → Variables). NÃO hardcodar credenciais.",
-  "_versao": "2.0.0",
-  "_correcoes_v2": [
-    "Split Posts: tratamento robusto do response PostgREST (Array.isArray + fallback raw.data)",
-    "MIME/extensão: detectado dinamicamente do header Content-Type do download",
-    "Credenciais: usa variáveis de ambiente do n8n — sem valores hardcoded",
-    "Validação PATCH: verifica HTTP status da resposta; loga post_id na falha",
-    "Log final: contador por categoria (sucesso, sem_url, erro_download, erro_upload, erro_patch)"
-  ],
+  "_instrucoes": "Workflow V3 para importar no n8n. Faz o download das capas e armazena no Supabase Storage. REQUER: variáveis de ambiente SUPABASE_URL e SUPABASE_SERVICE_KEY em n8n Settings → Variables. NÃO contém credenciais hardcoded.",
+  "_versao": "3.0.0",
+  "_v3_correcoes": {
+    "1_rpc": "Nova função upsert_instagram_post_insight_v2 — original preservada",
+    "2_split_posts": "runOnceForAllItems + handles array direto, raw.data, e itens individuais",
+    "3_modos_code": "Todos os nós Code têm 'mode' explícito (runOnceForAllItems ou runOnceForEachItem)",
+    "4_merge": "Substituído por agregação inline no Resumo Final (runOnceForAllItems via Merge append + 4 inputs)",
+    "5_credenciais": "$env.SUPABASE_URL e $env.SUPABASE_SERVICE_KEY referenciados diretamente nos nós HTTP — sem passar por Set node",
+    "6_dados_preservados": "post_id e username transportados explicitamente; binary passado via campo binary retornado no Code",
+    "7_poc": "poc_mode=true limita a 3 publicações; alterar poc_mode=false para processamento completo"
+  },
 
-  "name": "Instagram Cover Storage Sync",
+  "name": "Instagram Cover Storage Sync v3",
   "nodes": [
 
     {
-      "id": "node-schedule",
-      "name": "Agendamento Diário",
+      "id": "nd-schedule",
+      "name": "Agendamento",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1,
       "position": [100, 300],
@@ -27,13 +29,12 @@
             }
           ]
         }
-      },
-      "_nota": "09:30 UTC — 30 min após o workflow principal de Insights (que roda às 09:00 UTC). Ajustar para o horário configurado no workflow principal + 30 min."
+      }
     },
 
     {
-      "id": "node-config",
-      "name": "Config",
+      "id": "nd-poc-config",
+      "name": "POC Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3,
       "position": [280, 300],
@@ -42,142 +43,92 @@
         "assignments": {
           "assignments": [
             {
-              "id": "cfg-url",
-              "name": "supabaseUrl",
-              "value": "={{ $env.SUPABASE_URL }}",
-              "type": "string"
+              "id": "asgn-poc",
+              "name": "poc_mode",
+              "value": true,
+              "type": "boolean",
+              "_nota": "true = POC limitada a 3 posts. Alterar para false na implantação completa."
             },
             {
-              "id": "cfg-key",
-              "name": "supabaseServiceKey",
-              "value": "={{ $env.SUPABASE_SERVICE_KEY }}",
-              "type": "string"
+              "id": "asgn-poc-limit",
+              "name": "poc_limit",
+              "value": 3,
+              "type": "number"
             },
             {
-              "id": "cfg-bucket",
-              "name": "bucket",
-              "value": "instagram-covers",
-              "type": "string"
-            },
-            {
-              "id": "cfg-batch",
-              "name": "batchSize",
+              "id": "asgn-full-limit",
+              "name": "full_limit",
               "value": 50,
               "type": "number"
             }
           ]
         }
-      },
-      "_nota": "Variáveis de ambiente obrigatórias no n8n: SUPABASE_URL (ex: https://xyzxyz.supabase.co) e SUPABASE_SERVICE_KEY (service_role key — NÃO a anon key). Configurar em Settings → Variables."
+      }
     },
 
     {
-      "id": "node-query-posts",
+      "id": "nd-query",
       "name": "Buscar Posts Sem Capa",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [460, 300],
       "parameters": {
         "method": "GET",
-        "url": "={{ $json.supabaseUrl }}/rest/v1/instagram_post_insights",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/instagram_post_insights",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "apikey",
-              "value": "={{ $json.supabaseServiceKey }}"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $json.supabaseServiceKey }}"
-            },
-            {
-              "name": "Accept-Profile",
-              "value": "wpp"
-            }
+            { "name": "apikey",         "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization",  "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Accept-Profile", "value": "wpp" }
           ]
         },
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            {
-              "name": "select",
-              "value": "post_id,username,media_type,cover_source_url,thumbnail_url,media_url"
-            },
-            {
-              "name": "cover_url",
-              "value": "is.null"
-            },
-            {
-              "name": "cover_source_url",
-              "value": "not.is.null"
-            },
-            {
-              "name": "order",
-              "value": "posted_at.desc"
-            },
-            {
-              "name": "limit",
-              "value": "={{ $json.batchSize }}"
-            }
+            { "name": "select",           "value": "post_id,username,media_type,cover_source_url,thumbnail_url,media_url" },
+            { "name": "cover_url",        "value": "is.null" },
+            { "name": "cover_source_url", "value": "not.is.null" },
+            { "name": "order",            "value": "posted_at.desc" },
+            { "name": "limit",            "value": "={{ $json.poc_mode ? $json.poc_limit : $json.full_limit }}" }
           ]
         },
         "options": {
           "response": {
-            "response": {
-              "fullResponse": false,
-              "neverError": false
-            }
+            "response": { "fullResponse": false, "neverError": false }
           }
         }
       },
-      "_nota": "Prioriza cover_source_url (derivada pelo workflow de Insights) para posts sem cover_url. PostgREST GET retorna JSON array como corpo único — tratado no nó Split Posts."
+      "_nota": "Credenciais via $env.SUPABASE_SERVICE_KEY — não aparecem nos dados de execução. SUPABASE_URL sem barra final."
     },
 
     {
-      "id": "node-split-posts",
+      "id": "nd-split",
       "name": "Split Posts",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [640, 300],
       "parameters": {
-        "jsCode": "// PostgREST GET retorna um JSON array como corpo de um único item n8n.\n// Pode chegar como array direto ($input.item.json = [...]) ou,\n// em algumas versões do n8n, encapsulado em raw.data.\nconst raw = $input.item.json;\nconst data = Array.isArray(raw) ? raw\n           : Array.isArray(raw?.data) ? raw.data\n           : [];\n\nif (data.length === 0) {\n  console.log('[INFO] Nenhum post sem capa encontrado neste lote.');\n  return [];\n}\n\nconsole.log(`[INFO] ${data.length} posts sem capa encontrados.`);\n\nreturn data.map(post => ({ json: post }));"
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Normaliza a resposta do PostgREST para um item por post.\n// PostgREST GET retorna um JSON array como corpo de um único item n8n.\n// Versões distintas do n8n podem entregar:\n//   (a) item único com $json = [...] (array direto)\n//   (b) item único com $json = { data: [...] }\n//   (c) múltiplos itens individuais (HTTP node com splitIntoItems ativo)\n\nconst inputItems = $input.all();\nlet posts = [];\n\nfor (const item of inputItems) {\n  const raw = item.json;\n  if (Array.isArray(raw)) {\n    // (a) array direto\n    posts = posts.concat(raw);\n  } else if (raw && Array.isArray(raw.data)) {\n    // (b) encapsulado em .data\n    posts = posts.concat(raw.data);\n  } else if (raw && typeof raw.post_id === 'string') {\n    // (c) item individual já splitado\n    posts.push(raw);\n  }\n  // Ignorar itens malformados (sem post_id e sem array)\n}\n\nif (posts.length === 0) {\n  console.log('[Split Posts] Nenhum post sem capa encontrado.');\n  // Retornar item de controle para que o Resumo Final possa contabilizar\n  return [{ json: { _workflow_control: true, status: 'nenhum_post', total: 0 } }];\n}\n\nconsole.log('[Split Posts] ' + posts.length + ' posts encontrados.');\nreturn posts.map(function(p) { return { json: p }; });"
       }
     },
 
     {
-      "id": "node-derive-url",
-      "name": "Derivar URL de Capa",
-      "type": "n8n-nodes-base.code",
+      "id": "nd-skip-control",
+      "name": "É Item de Controle?",
+      "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [820, 300],
       "parameters": {
-        "jsCode": "// cover_source_url foi persistida pelo workflow de Insights durante o sync.\n// Usar diretamente, sem nova chamada à Graph API.\n// Fallback para thumbnail_url / media_url para posts históricos (antes do patch)\n// que não tenham cover_source_url mas possam ter as URLs brutas.\n\nconst post = $input.item.json;\n\nconst coverUrl = post.cover_source_url\n              || post.thumbnail_url\n              || post.media_url\n              || null;\n\nreturn {\n  json: {\n    post_id:   post.post_id,\n    username:  post.username,\n    media_type: post.media_type,\n    cover_url: coverUrl,\n    has_url:   Boolean(coverUrl)\n  }\n};"
-      }
-    },
-
-    {
-      "id": "node-check-url",
-      "name": "Tem URL?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [1000, 300],
-      "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
           "conditions": [
             {
-              "id": "cond-has-url",
-              "leftValue": "={{ $json.has_url }}",
+              "id": "cond-ctrl",
+              "leftValue": "={{ $json._workflow_control }}",
               "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              }
+              "operator": { "type": "boolean", "operation": "equals" }
             }
           ],
           "combinator": "and"
@@ -187,94 +138,107 @@
     },
 
     {
-      "id": "node-no-url-log",
-      "name": "Log Sem URL",
+      "id": "nd-derive-url",
+      "name": "Derivar URL de Capa",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 300],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Prioridade: cover_source_url (derivada pelo workflow de Insights)\n// Fallback: thumbnail_url, media_url (posts históricos sem cover_source_url)\nconst p = $input.item.json;\nconst coverUrl = p.cover_source_url || p.thumbnail_url || p.media_url || null;\nreturn {\n  json: {\n    post_id:   p.post_id,\n    username:  p.username,\n    cover_url: coverUrl,\n    has_url:   typeof coverUrl === 'string' && coverUrl.startsWith('http')\n  }\n};"
+      }
+    },
+
+    {
+      "id": "nd-check-url",
+      "name": "Tem URL?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1180, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-has-url",
+              "leftValue": "={{ $json.has_url }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+
+    {
+      "id": "nd-tag-sem-url",
+      "name": "Tag Sem URL",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3,
-      "position": [1180, 460],
+      "position": [1360, 460],
       "parameters": {
         "mode": "manual",
         "assignments": {
           "assignments": [
-            {
-              "id": "log-status",
-              "name": "status",
-              "value": "sem_url",
-              "type": "string"
-            },
-            {
-              "id": "log-post-id",
-              "name": "post_id",
-              "value": "={{ $json.post_id }}",
-              "type": "string"
-            }
+            { "id": "t1", "name": "status",  "value": "sem_url",         "type": "string" },
+            { "id": "t2", "name": "post_id", "value": "={{ $json.post_id }}", "type": "string" }
           ]
         }
       }
     },
 
     {
-      "id": "node-download",
+      "id": "nd-download",
       "name": "Download Capa",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1180, 300],
+      "position": [1360, 300],
       "parameters": {
         "method": "GET",
         "url": "={{ $json.cover_url }}",
         "sendHeaders": false,
         "options": {
           "response": {
-            "response": {
-              "responseFormat": "file",
-              "outputPropertyName": "data"
-            }
+            "response": { "responseFormat": "file", "outputPropertyName": "data" }
           },
           "timeout": 15000,
           "redirect": {
-            "redirect": {
-              "followRedirects": true,
-              "maxRedirects": 5
-            }
+            "redirect": { "followRedirects": true, "maxRedirects": 5 }
           }
         }
       },
-      "_nota": "responseFormat: 'file' salva o binário em $binary.data. mimeType e fileSize ficam disponíveis em $binary.data.mimeType e $binary.data.fileSize."
+      "_nota": "responseFormat 'file': n8n salva o binário em $binary.data e preserva o $json do item anterior (post_id, username continuam acessíveis). mimeType disponível em $binary.data.mimeType."
     },
 
     {
-      "id": "node-verify-download",
+      "id": "nd-verify-dl",
       "name": "Verificar Download",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1360, 300],
+      "position": [1540, 300],
       "parameters": {
-        "jsCode": "// Verificar se o download produziu dados binários válidos.\nconst binary = $binary?.data;\nconst post   = $json;\n\nif (!binary || !binary.mimeType) {\n  return {\n    json: {\n      post_id:  post.post_id,\n      username: post.username,\n      ok:       false,\n      reason:   'sem_dados_binarios'\n    }\n  };\n}\n\n// Detectar extensão a partir do Content-Type retornado\nconst MIME_EXT = {\n  'image/jpeg': 'jpg',\n  'image/jpg':  'jpg',\n  'image/png':  'png',\n  'image/webp': 'webp',\n  'image/gif':  'gif'\n};\nconst mimeType = binary.mimeType.split(';')[0].trim().toLowerCase();\nconst ext      = MIME_EXT[mimeType] || 'jpg';\nconst fileSize = binary.fileSize || 0;\n\n// Rejeitar arquivos muito grandes (> 5 MB = 5_242_880 bytes)\nif (fileSize > 5242880) {\n  return {\n    json: {\n      post_id:   post.post_id,\n      username:  post.username,\n      ok:        false,\n      reason:    'arquivo_muito_grande',\n      file_size: fileSize\n    }\n  };\n}\n\nreturn {\n  json: {\n    post_id:   post.post_id,\n    username:  post.username,\n    mime_type: mimeType,\n    ext:       ext,\n    file_size: fileSize,\n    ok:        true\n  },\n  binary: { data: binary }\n};"
+        "mode": "runOnceForEachItem",
+        "jsCode": "// $json preserva os campos do item anterior (post_id, username, cover_url)\n// $binary.data é preenchido pelo HTTP Request com responseFormat 'file'\nconst post   = $input.item.json;\nconst binary = $input.item.binary?.data;\n\nif (!binary || !binary.mimeType) {\n  return {\n    json: {\n      post_id:  post.post_id,\n      username: post.username,\n      ok:       false,\n      status:   'erro_download',\n      reason:   'sem_binario_ou_mime'\n    }\n  };\n}\n\nconst MIME_EXT = {\n  'image/jpeg': 'jpg',\n  'image/jpg':  'jpg',\n  'image/png':  'png',\n  'image/webp': 'webp',\n  'image/gif':  'gif'\n};\nconst mime = binary.mimeType.split(';')[0].trim().toLowerCase();\nconst ext  = MIME_EXT[mime] || 'jpg';\nconst size = binary.fileSize || 0;\n\nif (size > 5242880) {\n  return {\n    json: {\n      post_id:   post.post_id,\n      username:  post.username,\n      ok:        false,\n      status:    'erro_download',\n      reason:    'arquivo_muito_grande',\n      file_size: size\n    }\n  };\n}\n\n// Passar binary explicitamente para o próximo nó\nreturn {\n  json: {\n    post_id:   post.post_id,\n    username:  post.username,\n    mime_type: mime,\n    ext:       ext,\n    file_size: size,\n    ok:        true\n  },\n  binary: { data: binary }\n};"
       }
     },
 
     {
-      "id": "node-check-download",
+      "id": "nd-check-dl",
       "name": "Download OK?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1540, 300],
+      "position": [1720, 300],
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
           "conditions": [
             {
-              "id": "cond-ok",
+              "id": "cond-dl-ok",
               "leftValue": "={{ $json.ok }}",
               "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              }
+              "operator": { "type": "boolean", "operation": "equals" }
             }
           ],
           "combinator": "and"
@@ -284,73 +248,50 @@
     },
 
     {
-      "id": "node-download-error-log",
-      "name": "Log Erro Download",
+      "id": "nd-tag-err-dl",
+      "name": "Tag Erro Download",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3,
-      "position": [1720, 460],
+      "position": [1900, 460],
       "parameters": {
         "mode": "manual",
         "assignments": {
           "assignments": [
-            {
-              "id": "elog-status",
-              "name": "status",
-              "value": "erro_download",
-              "type": "string"
-            },
-            {
-              "id": "elog-post-id",
-              "name": "post_id",
-              "value": "={{ $json.post_id }}",
-              "type": "string"
-            },
-            {
-              "id": "elog-reason",
-              "name": "reason",
-              "value": "={{ $json.reason }}",
-              "type": "string"
-            }
+            { "id": "e1", "name": "status",  "value": "erro_download",        "type": "string" },
+            { "id": "e2", "name": "post_id", "value": "={{ $json.post_id }}", "type": "string" },
+            { "id": "e3", "name": "reason",  "value": "={{ $json.reason }}",  "type": "string" }
           ]
         }
       }
     },
 
     {
-      "id": "node-build-storage-path",
+      "id": "nd-build-path",
       "name": "Montar Caminho Storage",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1720, 300],
+      "position": [1900, 300],
       "parameters": {
-        "jsCode": "// Montar o caminho no bucket e a URL pública final.\n// A extensão vem do mimeType detectado no download — sem hardcode.\n\nconst post        = $json;\nconst supabaseUrl = $('Config').item.json.supabaseUrl;\nconst bucket      = $('Config').item.json.bucket;\nconst ext         = post.ext || 'jpg';\nconst mimeType    = post.mime_type || 'image/jpeg';\n\nconst storagePath = `${post.username}/${post.post_id}.${ext}`;\nconst publicUrl   = `${supabaseUrl}/storage/v1/object/public/${bucket}/${storagePath}`;\nconst uploadUrl   = `${supabaseUrl}/storage/v1/object/${bucket}/${storagePath}`;\n\nreturn {\n  json: {\n    post_id:      post.post_id,\n    username:     post.username,\n    mime_type:    mimeType,\n    ext:          ext,\n    storage_path: storagePath,\n    public_url:   publicUrl,\n    upload_url:   uploadUrl\n  },\n  binary: { data: $binary?.data }\n};"
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Montar paths e URL pública. Binary passado explicitamente.\nconst d       = $input.item.json;\nconst binary  = $input.item.binary?.data;\nconst baseUrl = $env.SUPABASE_URL;\nconst bucket  = 'instagram-covers';\nconst ext     = d.ext || 'jpg';\nconst mime    = d.mime_type || 'image/jpeg';\n\nconst storagePath = d.username + '/' + d.post_id + '.' + ext;\nconst publicUrl   = baseUrl + '/storage/v1/object/public/' + bucket + '/' + storagePath;\nconst uploadUrl   = baseUrl + '/storage/v1/object/' + bucket + '/' + storagePath;\n\nreturn {\n  json: {\n    post_id:      d.post_id,\n    username:     d.username,\n    mime_type:    mime,\n    ext:          ext,\n    storage_path: storagePath,\n    public_url:   publicUrl,\n    upload_url:   uploadUrl\n  },\n  binary: { data: binary }\n};"
       }
     },
 
     {
-      "id": "node-upload",
+      "id": "nd-upload",
       "name": "Upload para Storage",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1900, 300],
+      "position": [2080, 300],
       "parameters": {
         "method": "POST",
         "url": "={{ $json.upload_url }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $('Config').item.json.supabaseServiceKey }}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "={{ $json.mime_type }}"
-            },
-            {
-              "name": "x-upsert",
-              "value": "true"
-            }
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Content-Type",  "value": "={{ $json.mime_type }}" },
+            { "name": "x-upsert",      "value": "true" }
           ]
         },
         "sendBody": true,
@@ -358,50 +299,41 @@
         "inputDataFieldName": "data",
         "options": {
           "response": {
-            "response": {
-              "fullResponse": true,
-              "neverError": true
-            }
+            "response": { "fullResponse": true, "neverError": true }
           },
           "timeout": 30000
         }
       },
-      "_nota": "fullResponse: true retorna statusCode. x-upsert: true torna o upload idempotente. Content-Type é o mimeType detectado dinamicamente."
+      "_nota": "Authorization via $env.SUPABASE_SERVICE_KEY — não aparece nos dados de execução. x-upsert:true torna idempotente."
     },
 
     {
-      "id": "node-verify-upload",
+      "id": "nd-verify-up",
       "name": "Verificar Upload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2080, 300],
+      "position": [2260, 300],
       "parameters": {
-        "jsCode": "const response = $json;\nconst prevJson = $('Montar Caminho Storage').item.json;\n\nconst httpStatus = response.statusCode || 0;\nconst ok = httpStatus === 200 || httpStatus === 201;\n\nif (!ok) {\n  console.log(`[ERRO] Upload falhou para post_id=${prevJson.post_id}: HTTP ${httpStatus}`);\n  return {\n    json: {\n      post_id:     prevJson.post_id,\n      username:    prevJson.username,\n      ok:          false,\n      http_status: httpStatus,\n      error_body:  JSON.stringify(response.body || {}).substring(0, 500)\n    }\n  };\n}\n\nreturn {\n  json: {\n    post_id:     prevJson.post_id,\n    username:    prevJson.username,\n    public_url:  prevJson.public_url,\n    ok:          true,\n    http_status: httpStatus\n  }\n};"
+        "mode": "runOnceForEachItem",
+        "jsCode": "// $json aqui é a resposta HTTP do nó Upload (fullResponse:true)\n// Os dados do post estão em $('Montar Caminho Storage').item.json\nconst resp    = $input.item.json;\nconst prev    = $('Montar Caminho Storage').item.json;\nconst status  = resp.statusCode || 0;\nconst ok      = status === 200 || status === 201;\n\nif (!ok) {\n  console.log('[Upload] Falha post_id=' + prev.post_id + ' HTTP=' + status);\n  return {\n    json: {\n      post_id:     prev.post_id,\n      username:    prev.username,\n      ok:          false,\n      status:      'erro_upload',\n      http_status: status\n    }\n  };\n}\n\nreturn {\n  json: {\n    post_id:    prev.post_id,\n    username:   prev.username,\n    public_url: prev.public_url,\n    ok:         true,\n    http_status: status\n  }\n};"
       }
     },
 
     {
-      "id": "node-check-upload",
+      "id": "nd-check-up",
       "name": "Upload OK?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [2260, 300],
+      "position": [2440, 300],
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
           "conditions": [
             {
-              "id": "cond-upload-ok",
+              "id": "cond-up-ok",
               "leftValue": "={{ $json.ok }}",
               "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              }
+              "operator": { "type": "boolean", "operation": "equals" }
             }
           ],
           "combinator": "and"
@@ -411,165 +343,142 @@
     },
 
     {
-      "id": "node-upload-error-log",
-      "name": "Log Erro Upload",
+      "id": "nd-tag-err-up",
+      "name": "Tag Erro Upload",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3,
-      "position": [2440, 460],
+      "position": [2620, 460],
       "parameters": {
         "mode": "manual",
         "assignments": {
           "assignments": [
-            {
-              "id": "uelog-status",
-              "name": "status",
-              "value": "erro_upload",
-              "type": "string"
-            },
-            {
-              "id": "uelog-post-id",
-              "name": "post_id",
-              "value": "={{ $json.post_id }}",
-              "type": "string"
-            },
-            {
-              "id": "uelog-http",
-              "name": "http_status",
-              "value": "={{ $json.http_status }}",
-              "type": "number"
-            }
+            { "id": "u1", "name": "status",      "value": "erro_upload",           "type": "string" },
+            { "id": "u2", "name": "post_id",     "value": "={{ $json.post_id }}", "type": "string" },
+            { "id": "u3", "name": "http_status", "value": "={{ $json.http_status }}", "type": "number" }
           ]
         }
       }
     },
 
     {
-      "id": "node-patch-cover-url",
-      "name": "PATCH cover_url no Supabase",
+      "id": "nd-patch",
+      "name": "PATCH cover_url",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [2440, 300],
+      "position": [2620, 300],
       "parameters": {
         "method": "PATCH",
-        "url": "={{ $('Config').item.json.supabaseUrl }}/rest/v1/instagram_post_insights",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/instagram_post_insights",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "apikey",
-              "value": "={{ $('Config').item.json.supabaseServiceKey }}"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $('Config').item.json.supabaseServiceKey }}"
-            },
-            {
-              "name": "Content-Profile",
-              "value": "wpp"
-            },
-            {
-              "name": "Prefer",
-              "value": "return=representation"
-            }
+            { "name": "apikey",          "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization",   "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Content-Profile", "value": "wpp" },
+            { "name": "Prefer",          "value": "return=representation" }
           ]
         },
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            {
-              "name": "post_id",
-              "value": "=eq.{{ $json.post_id }}"
-            }
+            { "name": "post_id", "value": "=eq.{{ $json.post_id }}" }
           ]
         },
         "sendBody": true,
         "contentType": "json",
         "body": {
-          "cover_url": "={{ $json.public_url }}",
+          "cover_url":       "={{ $json.public_url }}",
           "cover_synced_at": "={{ $now.toISO() }}"
         },
         "options": {
           "response": {
-            "response": {
-              "fullResponse": true,
-              "neverError": true
-            }
+            "response": { "fullResponse": true, "neverError": true }
           }
         }
-      },
-      "_nota": "Prefer: return=representation faz o PostgREST retornar o registro atualizado, confirmando o post_id correto. HTTP 200 = sucesso."
+      }
     },
 
     {
-      "id": "node-verify-patch",
+      "id": "nd-verify-patch",
       "name": "Verificar PATCH",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2620, 300],
-      "parameters": {
-        "jsCode": "const response = $json;\nconst postId   = $('Verificar Upload').item.json.post_id;\n\nconst httpStatus  = response.statusCode || 0;\nconst body        = response.body;\nconst updatedRows = Array.isArray(body) ? body : (body ? [body] : []);\nconst patchOk     = httpStatus === 200 && updatedRows.length > 0;\n\nif (!patchOk) {\n  console.log(`[ERRO] PATCH falhou para post_id=${postId}: HTTP ${httpStatus}, rows=${updatedRows.length}`);\n  return {\n    json: {\n      post_id:      postId,\n      status:       'erro_patch',\n      http_status:  httpStatus,\n      rows_updated: updatedRows.length\n    }\n  };\n}\n\nreturn {\n  json: {\n    post_id:      postId,\n    status:       'sucesso',\n    cover_url:    updatedRows[0]?.cover_url || null,\n    rows_updated: updatedRows.length\n  }\n};"
-      }
-    },
-
-    {
-      "id": "node-merge-results",
-      "name": "Consolidar Resultados",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3,
       "position": [2800, 300],
       "parameters": {
-        "mode": "append",
-        "options": {}
+        "mode": "runOnceForEachItem",
+        "jsCode": "const resp       = $input.item.json;\nconst postId     = $('Verificar Upload').item.json.post_id;\nconst httpStatus = resp.statusCode || 0;\nconst body       = resp.body;\nconst rows       = Array.isArray(body) ? body : (body ? [body] : []);\nconst ok         = httpStatus === 200 && rows.length > 0;\n\nif (!ok) {\n  console.log('[PATCH] Falha post_id=' + postId + ' HTTP=' + httpStatus + ' rows=' + rows.length);\n  return {\n    json: {\n      post_id:      postId,\n      status:       'erro_patch',\n      http_status:  httpStatus,\n      rows_updated: rows.length\n    }\n  };\n}\n\nreturn {\n  json: {\n    post_id:      postId,\n    status:       'sucesso',\n    cover_url:    rows[0]?.cover_url || null,\n    rows_updated: rows.length\n  }\n};"
       }
     },
 
     {
-      "id": "node-summary",
-      "name": "Log Resumo Final",
-      "type": "n8n-nodes-base.code",
+      "id": "nd-merge",
+      "name": "Consolidar Resultados",
+      "type": "n8n-nodes-base.merge",
       "typeVersion": 2,
       "position": [2980, 300],
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nconst counts = {\n  total:         items.length,\n  sucesso:       0,\n  sem_url:       0,\n  erro_download: 0,\n  erro_upload:   0,\n  erro_patch:    0,\n  desconhecido:  0\n};\n\nconst erros = [];\n\nfor (const item of items) {\n  const s = item.json?.status;\n  if      (s === 'sucesso')       counts.sucesso++;\n  else if (s === 'sem_url')       counts.sem_url++;\n  else if (s === 'erro_download') { counts.erro_download++; erros.push({ tipo: 'download', post_id: item.json?.post_id, reason: item.json?.reason }); }\n  else if (s === 'erro_upload')   { counts.erro_upload++;   erros.push({ tipo: 'upload',   post_id: item.json?.post_id, http: item.json?.http_status }); }\n  else if (s === 'erro_patch')    { counts.erro_patch++;    erros.push({ tipo: 'patch',    post_id: item.json?.post_id, http: item.json?.http_status }); }\n  else counts.desconhecido++;\n}\n\nconsole.log('[RESUMO]', JSON.stringify({ counts, erros }, null, 2));\n\nreturn {\n  json: {\n    executado_em: new Date().toISOString(),\n    counts,\n    erros\n  }\n};"
+        "mode": "append"
+      },
+      "_nota": "Merge typeVersion 2, mode append. Recebe 4 inputs: (0) sucesso/erro_patch via Verificar PATCH, (1) sem_url via Tag Sem URL, (2) erro_download via Tag Erro Download, (3) erro_upload via Tag Erro Upload. Cada branch SEMPRE produz pelo menos 0 itens — Merge append não bloqueia quando um input chega com 0 itens."
+    },
+
+    {
+      "id": "nd-resumo",
+      "name": "Resumo Final",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3160, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Agrega todos os resultados de todos os caminhos.\n// Cada item tem um campo 'status' definido pelos nós Tag ou Verificar.\nconst items = $input.all();\n\nconst counts = {\n  total:         0,\n  sucesso:       0,\n  sem_url:       0,\n  erro_download: 0,\n  erro_upload:   0,\n  erro_patch:    0\n};\nconst erros = [];\n\nfor (const item of items) {\n  const s = item.json?.status;\n  // Ignorar item de controle gerado quando não há posts\n  if (item.json?._workflow_control) continue;\n  counts.total++;\n  if      (s === 'sucesso')       counts.sucesso++;\n  else if (s === 'sem_url')       counts.sem_url++;\n  else if (s === 'erro_download') { counts.erro_download++; erros.push({ tipo: 'download', post_id: item.json?.post_id, reason: item.json?.reason }); }\n  else if (s === 'erro_upload')   { counts.erro_upload++;   erros.push({ tipo: 'upload',   post_id: item.json?.post_id, http: item.json?.http_status }); }\n  else if (s === 'erro_patch')    { counts.erro_patch++;    erros.push({ tipo: 'patch',    post_id: item.json?.post_id, http: item.json?.http_status }); }\n}\n\nconsole.log('[Resumo] ' + JSON.stringify({ counts, erros }, null, 2));\n\nreturn {\n  json: {\n    executado_em: new Date().toISOString(),\n    counts,\n    erros\n  }\n};"
       }
     }
+
   ],
 
   "connections": {
-    "Agendamento Diário":           { "main": [[{ "node": "Config",                    "type": "main", "index": 0 }]] },
-    "Config":                       { "main": [[{ "node": "Buscar Posts Sem Capa",     "type": "main", "index": 0 }]] },
-    "Buscar Posts Sem Capa":        { "main": [[{ "node": "Split Posts",               "type": "main", "index": 0 }]] },
-    "Split Posts":                  { "main": [[{ "node": "Derivar URL de Capa",       "type": "main", "index": 0 }]] },
-    "Derivar URL de Capa":          { "main": [[{ "node": "Tem URL?",                  "type": "main", "index": 0 }]] },
-    "Tem URL?": {
+    "Agendamento":              { "main": [[{ "node": "POC Config",               "type": "main", "index": 0 }]] },
+    "POC Config":               { "main": [[{ "node": "Buscar Posts Sem Capa",   "type": "main", "index": 0 }]] },
+    "Buscar Posts Sem Capa":    { "main": [[{ "node": "Split Posts",              "type": "main", "index": 0 }]] },
+    "Split Posts":              { "main": [[{ "node": "É Item de Controle?",      "type": "main", "index": 0 }]] },
+    "É Item de Controle?": {
       "main": [
-        [{ "node": "Download Capa",    "type": "main", "index": 0 }],
-        [{ "node": "Log Sem URL",      "type": "main", "index": 0 }]
+        [{ "node": "Resumo Final",       "type": "main", "index": 0 }],
+        [{ "node": "Derivar URL de Capa","type": "main", "index": 0 }]
       ]
     },
-    "Download Capa":                { "main": [[{ "node": "Verificar Download",        "type": "main", "index": 0 }]] },
-    "Verificar Download":           { "main": [[{ "node": "Download OK?",              "type": "main", "index": 0 }]] },
+    "Derivar URL de Capa":      { "main": [[{ "node": "Tem URL?",                 "type": "main", "index": 0 }]] },
+    "Tem URL?": {
+      "main": [
+        [{ "node": "Download Capa",      "type": "main", "index": 0 }],
+        [{ "node": "Tag Sem URL",        "type": "main", "index": 0 }]
+      ]
+    },
+    "Download Capa":            { "main": [[{ "node": "Verificar Download",       "type": "main", "index": 0 }]] },
+    "Verificar Download":       { "main": [[{ "node": "Download OK?",             "type": "main", "index": 0 }]] },
     "Download OK?": {
       "main": [
         [{ "node": "Montar Caminho Storage", "type": "main", "index": 0 }],
-        [{ "node": "Log Erro Download",      "type": "main", "index": 0 }]
+        [{ "node": "Tag Erro Download",      "type": "main", "index": 0 }]
       ]
     },
-    "Montar Caminho Storage":       { "main": [[{ "node": "Upload para Storage",      "type": "main", "index": 0 }]] },
-    "Upload para Storage":          { "main": [[{ "node": "Verificar Upload",         "type": "main", "index": 0 }]] },
-    "Verificar Upload":             { "main": [[{ "node": "Upload OK?",               "type": "main", "index": 0 }]] },
+    "Montar Caminho Storage":   { "main": [[{ "node": "Upload para Storage",     "type": "main", "index": 0 }]] },
+    "Upload para Storage":      { "main": [[{ "node": "Verificar Upload",        "type": "main", "index": 0 }]] },
+    "Verificar Upload":         { "main": [[{ "node": "Upload OK?",              "type": "main", "index": 0 }]] },
     "Upload OK?": {
       "main": [
-        [{ "node": "PATCH cover_url no Supabase", "type": "main", "index": 0 }],
-        [{ "node": "Log Erro Upload",             "type": "main", "index": 0 }]
+        [{ "node": "PATCH cover_url",   "type": "main", "index": 0 }],
+        [{ "node": "Tag Erro Upload",   "type": "main", "index": 0 }]
       ]
     },
-    "PATCH cover_url no Supabase":  { "main": [[{ "node": "Verificar PATCH",          "type": "main", "index": 0 }]] },
-    "Verificar PATCH":              { "main": [[{ "node": "Consolidar Resultados",    "type": "main", "index": 0 }]] },
-    "Log Sem URL":                  { "main": [[{ "node": "Consolidar Resultados",    "type": "main", "index": 1 }]] },
-    "Log Erro Download":            { "main": [[{ "node": "Consolidar Resultados",    "type": "main", "index": 2 }]] },
-    "Log Erro Upload":              { "main": [[{ "node": "Consolidar Resultados",    "type": "main", "index": 3 }]] },
-    "Consolidar Resultados":        { "main": [[{ "node": "Log Resumo Final",         "type": "main", "index": 0 }]] }
+    "PATCH cover_url":          { "main": [[{ "node": "Verificar PATCH",         "type": "main", "index": 0 }]] },
+
+    "Verificar PATCH":  { "main": [[{ "node": "Consolidar Resultados", "type": "main", "index": 0 }]] },
+    "Tag Sem URL":      { "main": [[{ "node": "Consolidar Resultados", "type": "main", "index": 1 }]] },
+    "Tag Erro Download":{ "main": [[{ "node": "Consolidar Resultados", "type": "main", "index": 2 }]] },
+    "Tag Erro Upload":  { "main": [[{ "node": "Consolidar Resultados", "type": "main", "index": 3 }]] },
+
+    "Consolidar Resultados": { "main": [[{ "node": "Resumo Final", "type": "main", "index": 0 }]] }
   },
 
   "settings": {
@@ -580,24 +489,26 @@
   },
 
   "staticData": null,
-  "tags": ["instagram", "storage", "capas"],
-  "triggerCount": 1,
+  "tags": ["instagram", "storage", "capas", "v3"],
   "updatedAt": "2026-11-12T00:00:00.000Z",
-  "versionId": "2.0.0",
+  "versionId": "3.0.0",
 
   "_notas_implantacao": {
-    "variaveis_ambiente_necessarias": [
-      "SUPABASE_URL — ex: https://abcdef.supabase.co (sem barra final)",
-      "SUPABASE_SERVICE_KEY — service_role key do projeto (NÃO a anon key)"
-    ],
-    "configurar_em": "n8n Settings → Variables (ou variáveis de ambiente do processo n8n)",
-    "bucket_supabase": {
-      "nome": "instagram-covers",
-      "visibilidade": "Public",
-      "mime_types_permitidos": ["image/jpeg", "image/png", "image/webp"],
-      "tamanho_maximo_mb": 5
+    "variaveis_ambiente_n8n": {
+      "SUPABASE_URL":         "https://<projeto>.supabase.co (sem barra final)",
+      "SUPABASE_SERVICE_KEY": "service_role key — NÃO a anon key",
+      "onde_configurar":      "n8n Settings → Variables"
     },
-    "politica_rls_bucket": "CREATE POLICY \"instagram-covers leitura publica\" ON storage.objects FOR SELECT USING (bucket_id = 'instagram-covers'); -- service_role bypassa RLS por default -- nenhuma política de INSERT/UPDATE é necessária.",
-    "verificacao_post_implantacao": "SELECT post_id, username, media_type, cover_url, cover_synced_at FROM wpp.instagram_post_insights WHERE cover_url IS NOT NULL ORDER BY cover_synced_at DESC LIMIT 10;"
+    "poc_mode": {
+      "ativado_por_padrao": true,
+      "comportamento":      "Limita a 3 publicações. Desativar (poc_mode=false) para processamento completo do histórico.",
+      "como_desativar":     "No nó 'POC Config', alterar poc_mode de true para false"
+    },
+    "bucket_supabase": {
+      "nome":            "instagram-covers",
+      "visibilidade":    "Public",
+      "politica_rls":    "CREATE POLICY \"leitura publica\" ON storage.objects FOR SELECT USING (bucket_id = 'instagram-covers');"
+    },
+    "verificacao": "SELECT post_id, username, media_type, cover_url, cover_synced_at FROM wpp.instagram_post_insights WHERE cover_url IS NOT NULL ORDER BY cover_synced_at DESC LIMIT 10;"
   }
 }

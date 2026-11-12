@@ -1,28 +1,16 @@
 -- =============================================================================
--- Migration: upsert_instagram_post_insight v2
--- Schema: wpp
--- Objetivo: adicionar campos de imagem à stored procedure de UPSERT, mantendo
---           compatibilidade retroativa via DEFAULT NULL nos novos parâmetros.
---
--- APLICAR APÓS: 20261112100000_instagram_post_covers.sql
--- APLICAR VIA:  Supabase SQL Editor (schema wpp não é gerenciado pelo CLI)
---
--- ⚠️  ESTRATÉGIA DE SUBSTITUIÇÃO — LEIA ANTES DE APLICAR ⚠️
--- ─────────────────────────────────────────────────────────
--- PostgreSQL resolve funções por aridade (número de parâmetros).
--- CREATE OR REPLACE com contagem diferente de parâmetros CRIA UM OVERLOAD —
--- a função original de 14 parâmetros continua existindo e continua sendo
--- chamada pelo workflow antigo (PostgREST envia params pelo nome em JSON;
--- o banco resolve para a assinatura com a aridade correspondente).
---
--- A estratégia correta é:
---   1. Descobrir a assinatura exata atual (Step 0 abaixo)
---   2. DROP explícito da assinatura antiga
---   3. CREATE da nova função com DEFAULT NULL nos novos parâmetros
---
--- Com DEFAULT NULL, chamadas que enviam apenas 14 parâmetros nomeados
--- continuam funcionando: o banco aplica NULL para os parâmetros ausentes.
+-- ⚠️  ARQUIVO SUBSTITUÍDO — NÃO APLICAR ⚠️
 -- =============================================================================
+-- Esta migration foi descartada em favor de 20261112100003_upsert_instagram_post_insight_v2.sql
+--
+-- Motivo: a estratégia de DROP aqui presente é desnecessariamente destrutiva.
+-- A abordagem correta (V3) cria uma NOVA função upsert_instagram_post_insight_v2
+-- separada, preservando a original intacta para o workflow existente.
+--
+-- NÃO execute este arquivo. Use 20261112100003 em seu lugar.
+-- =============================================================================
+--
+-- (conteúdo original preservado abaixo apenas para referência histórica)
 
 -- ─── Step 0: Verificar assinatura atual (executar antes de prosseguir) ────────
 --

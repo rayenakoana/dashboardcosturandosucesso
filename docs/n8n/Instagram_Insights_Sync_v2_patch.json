@@ -1,7 +1,9 @@
 {
   "_instrucoes": "Arquivo de referência — NÃO importar diretamente. Contém apenas os nós modificados em relação ao workflow original (Instagram Insights Sync, id: shnqPcgGxBB1rnVM). Substituir o código dos nós correspondentes pelo id listado abaixo. As credenciais (access_token e apikey/Authorization) devem ser mantidas exatamente como estão no workflow original.",
   "_versao_base": "9e20cb41-966b-4a02-a3ad-52db6dbe77fc",
+  "_versao_patch": "3.0.0",
   "_alteracoes_resumo": [
+    "Nós RPC (id: 30451f91 + 1a288ca2): URL alterada de rpc/upsert_instagram_post_insight para rpc/upsert_instagram_post_insight_v2 — função original preservada intacta",
     "Buscar Posts (id: 582b340e) + Buscar Posts1 (id: a9af8a77): adicionar thumbnail_url, media_url, children{media_url,media_type,thumbnail_url} ao fields",
     "Montar Post Insight (id: 976301a9) + Montar Post Insight1 (id: bdf1c684): extrair URLs por tipo de mídia; derivar cover_source_url por lógica de media_type (IMAGE→media_url, VIDEO→thumbnail_url||media_url, CAROUSEL→primeiro filho com tratamento de VIDEO filho)",
     "Serializar Body Post (id: 30451f91) + Serializar Body Post1 (id: 1a288ca2): adicionar p_thumbnail_url, p_media_url e p_cover_source_url ao payload"
@@ -39,6 +41,23 @@
       "id": "bdf1c684-5256-4118-8b9e-c73c4821c4c1",
       "name": "Montar Post Insight1",
       "jsCode_novo": "const insights = $input.item.json;\nconst insightsRaw = insights?.data || [];\nconst post = $('Definir Métricas1').item.json;\n\nconst get = (name) => {\n  const found = insightsRaw.find(i => i.name === name);\n  return found?.values?.[0]?.value ?? 0;\n};\n\nconst thumbnailUrl = post.thumbnail_url || null;\nconst mediaUrl     = post.media_url     || null;\n\nlet coverSourceUrl = null;\n\nif (post.media_type === 'IMAGE') {\n  coverSourceUrl = mediaUrl;\n\n} else if (post.media_type === 'VIDEO') {\n  coverSourceUrl = thumbnailUrl || mediaUrl;\n\n} else if (post.media_type === 'CAROUSEL_ALBUM') {\n  const firstChild = post.children?.data?.[0];\n  if (firstChild) {\n    if (firstChild.media_type === 'VIDEO') {\n      coverSourceUrl = firstChild.thumbnail_url || firstChild.media_url || null;\n    } else {\n      coverSourceUrl = firstChild.media_url || null;\n    }\n  }\n  if (!coverSourceUrl) {\n    coverSourceUrl = mediaUrl;\n  }\n}\n\nreturn {\n  json: {\n    post_id:          post.id,\n    account_id:       post.account_id,\n    username:         post.username,\n    posted_at:        post.timestamp,\n    media_type:       post.media_type,\n    permalink:        post.permalink,\n    caption:          (post.caption || '').substring(0, 500),\n    like_count:       get('likes'),\n    comments_count:   get('comments'),\n    shares:           get('shares'),\n    saved:            get('saved'),\n    reach:            get('reach'),\n    impressions:      get('impressions'),\n    views:            get('views'),\n    thumbnail_url:    thumbnailUrl,\n    media_url:        mediaUrl,\n    cover_source_url: coverSourceUrl\n  }\n};"
+    },
+
+    {
+      "_instrucao": "Localizar o nó que chama o PostgREST RPC para gravar o post (nó imediatamente após 'Serializar Body Post', com URL contendo '/rest/v1/rpc/upsert_instagram_post_insight'). Alterar APENAS a URL para chamar a função nova. A função original permanece ativa para outros usos.",
+      "_tipo_no": "HTTP Request (POST para PostgREST RPC)",
+      "parametro_a_alterar": "url",
+      "valor_original_contem": "/rest/v1/rpc/upsert_instagram_post_insight",
+      "valor_novo_contem":    "/rest/v1/rpc/upsert_instagram_post_insight_v2",
+      "_nota": "Substituição simples de sufixo na URL. Manter todas as outras configurações do nó (método, headers, credenciais) exatamente como estão."
+    },
+
+    {
+      "_instrucao": "Mesmo procedimento para o nó paralelo da segunda conta (CS), que também chama o RPC. Localizar pelo mesmo padrão de URL.",
+      "_tipo_no": "HTTP Request (POST para PostgREST RPC) — pipeline CS",
+      "parametro_a_alterar": "url",
+      "valor_original_contem": "/rest/v1/rpc/upsert_instagram_post_insight",
+      "valor_novo_contem":    "/rest/v1/rpc/upsert_instagram_post_insight_v2"
     },
 
     {
