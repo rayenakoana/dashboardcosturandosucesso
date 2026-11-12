@@ -138,13 +138,13 @@
       "position": [800, 100],
       "parameters": {
         "method": "GET",
-        "url": "={{ $env.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.18115485343992680&select=post_id,like_count,comments_count,shares,saved,reach,impressions,views,synced_at,cover_url,cover_synced_at' }}",
+        "url": "={{ $vars.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.18115485343992680&select=post_id,like_count,comments_count,shares,saved,reach,impressions,views,synced_at,cover_url,cover_synced_at' }}",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey",         "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization",  "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "apikey",         "value": "={{ $vars.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization",  "value": "=Bearer {{ $vars.SUPABASE_SERVICE_KEY }}" },
             { "name": "Accept-Profile", "value": "wpp" },
             { "name": "Accept",         "value": "application/json" }
           ]
@@ -161,13 +161,13 @@
       "position": [800, 500],
       "parameters": {
         "method": "GET",
-        "url": "={{ $env.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.18082958183373773&select=post_id,like_count,comments_count,shares,saved,reach,impressions,views,synced_at,cover_url,cover_synced_at' }}",
+        "url": "={{ $vars.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.18082958183373773&select=post_id,like_count,comments_count,shares,saved,reach,impressions,views,synced_at,cover_url,cover_synced_at' }}",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey",         "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization",  "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "apikey",         "value": "={{ $vars.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization",  "value": "=Bearer {{ $vars.SUPABASE_SERVICE_KEY }}" },
             { "name": "Accept-Profile", "value": "wpp" },
             { "name": "Accept",         "value": "application/json" }
           ]
@@ -184,13 +184,13 @@
       "position": [800, 900],
       "parameters": {
         "method": "GET",
-        "url": "={{ $env.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.18066040568539014&select=post_id,like_count,comments_count,shares,saved,reach,impressions,views,synced_at,cover_url,cover_synced_at' }}",
+        "url": "={{ $vars.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.18066040568539014&select=post_id,like_count,comments_count,shares,saved,reach,impressions,views,synced_at,cover_url,cover_synced_at' }}",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey",         "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization",  "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "apikey",         "value": "={{ $vars.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization",  "value": "=Bearer {{ $vars.SUPABASE_SERVICE_KEY }}" },
             { "name": "Accept-Profile", "value": "wpp" },
             { "name": "Accept",         "value": "application/json" }
           ]
@@ -303,7 +303,7 @@
       "position": [1520, 100],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const prep   = $('Preparar Download IMAGE').item.json;\nconst item   = $input.item;\nif (item.json?.error) throw new Error('[IMAGE] Download falhou: ' + JSON.stringify(item.json.error));\nconst binary = item.binary?.data;\nif (!binary) throw new Error('[IMAGE] Download não retornou dados binários');\nconst mime = (binary.mimeType || '').toLowerCase();\nconst MIMES_ACEITOS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };\nconst ext = MIMES_ACEITOS[mime];\nif (!ext) throw new Error('[IMAGE] MIME não aceito: ' + mime + ' — aceitos: image/jpeg, image/png, image/webp, image/gif');\n// Medir tamanho real: binary.data é string base64 em n8n Code nodes\nconst size = Buffer.isBuffer(binary.data)\n  ? binary.data.length\n  : Buffer.byteLength(binary.data, 'base64');\nconst MAX = 5 * 1024 * 1024;\nif (size > MAX) throw new Error('[IMAGE] Arquivo muito grande: ' + size + ' bytes (limite 5 MB)');\nconst storagePath = prep.username + '/' + prep.post_id + '.' + ext;\nreturn {\n  json: {\n    post_id:          prep.post_id,\n    username:         prep.username,\n    media_type:       prep.media_type,\n    cover_strategy:   prep.cover_strategy,\n    mime_type:        mime,\n    ext:              ext,\n    file_size_bytes:  size,\n    storage_path:     storagePath,\n    upload_url:       $env.SUPABASE_URL + '/storage/v1/object/instagram-covers/' + storagePath,\n    public_url:       $env.SUPABASE_URL + '/storage/v1/object/public/instagram-covers/' + storagePath,\n    metricas_antes:   prep.metricas_antes\n  },\n  binary: { data: binary }\n};"
+        "jsCode": "const prep   = $('Preparar Download IMAGE').item.json;\nconst item   = $input.item;\nif (item.json?.error) throw new Error('[IMAGE] Download falhou: ' + JSON.stringify(item.json.error));\nconst binary = item.binary?.data;\nif (!binary) throw new Error('[IMAGE] Download não retornou dados binários');\nconst mime = (binary.mimeType || '').toLowerCase();\nconst MIMES_ACEITOS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };\nconst ext = MIMES_ACEITOS[mime];\nif (!ext) throw new Error('[IMAGE] MIME não aceito: ' + mime + ' — aceitos: image/jpeg, image/png, image/webp, image/gif');\n// Medir tamanho real: binary.data é string base64 em n8n Code nodes\nconst size = Buffer.isBuffer(binary.data)\n  ? binary.data.length\n  : Buffer.byteLength(binary.data, 'base64');\nconst MAX = 5 * 1024 * 1024;\nif (size > MAX) throw new Error('[IMAGE] Arquivo muito grande: ' + size + ' bytes (limite 5 MB)');\nconst storagePath = prep.username + '/' + prep.post_id + '.' + ext;\nreturn {\n  json: {\n    post_id:          prep.post_id,\n    username:         prep.username,\n    media_type:       prep.media_type,\n    cover_strategy:   prep.cover_strategy,\n    mime_type:        mime,\n    ext:              ext,\n    file_size_bytes:  size,\n    storage_path:     storagePath,\n    upload_url:       $vars.SUPABASE_URL + '/storage/v1/object/instagram-covers/' + storagePath,\n    public_url:       $vars.SUPABASE_URL + '/storage/v1/object/public/instagram-covers/' + storagePath,\n    metricas_antes:   prep.metricas_antes\n  },\n  binary: { data: binary }\n};"
       }
     },
 
@@ -315,7 +315,7 @@
       "position": [1520, 500],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const prep   = $('Preparar Download VIDEO').item.json;\nconst item   = $input.item;\nif (item.json?.error) throw new Error('[VIDEO] Download falhou: ' + JSON.stringify(item.json.error));\nconst binary = item.binary?.data;\nif (!binary) throw new Error('[VIDEO] Download não retornou dados binários');\nconst mime = (binary.mimeType || '').toLowerCase();\nconst MIMES_ACEITOS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };\nconst ext = MIMES_ACEITOS[mime];\nif (!ext) throw new Error('[VIDEO] thumbnail_url retornou MIME não aceito: ' + mime + ' — se retornou video/* o campo está apontando para .mp4; aceitos: image/jpeg, image/png, image/webp, image/gif');\n// Medir tamanho real: binary.data é string base64 em n8n Code nodes\nconst size = Buffer.isBuffer(binary.data)\n  ? binary.data.length\n  : Buffer.byteLength(binary.data, 'base64');\nconst MAX = 5 * 1024 * 1024;\nif (size > MAX) throw new Error('[VIDEO] Arquivo muito grande: ' + size + ' bytes (limite 5 MB)');\nconst storagePath = prep.username + '/' + prep.post_id + '.' + ext;\nreturn {\n  json: {\n    post_id:          prep.post_id,\n    username:         prep.username,\n    media_type:       prep.media_type,\n    cover_strategy:   prep.cover_strategy,\n    mime_type:        mime,\n    ext:              ext,\n    file_size_bytes:  size,\n    storage_path:     storagePath,\n    upload_url:       $env.SUPABASE_URL + '/storage/v1/object/instagram-covers/' + storagePath,\n    public_url:       $env.SUPABASE_URL + '/storage/v1/object/public/instagram-covers/' + storagePath,\n    metricas_antes:   prep.metricas_antes\n  },\n  binary: { data: binary }\n};"
+        "jsCode": "const prep   = $('Preparar Download VIDEO').item.json;\nconst item   = $input.item;\nif (item.json?.error) throw new Error('[VIDEO] Download falhou: ' + JSON.stringify(item.json.error));\nconst binary = item.binary?.data;\nif (!binary) throw new Error('[VIDEO] Download não retornou dados binários');\nconst mime = (binary.mimeType || '').toLowerCase();\nconst MIMES_ACEITOS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };\nconst ext = MIMES_ACEITOS[mime];\nif (!ext) throw new Error('[VIDEO] thumbnail_url retornou MIME não aceito: ' + mime + ' — se retornou video/* o campo está apontando para .mp4; aceitos: image/jpeg, image/png, image/webp, image/gif');\n// Medir tamanho real: binary.data é string base64 em n8n Code nodes\nconst size = Buffer.isBuffer(binary.data)\n  ? binary.data.length\n  : Buffer.byteLength(binary.data, 'base64');\nconst MAX = 5 * 1024 * 1024;\nif (size > MAX) throw new Error('[VIDEO] Arquivo muito grande: ' + size + ' bytes (limite 5 MB)');\nconst storagePath = prep.username + '/' + prep.post_id + '.' + ext;\nreturn {\n  json: {\n    post_id:          prep.post_id,\n    username:         prep.username,\n    media_type:       prep.media_type,\n    cover_strategy:   prep.cover_strategy,\n    mime_type:        mime,\n    ext:              ext,\n    file_size_bytes:  size,\n    storage_path:     storagePath,\n    upload_url:       $vars.SUPABASE_URL + '/storage/v1/object/instagram-covers/' + storagePath,\n    public_url:       $vars.SUPABASE_URL + '/storage/v1/object/public/instagram-covers/' + storagePath,\n    metricas_antes:   prep.metricas_antes\n  },\n  binary: { data: binary }\n};"
       }
     },
 
@@ -327,7 +327,7 @@
       "position": [1520, 900],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const prep   = $('Preparar Download CAROUSEL').item.json;\nconst item   = $input.item;\nif (item.json?.error) throw new Error('[CAROUSEL] Download falhou: ' + JSON.stringify(item.json.error));\nconst binary = item.binary?.data;\nif (!binary) throw new Error('[CAROUSEL] Download não retornou dados binários');\nconst mime = (binary.mimeType || '').toLowerCase();\nconst MIMES_ACEITOS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };\nconst ext = MIMES_ACEITOS[mime];\nif (!ext) throw new Error('[CAROUSEL] MIME não aceito: ' + mime + ' — aceitos: image/jpeg, image/png, image/webp, image/gif');\n// Medir tamanho real: binary.data é string base64 em n8n Code nodes\nconst size = Buffer.isBuffer(binary.data)\n  ? binary.data.length\n  : Buffer.byteLength(binary.data, 'base64');\nconst MAX = 5 * 1024 * 1024;\nif (size > MAX) throw new Error('[CAROUSEL] Arquivo muito grande: ' + size + ' bytes (limite 5 MB)');\nconst storagePath = prep.username + '/' + prep.post_id + '.' + ext;\nreturn {\n  json: {\n    post_id:          prep.post_id,\n    username:         prep.username,\n    media_type:       prep.media_type,\n    cover_strategy:   prep.cover_strategy,\n    total_filhos:     prep.total_filhos,\n    filho0_tipo:      prep.filho0_tipo,\n    mime_type:        mime,\n    ext:              ext,\n    file_size_bytes:  size,\n    storage_path:     storagePath,\n    upload_url:       $env.SUPABASE_URL + '/storage/v1/object/instagram-covers/' + storagePath,\n    public_url:       $env.SUPABASE_URL + '/storage/v1/object/public/instagram-covers/' + storagePath,\n    metricas_antes:   prep.metricas_antes\n  },\n  binary: { data: binary }\n};"
+        "jsCode": "const prep   = $('Preparar Download CAROUSEL').item.json;\nconst item   = $input.item;\nif (item.json?.error) throw new Error('[CAROUSEL] Download falhou: ' + JSON.stringify(item.json.error));\nconst binary = item.binary?.data;\nif (!binary) throw new Error('[CAROUSEL] Download não retornou dados binários');\nconst mime = (binary.mimeType || '').toLowerCase();\nconst MIMES_ACEITOS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };\nconst ext = MIMES_ACEITOS[mime];\nif (!ext) throw new Error('[CAROUSEL] MIME não aceito: ' + mime + ' — aceitos: image/jpeg, image/png, image/webp, image/gif');\n// Medir tamanho real: binary.data é string base64 em n8n Code nodes\nconst size = Buffer.isBuffer(binary.data)\n  ? binary.data.length\n  : Buffer.byteLength(binary.data, 'base64');\nconst MAX = 5 * 1024 * 1024;\nif (size > MAX) throw new Error('[CAROUSEL] Arquivo muito grande: ' + size + ' bytes (limite 5 MB)');\nconst storagePath = prep.username + '/' + prep.post_id + '.' + ext;\nreturn {\n  json: {\n    post_id:          prep.post_id,\n    username:         prep.username,\n    media_type:       prep.media_type,\n    cover_strategy:   prep.cover_strategy,\n    total_filhos:     prep.total_filhos,\n    filho0_tipo:      prep.filho0_tipo,\n    mime_type:        mime,\n    ext:              ext,\n    file_size_bytes:  size,\n    storage_path:     storagePath,\n    upload_url:       $vars.SUPABASE_URL + '/storage/v1/object/instagram-covers/' + storagePath,\n    public_url:       $vars.SUPABASE_URL + '/storage/v1/object/public/instagram-covers/' + storagePath,\n    metricas_antes:   prep.metricas_antes\n  },\n  binary: { data: binary }\n};"
       }
     },
 
@@ -345,8 +345,8 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey",        "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "apikey",        "value": "={{ $vars.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $vars.SUPABASE_SERVICE_KEY }}" },
             { "name": "Content-Type",  "value": "={{ $json.mime_type }}" },
             { "name": "x-upsert",      "value": "true" }
           ]
@@ -372,8 +372,8 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey",        "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "apikey",        "value": "={{ $vars.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $vars.SUPABASE_SERVICE_KEY }}" },
             { "name": "Content-Type",  "value": "={{ $json.mime_type }}" },
             { "name": "x-upsert",      "value": "true" }
           ]
@@ -399,8 +399,8 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey",        "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "apikey",        "value": "={{ $vars.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $vars.SUPABASE_SERVICE_KEY }}" },
             { "name": "Content-Type",  "value": "={{ $json.mime_type }}" },
             { "name": "x-upsert",      "value": "true" }
           ]
@@ -561,13 +561,13 @@
       "position": [2440, 100],
       "parameters": {
         "method": "PATCH",
-        "url": "={{ $env.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.' + $json.post_id }}",
+        "url": "={{ $vars.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.' + $json.post_id }}",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey",          "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization",   "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "apikey",          "value": "={{ $vars.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization",   "value": "=Bearer {{ $vars.SUPABASE_SERVICE_KEY }}" },
             { "name": "Content-Profile", "value": "wpp" },
             { "name": "Accept-Profile",  "value": "wpp" },
             { "name": "Prefer",          "value": "return=representation" }
@@ -588,13 +588,13 @@
       "position": [2440, 500],
       "parameters": {
         "method": "PATCH",
-        "url": "={{ $env.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.' + $json.post_id }}",
+        "url": "={{ $vars.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.' + $json.post_id }}",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey",          "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization",   "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "apikey",          "value": "={{ $vars.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization",   "value": "=Bearer {{ $vars.SUPABASE_SERVICE_KEY }}" },
             { "name": "Content-Profile", "value": "wpp" },
             { "name": "Accept-Profile",  "value": "wpp" },
             { "name": "Prefer",          "value": "return=representation" }
@@ -615,13 +615,13 @@
       "position": [2440, 900],
       "parameters": {
         "method": "PATCH",
-        "url": "={{ $env.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.' + $json.post_id }}",
+        "url": "={{ $vars.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.' + $json.post_id }}",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey",          "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization",   "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "apikey",          "value": "={{ $vars.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization",   "value": "=Bearer {{ $vars.SUPABASE_SERVICE_KEY }}" },
             { "name": "Content-Profile", "value": "wpp" },
             { "name": "Accept-Profile",  "value": "wpp" },
             { "name": "Prefer",          "value": "return=representation" }
