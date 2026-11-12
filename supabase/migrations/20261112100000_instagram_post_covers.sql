@@ -13,23 +13,27 @@
 
 -- 1. Adicionar colunas de imagem
 ALTER TABLE wpp.instagram_post_insights
-  ADD COLUMN IF NOT EXISTS thumbnail_url   TEXT,
-  ADD COLUMN IF NOT EXISTS media_url       TEXT,
-  ADD COLUMN IF NOT EXISTS cover_url       TEXT,
-  ADD COLUMN IF NOT EXISTS cover_synced_at TIMESTAMPTZ;
+  ADD COLUMN IF NOT EXISTS thumbnail_url    TEXT,
+  ADD COLUMN IF NOT EXISTS media_url        TEXT,
+  ADD COLUMN IF NOT EXISTS cover_source_url TEXT,
+  ADD COLUMN IF NOT EXISTS cover_url        TEXT,
+  ADD COLUMN IF NOT EXISTS cover_synced_at  TIMESTAMPTZ;
 
 -- 2. Comentários descritivos
 COMMENT ON COLUMN wpp.instagram_post_insights.thumbnail_url
-  IS 'URL original da thumbnail fornecida pela Meta Graph API (CDN do Meta — pode expirar). Usada para Reels/Vídeos.';
+  IS 'URL bruta do thumbnail fornecida pela Meta Graph API (CDN Meta — expira). Reels/Vídeos.';
 
 COMMENT ON COLUMN wpp.instagram_post_insights.media_url
-  IS 'URL original da mídia fornecida pela Meta Graph API (CDN do Meta — pode expirar). Usada para Imagens e primeiro filho de Carrosséis.';
+  IS 'URL bruta da mídia fornecida pela Meta Graph API (CDN Meta — expira). Imagens; para Carrosséis, refere-se ao álbum.';
+
+COMMENT ON COLUMN wpp.instagram_post_insights.cover_source_url
+  IS 'URL de origem da capa, derivada pelo workflow com lógica por media_type (IMAGE→media_url, VIDEO→thumbnail_url, CAROUSEL→primeiro filho). Pode ser CDN Meta (expira) mas é o que o workflow de Storage usa para download, eliminando nova chamada à API.';
 
 COMMENT ON COLUMN wpp.instagram_post_insights.cover_url
-  IS 'URL permanente da miniatura armazenada no Supabase Storage (bucket instagram-covers). Formato: instagram-covers/{username}/{post_id}.jpg. Null enquanto o download ainda não foi realizado.';
+  IS 'URL permanente no Supabase Storage (bucket instagram-covers/{username}/{post_id}.{ext}). Null até o workflow de Storage executar com sucesso.';
 
 COMMENT ON COLUMN wpp.instagram_post_insights.cover_synced_at
-  IS 'Timestamp UTC do último download bem-sucedido da capa para o Supabase Storage. Null se ainda não baixado ou se o download falhou.';
+  IS 'Timestamp UTC do último upload bem-sucedido da capa para o Supabase Storage.';
 
 -- 3. Verificação de duplicatas por post_id
 -- Execute esta query ANTES de aplicar a migration para confirmar unicidade:

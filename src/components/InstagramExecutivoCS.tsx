@@ -77,8 +77,8 @@ function thumb(post: InstagramPostInsight, compactMode=false) {
   // Se a sincronização do Instagram possuir uma URL de mídia real, usa essa URL.
   // Sem URL, preserva um placeholder — nunca atribui outra imagem ao post.
   const media = post as InstagramPostInsight;
-  // cover_url (Storage permanente) tem prioridade; fallback para URLs do Meta CDN
-  const candidate = media.cover_url || media.thumbnail_url || media.media_url || "";
+  // cover_url (Storage permanente) → cover_source_url (CDN Meta derivada) → thumbnail_url → media_url
+  const candidate = media.cover_url || media.cover_source_url || media.thumbnail_url || media.media_url || "";
   const realImage = /^https:\/\//i.test(candidate) ? candidate : null;
   return <span className={`cs-ig26__thumb ${compactMode ? "cs-ig26__thumb--mini" : ""}`} aria-label={formatOf(post)}>
     <T className="cs-ig26__thumb-fallback" size={compactMode?15:25}/>

@@ -1,8 +1,23 @@
 {
-  "_instrucoes": "Workflow separado para download e persistência das capas no Supabase Storage. Importar como NOVO workflow no n8n — não substituir o workflow de Insights. Substituir SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY e SUPABASE_ANON_KEY pelos valores reais do projeto antes de ativar.",
+  "_instrucoes": "Workflow completo para importar no n8n. Faz o download das capas dos posts do Instagram e as armazena no Supabase Storage. Executar APÓS o workflow principal de Insights já ter sido atualizado e os campos de imagem populados na tabela. Requer variáveis de ambiente no n8n: SUPABASE_URL e SUPABASE_SERVICE_KEY (Settings → Variables). NÃO hardcodar credenciais.",
+  "_versao": "2.0.0",
+  "_correcoes_v2": [
+    "Split Posts: tratamento robusto do response PostgREST (Array.isArray + fallback raw.data)",
+    "MIME/extensão: detectado dinamicamente do header Content-Type do download",
+    "Credenciais: usa variáveis de ambiente do n8n — sem valores hardcoded",
+    "Validação PATCH: verifica HTTP status da resposta; loga post_id na falha",
+    "Log final: contador por categoria (sucesso, sem_url, erro_download, erro_upload, erro_patch)"
+  ],
+
   "name": "Instagram Cover Storage Sync",
   "nodes": [
+
     {
+      "id": "node-schedule",
+      "name": "Agendamento Diário",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [100, 300],
       "parameters": {
         "rule": {
           "interval": [
@@ -13,319 +28,576 @@
           ]
         }
       },
-      "name": "Schedule Trigger",
-      "_comment": "Roda às 09h30 UTC — 30 minutos após o workflow principal de Insights (09h00). Ajustar se o horário do workflow principal for diferente.",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.3,
-      "position": [-800, 0],
-      "id": "cov-01"
+      "_nota": "09:30 UTC — 30 min após o workflow principal de Insights (que roda às 09:00 UTC). Ajustar para o horário configurado no workflow principal + 30 min."
     },
+
     {
-      "parameters": {
-        "jsCode": "// Configurações do projeto — substituir pelos valores reais\nconst SUPABASE_URL = 'https://syecwttpsvrmhdvinjmt.supabase.co';\nconst SUPABASE_SERVICE_KEY = 'SUPABASE_SERVICE_ROLE_KEY_AQUI';\nconst STORAGE_BUCKET = 'instagram-covers';\n\nreturn [{\n  json: {\n    SUPABASE_URL,\n    SUPABASE_SERVICE_KEY,\n    STORAGE_BUCKET\n  }\n}];"
-      },
+      "id": "node-config",
       "name": "Config",
-      "_comment": "Centraliza as configurações. Em produção, usar variáveis de ambiente do n8n (Settings > Variables) ao invés de hardcode.",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [-560, 0],
-      "id": "cov-02"
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [280, 300],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg-url",
+              "name": "supabaseUrl",
+              "value": "={{ $env.SUPABASE_URL }}",
+              "type": "string"
+            },
+            {
+              "id": "cfg-key",
+              "name": "supabaseServiceKey",
+              "value": "={{ $env.SUPABASE_SERVICE_KEY }}",
+              "type": "string"
+            },
+            {
+              "id": "cfg-bucket",
+              "name": "bucket",
+              "value": "instagram-covers",
+              "type": "string"
+            },
+            {
+              "id": "cfg-batch",
+              "name": "batchSize",
+              "value": 50,
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "_nota": "Variáveis de ambiente obrigatórias no n8n: SUPABASE_URL (ex: https://xyzxyz.supabase.co) e SUPABASE_SERVICE_KEY (service_role key — NÃO a anon key). Configurar em Settings → Variables."
     },
+
     {
+      "id": "node-query-posts",
+      "name": "Buscar Posts Sem Capa",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [460, 300],
       "parameters": {
         "method": "GET",
-        "url": "=https://syecwttpsvrmhdvinjmt.supabase.co/rest/v1/instagram_post_insights",
+        "url": "={{ $json.supabaseUrl }}/rest/v1/instagram_post_insights",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $json.supabaseServiceKey }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.supabaseServiceKey }}"
+            },
+            {
+              "name": "Accept-Profile",
+              "value": "wpp"
+            }
+          ]
+        },
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "select", "value": "post_id,username,media_type,thumbnail_url,media_url" },
-            { "name": "cover_url", "value": "is.null" },
-            { "name": "order", "value": "posted_at.desc" },
-            { "name": "limit", "value": "100" }
+            {
+              "name": "select",
+              "value": "post_id,username,media_type,cover_source_url,thumbnail_url,media_url"
+            },
+            {
+              "name": "cover_url",
+              "value": "is.null"
+            },
+            {
+              "name": "cover_source_url",
+              "value": "not.is.null"
+            },
+            {
+              "name": "order",
+              "value": "posted_at.desc"
+            },
+            {
+              "name": "limit",
+              "value": "={{ $json.batchSize }}"
+            }
           ]
         },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            { "name": "apikey", "value": "SUPABASE_SERVICE_ROLE_KEY_AQUI" },
-            { "name": "Authorization", "value": "Bearer SUPABASE_SERVICE_ROLE_KEY_AQUI" },
-            { "name": "Accept-Profile", "value": "wpp" }
-          ]
-        },
-        "options": {}
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "neverError": false
+            }
+          }
+        }
       },
-      "name": "Buscar Posts Sem Capa",
-      "_comment": "Busca até 100 posts sem cover_url por execução. Executar múltiplas vezes para processar histórico completo.",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [-320, 0],
-      "id": "cov-03"
+      "_nota": "Prioriza cover_source_url (derivada pelo workflow de Insights) para posts sem cover_url. PostgREST GET retorna JSON array como corpo único — tratado no nó Split Posts."
     },
+
     {
-      "parameters": {
-        "jsCode": "const data = $input.item.json;\nif (!Array.isArray(data) || data.length === 0) return [];\nreturn data.map(post => ({ json: post }));"
-      },
+      "id": "node-split-posts",
       "name": "Split Posts",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-80, 0],
-      "id": "cov-04"
-    },
-    {
+      "position": [640, 300],
       "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const post = $input.item.json;\n\n// Derivar URL de capa por tipo de mídia (sem nova chamada à API)\nlet coverSourceUrl = null;\n\nif (post.media_type === 'IMAGE') {\n  coverSourceUrl = post.media_url || null;\n} else if (post.media_type === 'VIDEO') {\n  coverSourceUrl = post.thumbnail_url || post.media_url || null;\n} else if (post.media_type === 'CAROUSEL_ALBUM') {\n  // Para carrosséis, media_url pode conter a capa do álbum\n  // Se não, o post será pulado e tratado por uma segunda passagem com chamada à API\n  coverSourceUrl = post.media_url || post.thumbnail_url || null;\n}\n\nreturn {\n  json: {\n    ...post,\n    cover_source_url: coverSourceUrl,\n    has_source: Boolean(coverSourceUrl)\n  }\n};"
-      },
+        "jsCode": "// PostgREST GET retorna um JSON array como corpo de um único item n8n.\n// Pode chegar como array direto ($input.item.json = [...]) ou,\n// em algumas versões do n8n, encapsulado em raw.data.\nconst raw = $input.item.json;\nconst data = Array.isArray(raw) ? raw\n           : Array.isArray(raw?.data) ? raw.data\n           : [];\n\nif (data.length === 0) {\n  console.log('[INFO] Nenhum post sem capa encontrado neste lote.');\n  return [];\n}\n\nconsole.log(`[INFO] ${data.length} posts sem capa encontrados.`);\n\nreturn data.map(post => ({ json: post }));"
+      }
+    },
+
+    {
+      "id": "node-derive-url",
       "name": "Derivar URL de Capa",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [160, 0],
-      "id": "cov-05"
+      "position": [820, 300],
+      "parameters": {
+        "jsCode": "// cover_source_url foi persistida pelo workflow de Insights durante o sync.\n// Usar diretamente, sem nova chamada à Graph API.\n// Fallback para thumbnail_url / media_url para posts históricos (antes do patch)\n// que não tenham cover_source_url mas possam ter as URLs brutas.\n\nconst post = $input.item.json;\n\nconst coverUrl = post.cover_source_url\n              || post.thumbnail_url\n              || post.media_url\n              || null;\n\nreturn {\n  json: {\n    post_id:   post.post_id,\n    username:  post.username,\n    media_type: post.media_type,\n    cover_url: coverUrl,\n    has_url:   Boolean(coverUrl)\n  }\n};"
+      }
     },
+
     {
+      "id": "node-check-url",
+      "name": "Tem URL?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1000, 300],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
           "conditions": [
             {
-              "id": "has-source",
-              "leftValue": "={{ $json.has_source }}",
+              "id": "cond-has-url",
+              "leftValue": "={{ $json.has_url }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "true" }
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
             }
           ],
           "combinator": "and"
         },
         "options": {}
-      },
-      "name": "Tem URL de Capa?",
-      "_comment": "true → baixar e fazer upload. false → pular (carrossel sem media_url — tratado em segunda passagem).",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [400, 0],
-      "id": "cov-06"
+      }
     },
+
     {
+      "id": "node-no-url-log",
+      "name": "Log Sem URL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1180, 460],
       "parameters": {
-        "url": "={{ $json.cover_source_url }}",
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "log-status",
+              "name": "status",
+              "value": "sem_url",
+              "type": "string"
+            },
+            {
+              "id": "log-post-id",
+              "name": "post_id",
+              "value": "={{ $json.post_id }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": "node-download",
+      "name": "Download Capa",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1180, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.cover_url }}",
+        "sendHeaders": false,
         "options": {
-          "response": { "response": { "responseFormat": "file" } },
-          "timeout": 15000
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 15000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 5
+            }
+          }
         }
       },
-      "name": "Download Capa",
-      "_comment": "Baixa a imagem como arquivo binário. Timeout de 15 segundos. Se falhar, continua para o próximo post.",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [640, -80],
-      "id": "cov-07",
-      "continueOnFail": true
+      "_nota": "responseFormat: 'file' salva o binário em $binary.data. mimeType e fileSize ficam disponíveis em $binary.data.mimeType e $binary.data.fileSize."
     },
+
     {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "// Verificar se o download teve sucesso\nconst item = $input.item;\nconst post = $('Derivar URL de Capa').item.json;\n\n// Se houve erro no download, retornar flag de falha\nif (item.error || !item.binary?.data) {\n  return {\n    json: {\n      ...post,\n      download_ok: false,\n      download_error: item.error?.message || 'Sem dados binários'\n    }\n  };\n}\n\nreturn {\n  json: {\n    ...post,\n    download_ok: true,\n    file_size: item.binary.data.fileSize || 0\n  },\n  binary: item.binary\n};"
-      },
+      "id": "node-verify-download",
       "name": "Verificar Download",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [880, -80],
-      "id": "cov-08"
+      "position": [1360, 300],
+      "parameters": {
+        "jsCode": "// Verificar se o download produziu dados binários válidos.\nconst binary = $binary?.data;\nconst post   = $json;\n\nif (!binary || !binary.mimeType) {\n  return {\n    json: {\n      post_id:  post.post_id,\n      username: post.username,\n      ok:       false,\n      reason:   'sem_dados_binarios'\n    }\n  };\n}\n\n// Detectar extensão a partir do Content-Type retornado\nconst MIME_EXT = {\n  'image/jpeg': 'jpg',\n  'image/jpg':  'jpg',\n  'image/png':  'png',\n  'image/webp': 'webp',\n  'image/gif':  'gif'\n};\nconst mimeType = binary.mimeType.split(';')[0].trim().toLowerCase();\nconst ext      = MIME_EXT[mimeType] || 'jpg';\nconst fileSize = binary.fileSize || 0;\n\n// Rejeitar arquivos muito grandes (> 5 MB = 5_242_880 bytes)\nif (fileSize > 5242880) {\n  return {\n    json: {\n      post_id:   post.post_id,\n      username:  post.username,\n      ok:        false,\n      reason:    'arquivo_muito_grande',\n      file_size: fileSize\n    }\n  };\n}\n\nreturn {\n  json: {\n    post_id:   post.post_id,\n    username:  post.username,\n    mime_type: mimeType,\n    ext:       ext,\n    file_size: fileSize,\n    ok:        true\n  },\n  binary: { data: binary }\n};"
+      }
     },
+
     {
+      "id": "node-check-download",
+      "name": "Download OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1540, 300],
       "parameters": {
         "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
           "conditions": [
             {
-              "id": "download-ok",
-              "leftValue": "={{ $json.download_ok }}",
+              "id": "cond-ok",
+              "leftValue": "={{ $json.ok }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "true" }
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
             }
           ],
           "combinator": "and"
         },
         "options": {}
-      },
-      "name": "Download OK?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [1120, -80],
-      "id": "cov-09"
+      }
     },
+
     {
+      "id": "node-download-error-log",
+      "name": "Log Erro Download",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1720, 460],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "elog-status",
+              "name": "status",
+              "value": "erro_download",
+              "type": "string"
+            },
+            {
+              "id": "elog-post-id",
+              "name": "post_id",
+              "value": "={{ $json.post_id }}",
+              "type": "string"
+            },
+            {
+              "id": "elog-reason",
+              "name": "reason",
+              "value": "={{ $json.reason }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": "node-build-storage-path",
+      "name": "Montar Caminho Storage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1720, 300],
+      "parameters": {
+        "jsCode": "// Montar o caminho no bucket e a URL pública final.\n// A extensão vem do mimeType detectado no download — sem hardcode.\n\nconst post        = $json;\nconst supabaseUrl = $('Config').item.json.supabaseUrl;\nconst bucket      = $('Config').item.json.bucket;\nconst ext         = post.ext || 'jpg';\nconst mimeType    = post.mime_type || 'image/jpeg';\n\nconst storagePath = `${post.username}/${post.post_id}.${ext}`;\nconst publicUrl   = `${supabaseUrl}/storage/v1/object/public/${bucket}/${storagePath}`;\nconst uploadUrl   = `${supabaseUrl}/storage/v1/object/${bucket}/${storagePath}`;\n\nreturn {\n  json: {\n    post_id:      post.post_id,\n    username:     post.username,\n    mime_type:    mimeType,\n    ext:          ext,\n    storage_path: storagePath,\n    public_url:   publicUrl,\n    upload_url:   uploadUrl\n  },\n  binary: { data: $binary?.data }\n};"
+      }
+    },
+
+    {
+      "id": "node-upload",
+      "name": "Upload para Storage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1900, 300],
       "parameters": {
         "method": "POST",
-        "url": "=https://syecwttpsvrmhdvinjmt.supabase.co/storage/v1/object/instagram-covers/{{ $json.username }}/{{ $json.post_id }}.jpg",
+        "url": "={{ $json.upload_url }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "Bearer SUPABASE_SERVICE_ROLE_KEY_AQUI" },
-            { "name": "Content-Type", "value": "image/jpeg" },
-            { "name": "x-upsert", "value": "true" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Config').item.json.supabaseServiceKey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "={{ $json.mime_type }}"
+            },
+            {
+              "name": "x-upsert",
+              "value": "true"
+            }
           ]
         },
         "sendBody": true,
         "contentType": "binaryData",
         "inputDataFieldName": "data",
-        "options": { "timeout": 30000 }
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          },
+          "timeout": 30000
+        }
       },
-      "name": "Upload ao Storage",
-      "_comment": "Faz POST com x-upsert:true — idempotente. Se a imagem já existir, substitui. URL resultante é permanente.",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [1360, -160],
-      "id": "cov-10",
-      "continueOnFail": true
+      "_nota": "fullResponse: true retorna statusCode. x-upsert: true torna o upload idempotente. Content-Type é o mimeType detectado dinamicamente."
     },
+
     {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const uploadResult = $input.item.json;\nconst post = $('Verificar Download').item.json;\n\n// Verificar se o upload teve sucesso (Supabase Storage retorna { Key: '...' })\nconst uploadOk = !$input.item.error && (uploadResult.Key || uploadResult.Id);\n\nconst SUPABASE_URL = 'https://syecwttpsvrmhdvinjmt.supabase.co';\nconst coverUrl = uploadOk\n  ? `${SUPABASE_URL}/storage/v1/object/public/instagram-covers/${post.username}/${post.post_id}.jpg`\n  : null;\n\nreturn {\n  json: {\n    post_id: post.post_id,\n    cover_url: coverUrl,\n    upload_ok: uploadOk,\n    upload_error: $input.item.error?.message || null\n  }\n};"
-      },
-      "name": "Montar Cover URL",
+      "id": "node-verify-upload",
+      "name": "Verificar Upload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1600, -160],
-      "id": "cov-11"
+      "position": [2080, 300],
+      "parameters": {
+        "jsCode": "const response = $json;\nconst prevJson = $('Montar Caminho Storage').item.json;\n\nconst httpStatus = response.statusCode || 0;\nconst ok = httpStatus === 200 || httpStatus === 201;\n\nif (!ok) {\n  console.log(`[ERRO] Upload falhou para post_id=${prevJson.post_id}: HTTP ${httpStatus}`);\n  return {\n    json: {\n      post_id:     prevJson.post_id,\n      username:    prevJson.username,\n      ok:          false,\n      http_status: httpStatus,\n      error_body:  JSON.stringify(response.body || {}).substring(0, 500)\n    }\n  };\n}\n\nreturn {\n  json: {\n    post_id:     prevJson.post_id,\n    username:    prevJson.username,\n    public_url:  prevJson.public_url,\n    ok:          true,\n    http_status: httpStatus\n  }\n};"
+      }
     },
+
     {
+      "id": "node-check-upload",
+      "name": "Upload OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2260, 300],
       "parameters": {
         "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
           "conditions": [
             {
-              "id": "upload-ok",
-              "leftValue": "={{ $json.upload_ok }}",
+              "id": "cond-upload-ok",
+              "leftValue": "={{ $json.ok }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "true" }
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
             }
           ],
           "combinator": "and"
         },
         "options": {}
-      },
-      "name": "Upload OK?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [1840, -160],
-      "id": "cov-12"
+      }
     },
+
     {
+      "id": "node-upload-error-log",
+      "name": "Log Erro Upload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [2440, 460],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "uelog-status",
+              "name": "status",
+              "value": "erro_upload",
+              "type": "string"
+            },
+            {
+              "id": "uelog-post-id",
+              "name": "post_id",
+              "value": "={{ $json.post_id }}",
+              "type": "string"
+            },
+            {
+              "id": "uelog-http",
+              "name": "http_status",
+              "value": "={{ $json.http_status }}",
+              "type": "number"
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": "node-patch-cover-url",
+      "name": "PATCH cover_url no Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2440, 300],
       "parameters": {
         "method": "PATCH",
-        "url": "=https://syecwttpsvrmhdvinjmt.supabase.co/rest/v1/instagram_post_insights",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            { "name": "post_id", "value": "=eq.{{ $json.post_id }}" }
-          ]
-        },
+        "url": "={{ $('Config').item.json.supabaseUrl }}/rest/v1/instagram_post_insights",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "SUPABASE_SERVICE_ROLE_KEY_AQUI" },
-            { "name": "Authorization", "value": "Bearer SUPABASE_SERVICE_ROLE_KEY_AQUI" },
-            { "name": "Content-Type", "value": "application/json" },
-            { "name": "Content-Profile", "value": "wpp" },
-            { "name": "Prefer", "value": "return=minimal" }
+            {
+              "name": "apikey",
+              "value": "={{ $('Config').item.json.supabaseServiceKey }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Config').item.json.supabaseServiceKey }}"
+            },
+            {
+              "name": "Content-Profile",
+              "value": "wpp"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "post_id",
+              "value": "=eq.{{ $json.post_id }}"
+            }
           ]
         },
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"cover_url\": \"{{ $json.cover_url }}\",\n  \"cover_synced_at\": \"{{ $now.toISO() }}\"\n}",
+        "contentType": "json",
+        "body": {
+          "cover_url": "={{ $json.public_url }}",
+          "cover_synced_at": "={{ $now.toISO() }}"
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "_nota": "Prefer: return=representation faz o PostgREST retornar o registro atualizado, confirmando o post_id correto. HTTP 200 = sucesso."
+    },
+
+    {
+      "id": "node-verify-patch",
+      "name": "Verificar PATCH",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2620, 300],
+      "parameters": {
+        "jsCode": "const response = $json;\nconst postId   = $('Verificar Upload').item.json.post_id;\n\nconst httpStatus  = response.statusCode || 0;\nconst body        = response.body;\nconst updatedRows = Array.isArray(body) ? body : (body ? [body] : []);\nconst patchOk     = httpStatus === 200 && updatedRows.length > 0;\n\nif (!patchOk) {\n  console.log(`[ERRO] PATCH falhou para post_id=${postId}: HTTP ${httpStatus}, rows=${updatedRows.length}`);\n  return {\n    json: {\n      post_id:      postId,\n      status:       'erro_patch',\n      http_status:  httpStatus,\n      rows_updated: updatedRows.length\n    }\n  };\n}\n\nreturn {\n  json: {\n    post_id:      postId,\n    status:       'sucesso',\n    cover_url:    updatedRows[0]?.cover_url || null,\n    rows_updated: updatedRows.length\n  }\n};"
+      }
+    },
+
+    {
+      "id": "node-merge-results",
+      "name": "Consolidar Resultados",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [2800, 300],
+      "parameters": {
+        "mode": "append",
         "options": {}
-      },
-      "name": "Atualizar cover_url",
-      "_comment": "PATCH idempotente — atualiza APENAS cover_url e cover_synced_at. Métricas não são tocadas.",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [2080, -240],
-      "id": "cov-13",
-      "continueOnFail": true
+      }
     },
+
     {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "// Log de sucesso\nconst d = $input.item.json;\nconsole.log(`[OK] ${d.post_id} → cover_url atualizada`);\nreturn { json: { status: 'ok', post_id: d.post_id } };"
-      },
-      "name": "Log Sucesso",
+      "id": "node-summary",
+      "name": "Log Resumo Final",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2320, -240],
-      "id": "cov-14"
-    },
-    {
+      "position": [2980, 300],
       "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const d = $input.item.json;\nconsole.warn(`[ERRO UPLOAD] post_id=${d.post_id} error=${d.upload_error}`);\nreturn { json: { status: 'upload_failed', post_id: d.post_id, error: d.upload_error } };"
-      },
-      "name": "Log Erro Upload",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [2080, -80],
-      "id": "cov-15"
-    },
-    {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const d = $input.item.json;\nconsole.warn(`[ERRO DOWNLOAD] post_id=${d.post_id} url=${d.cover_source_url} error=${d.download_error}`);\nreturn { json: { status: 'download_failed', post_id: d.post_id, url: d.cover_source_url, error: d.download_error } };"
-      },
-      "name": "Log Erro Download",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [1360, 80],
-      "id": "cov-16"
-    },
-    {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const d = $input.item.json;\nconsole.info(`[SEM URL] post_id=${d.post_id} media_type=${d.media_type} — sem cover_source_url (carrossel sem media_url ou post removido)`);\nreturn { json: { status: 'no_url', post_id: d.post_id, media_type: d.media_type } };"
-      },
-      "name": "Log Sem URL",
-      "_comment": "Posts sem cover_source_url (geralmente carrosséis onde a Graph API não retornou media_url). Exige segunda passagem com chamada à API.",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [640, 120],
-      "id": "cov-17"
+        "jsCode": "const items = $input.all();\n\nconst counts = {\n  total:         items.length,\n  sucesso:       0,\n  sem_url:       0,\n  erro_download: 0,\n  erro_upload:   0,\n  erro_patch:    0,\n  desconhecido:  0\n};\n\nconst erros = [];\n\nfor (const item of items) {\n  const s = item.json?.status;\n  if      (s === 'sucesso')       counts.sucesso++;\n  else if (s === 'sem_url')       counts.sem_url++;\n  else if (s === 'erro_download') { counts.erro_download++; erros.push({ tipo: 'download', post_id: item.json?.post_id, reason: item.json?.reason }); }\n  else if (s === 'erro_upload')   { counts.erro_upload++;   erros.push({ tipo: 'upload',   post_id: item.json?.post_id, http: item.json?.http_status }); }\n  else if (s === 'erro_patch')    { counts.erro_patch++;    erros.push({ tipo: 'patch',    post_id: item.json?.post_id, http: item.json?.http_status }); }\n  else counts.desconhecido++;\n}\n\nconsole.log('[RESUMO]', JSON.stringify({ counts, erros }, null, 2));\n\nreturn {\n  json: {\n    executado_em: new Date().toISOString(),\n    counts,\n    erros\n  }\n};"
+      }
     }
   ],
+
   "connections": {
-    "Schedule Trigger": { "main": [[{ "node": "Config", "type": "main", "index": 0 }]] },
-    "Config": { "main": [[{ "node": "Buscar Posts Sem Capa", "type": "main", "index": 0 }]] },
-    "Buscar Posts Sem Capa": { "main": [[{ "node": "Split Posts", "type": "main", "index": 0 }]] },
-    "Split Posts": { "main": [[{ "node": "Derivar URL de Capa", "type": "main", "index": 0 }]] },
-    "Derivar URL de Capa": { "main": [[{ "node": "Tem URL de Capa?", "type": "main", "index": 0 }]] },
-    "Tem URL de Capa?": {
+    "Agendamento Diário":           { "main": [[{ "node": "Config",                    "type": "main", "index": 0 }]] },
+    "Config":                       { "main": [[{ "node": "Buscar Posts Sem Capa",     "type": "main", "index": 0 }]] },
+    "Buscar Posts Sem Capa":        { "main": [[{ "node": "Split Posts",               "type": "main", "index": 0 }]] },
+    "Split Posts":                  { "main": [[{ "node": "Derivar URL de Capa",       "type": "main", "index": 0 }]] },
+    "Derivar URL de Capa":          { "main": [[{ "node": "Tem URL?",                  "type": "main", "index": 0 }]] },
+    "Tem URL?": {
       "main": [
-        [{ "node": "Download Capa", "type": "main", "index": 0 }],
-        [{ "node": "Log Sem URL", "type": "main", "index": 0 }]
+        [{ "node": "Download Capa",    "type": "main", "index": 0 }],
+        [{ "node": "Log Sem URL",      "type": "main", "index": 0 }]
       ]
     },
-    "Download Capa": { "main": [[{ "node": "Verificar Download", "type": "main", "index": 0 }]] },
-    "Verificar Download": { "main": [[{ "node": "Download OK?", "type": "main", "index": 0 }]] },
+    "Download Capa":                { "main": [[{ "node": "Verificar Download",        "type": "main", "index": 0 }]] },
+    "Verificar Download":           { "main": [[{ "node": "Download OK?",              "type": "main", "index": 0 }]] },
     "Download OK?": {
       "main": [
-        [{ "node": "Upload ao Storage", "type": "main", "index": 0 }],
-        [{ "node": "Log Erro Download", "type": "main", "index": 0 }]
+        [{ "node": "Montar Caminho Storage", "type": "main", "index": 0 }],
+        [{ "node": "Log Erro Download",      "type": "main", "index": 0 }]
       ]
     },
-    "Upload ao Storage": { "main": [[{ "node": "Montar Cover URL", "type": "main", "index": 0 }]] },
-    "Montar Cover URL": { "main": [[{ "node": "Upload OK?", "type": "main", "index": 0 }]] },
+    "Montar Caminho Storage":       { "main": [[{ "node": "Upload para Storage",      "type": "main", "index": 0 }]] },
+    "Upload para Storage":          { "main": [[{ "node": "Verificar Upload",         "type": "main", "index": 0 }]] },
+    "Verificar Upload":             { "main": [[{ "node": "Upload OK?",               "type": "main", "index": 0 }]] },
     "Upload OK?": {
       "main": [
-        [{ "node": "Atualizar cover_url", "type": "main", "index": 0 }],
-        [{ "node": "Log Erro Upload", "type": "main", "index": 0 }]
+        [{ "node": "PATCH cover_url no Supabase", "type": "main", "index": 0 }],
+        [{ "node": "Log Erro Upload",             "type": "main", "index": 0 }]
       ]
     },
-    "Atualizar cover_url": { "main": [[{ "node": "Log Sucesso", "type": "main", "index": 0 }]] }
+    "PATCH cover_url no Supabase":  { "main": [[{ "node": "Verificar PATCH",          "type": "main", "index": 0 }]] },
+    "Verificar PATCH":              { "main": [[{ "node": "Consolidar Resultados",    "type": "main", "index": 0 }]] },
+    "Log Sem URL":                  { "main": [[{ "node": "Consolidar Resultados",    "type": "main", "index": 1 }]] },
+    "Log Erro Download":            { "main": [[{ "node": "Consolidar Resultados",    "type": "main", "index": 2 }]] },
+    "Log Erro Upload":              { "main": [[{ "node": "Consolidar Resultados",    "type": "main", "index": 3 }]] },
+    "Consolidar Resultados":        { "main": [[{ "node": "Log Resumo Final",         "type": "main", "index": 0 }]] }
   },
-  "active": false,
-  "_nota_ativacao": "Manter inativo até a migration e o workflow principal estarem aplicados e validados com POC.",
+
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate",
     "saveManualExecutions": true,
-    "callerPolicy": "workflowsFromSameOwner"
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
   },
-  "tags": ["instagram", "storage", "covers"]
+
+  "staticData": null,
+  "tags": ["instagram", "storage", "capas"],
+  "triggerCount": 1,
+  "updatedAt": "2026-11-12T00:00:00.000Z",
+  "versionId": "2.0.0",
+
+  "_notas_implantacao": {
+    "variaveis_ambiente_necessarias": [
+      "SUPABASE_URL — ex: https://abcdef.supabase.co (sem barra final)",
+      "SUPABASE_SERVICE_KEY — service_role key do projeto (NÃO a anon key)"
+    ],
+    "configurar_em": "n8n Settings → Variables (ou variáveis de ambiente do processo n8n)",
+    "bucket_supabase": {
+      "nome": "instagram-covers",
+      "visibilidade": "Public",
+      "mime_types_permitidos": ["image/jpeg", "image/png", "image/webp"],
+      "tamanho_maximo_mb": 5
+    },
+    "politica_rls_bucket": "CREATE POLICY \"instagram-covers leitura publica\" ON storage.objects FOR SELECT USING (bucket_id = 'instagram-covers'); -- service_role bypassa RLS por default -- nenhuma política de INSERT/UPDATE é necessária.",
+    "verificacao_post_implantacao": "SELECT post_id, username, media_type, cover_url, cover_synced_at FROM wpp.instagram_post_insights WHERE cover_url IS NOT NULL ORDER BY cover_synced_at DESC LIMIT 10;"
+  }
 }

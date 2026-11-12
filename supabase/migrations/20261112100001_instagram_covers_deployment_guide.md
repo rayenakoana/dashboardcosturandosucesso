@@ -2,6 +2,7 @@
 
 **Branch:** `review/instagram-prototipo-v2-20261112`
 **Data:** 2026-11-12
+**Versão artefatos:** v2.0 (correções aplicadas 2026-11-12)
 **Status:** Aguardando aprovação — NÃO aplicar em produção sem validação
 
 ---
@@ -74,11 +75,13 @@ ORDER BY total DESC;
 
 ---
 
-## 2. Aplicar a migration
+## 2. Aplicar as migrations em ordem
 
 **Não usar o Supabase CLI** — o schema `wpp` é gerenciado pelo n8n, não pelo repositório.
 
-Execute o conteúdo de `20261112100000_instagram_post_covers.sql` diretamente no **Supabase SQL Editor** (rota: Supabase Dashboard → SQL Editor → New query → colar o SQL → Run).
+### 2a. Migration de colunas (`20261112100000`)
+
+Execute no **Supabase SQL Editor** → New query → colar o SQL → Run.
 
 Confirme o resultado:
 
@@ -87,10 +90,30 @@ SELECT column_name, data_type, is_nullable
 FROM information_schema.columns
 WHERE table_schema = 'wpp'
   AND table_name = 'instagram_post_insights'
-  AND column_name IN ('thumbnail_url','media_url','cover_url','cover_synced_at');
+  AND column_name IN ('thumbnail_url','media_url','cover_source_url','cover_url','cover_synced_at');
 ```
 
-Esperado: 4 linhas, todas com `is_nullable = YES`.
+Esperado: 5 linhas, todas com `is_nullable = YES`.
+
+### 2b. Migration da stored procedure (`20261112100002`)
+
+**Atenção — estratégia DROP + CREATE:**
+O arquivo `20261112100002_upsert_instagram_post_insight_v2.sql` começa com um bloco `DO $$` que localiza e dropa todos os overloads existentes da função antes de criar a nova versão. Isso é necessário porque `CREATE OR REPLACE` com aridade diferente cria um overload em vez de substituir.
+
+Execute o conteúdo de `20261112100002` no SQL Editor **após** a migration anterior.
+
+Confirme o resultado:
+
+```sql
+SELECT proname, pronargs, proargnames,
+       pg_get_function_identity_arguments(oid) AS signature
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE n.nspname = 'wpp'
+  AND p.proname = 'upsert_instagram_post_insight';
+```
+
+Esperado: exatamente **1 linha**, `pronargs = 17`, `proargnames` inclui `p_thumbnail_url`, `p_media_url`, `p_cover_source_url`.
 
 ---
 
@@ -389,42 +412,96 @@ Nenhuma outra linha do componente foi alterada.
 
 ---
 
-## 7. Prova de conceito — 3 publicações reais
+## 7. Prova de conceito — 3 publicações reais (POC controlada)
 
-Após aplicar a migration e atualizar o workflow, executar manualmente para:
+Executar manualmente o workflow atualizado para exatamente **3 posts**: um de cada tipo. Os post_ids devem ser escolhidos consultando a tabela antes da execução para confirmar os tipos disponíveis.
 
-1. Um **Reel** (media_type = VIDEO)
-2. Uma **Imagem** (media_type = IMAGE)
-3. Um **Carrossel** (media_type = CAROUSEL_ALBUM)
+### Passo 1 — Identificar os 3 posts candidatos
 
-Verificar no Supabase:
+```sql
+-- Um de cada tipo, mais recentes
+SELECT post_id, username, media_type, posted_at,
+       cover_source_url, thumbnail_url, media_url
+FROM wpp.instagram_post_insights
+WHERE media_type IN ('IMAGE', 'VIDEO', 'CAROUSEL_ALBUM')
+  AND cover_url IS NULL
+ORDER BY media_type, posted_at DESC;
+```
+
+Escolher 1 `post_id` de cada `media_type` para o POC.
+
+### Passo 2 — Executar o workflow de Insights atualizado para esses posts
+
+No n8n: executar o workflow de Insights manualmente, verificar que os campos `thumbnail_url`, `media_url` e `cover_source_url` foram preenchidos nos 3 posts escolhidos:
+
+```sql
+SELECT post_id, media_type, thumbnail_url, media_url, cover_source_url
+FROM wpp.instagram_post_insights
+WHERE post_id IN ('<post_id_imagem>', '<post_id_reel>', '<post_id_carrossel>');
+```
+
+Esperado: `cover_source_url` não-nulo para todos os 3.
+
+### Passo 3 — Executar o workflow de Storage para os 3 posts
+
+No n8n: executar o workflow `Instagram Cover Storage Sync` manualmente (clique em "Execute Workflow"). O workflow de Storage buscará apenas posts com `cover_url IS NULL` e `cover_source_url NOT NULL`.
+
+### Passo 4 — Validar os resultados
+
+**No Supabase SQL Editor:**
 ```sql
 SELECT post_id, media_type, cover_url, cover_synced_at
 FROM wpp.instagram_post_insights
-WHERE cover_url IS NOT NULL
-ORDER BY cover_synced_at DESC
-LIMIT 3;
+WHERE post_id IN ('<post_id_imagem>', '<post_id_reel>', '<post_id_carrossel>');
 ```
+Esperado: `cover_url` preenchido e `cover_synced_at` recente para todos os 3.
 
-Verificar no Storage: abrir as 3 URLs no navegador.
+**No Supabase Storage (bucket instagram-covers):** navegar até a pasta da conta e confirmar que os 3 arquivos existem com a extensão correta (`.jpg`, `.png` ou `.webp` — NÃO necessariamente `.jpg`).
 
-Verificar no CS Dash: abrir o ambiente de desenvolvimento e confirmar que as 3 capas aparecem nos cards de Destaques do Período e na tabela Posts do Período.
+**No navegador:** abrir cada `cover_url` diretamente e confirmar que a imagem carrega sem erros.
+
+**No CS Dash (ambiente de desenvolvimento):** abrir a página Instagram, selecionar o período que inclui os 3 posts, confirmar que as capas reais aparecem nos cards de Destaques do Período e na tabela Posts do Período.
+
+### Passo 5 — Verificar ausência de regressões
+
+- Métricas dos 3 posts (reach, impressions, like_count etc.) permanecem inalteradas
+- Outros posts sem capa continuam exibindo o ícone substituto (não quebraram)
+- Demais páginas do CS Dash (WhatsApp, Financeiro, etc.) funcionam normalmente
 
 ---
 
-## 8. Checklist de aprovação antes da implantação completa
+## 8. Variáveis de ambiente necessárias no n8n
 
-- [ ] JSON do workflow n8n exportado e revisado
+O workflow de Storage usa `{{ $env.SUPABASE_URL }}` e `{{ $env.SUPABASE_SERVICE_KEY }}`.
+
+Configurar antes de ativar (n8n Settings → Variables):
+
+| Nome | Valor |
+|------|-------|
+| `SUPABASE_URL` | `https://<seu-projeto>.supabase.co` (sem barra final) |
+| `SUPABASE_SERVICE_KEY` | service_role key do projeto (NÃO a anon key) |
+
+A service_role key fica em: Supabase Dashboard → Settings → API → `service_role` (secret).
+
+---
+
+## 9. Checklist de aprovação antes da implantação completa
+
+- [ ] JSON do workflow n8n original exportado como backup
 - [ ] Query de duplicatas executada — resultado: 0 linhas
 - [ ] Políticas RLS confirmadas
-- [ ] Migration aplicada no SQL Editor
-- [ ] 4 colunas confirmadas na tabela
+- [ ] Migration `20261112100000` aplicada — 5 colunas confirmadas
+- [ ] Migration `20261112100002` aplicada — stored procedure com 17 params confirmada (1 linha em pg_proc)
 - [ ] Bucket `instagram-covers` criado como público
 - [ ] Política de leitura pública criada no bucket
-- [ ] Workflow atualizado com os novos nós
-- [ ] POC de 3 publicações executada com sucesso
-- [ ] 3 URLs abertas no navegador — imagens carregam
-- [ ] CS Dash (dev) exibe as 3 capas reais
-- [ ] Indicadores de métricas permanecem inalterados
-- [ ] Rotina histórica executada em lote
-- [ ] Relatório de recuperação histórica gerado
+- [ ] Variáveis `SUPABASE_URL` e `SUPABASE_SERVICE_KEY` configuradas no n8n
+- [ ] Workflow de Insights atualizado com os 6 nós modificados
+- [ ] POC: 3 posts identificados (1 IMAGE, 1 VIDEO, 1 CAROUSEL_ALBUM)
+- [ ] POC: `cover_source_url` preenchido para os 3 após sync de Insights
+- [ ] POC: workflow de Storage executado manualmente
+- [ ] POC: `cover_url` preenchido para os 3 — extensão correta (não necessariamente .jpg)
+- [ ] POC: 3 URLs abertas no navegador — imagens carregam
+- [ ] POC: CS Dash (dev) exibe as 3 capas reais
+- [ ] POC: métricas dos 3 posts permanecem inalteradas
+- [ ] Rotina histórica executada em lote (posts sem `cover_source_url` → re-sync via Insights)
+- [ ] Relatório de recuperação histórica gerado pelo Log Resumo Final

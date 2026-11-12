@@ -30,9 +30,10 @@ export interface InstagramPostInsight {
   views: number;
   synced_at: string;
   // Campos de imagem — preenchidos após migration e atualização do workflow n8n
-  cover_url?: string | null;      // URL permanente no Supabase Storage (prioridade)
-  thumbnail_url?: string | null;  // URL original Meta CDN — Reels/Vídeos
-  media_url?: string | null;      // URL original Meta CDN — Imagens e Carrosséis
+  cover_url?: string | null;         // URL permanente no Supabase Storage (1ª prioridade)
+  cover_source_url?: string | null;  // URL de origem derivada pelo workflow (CDN Meta — pode expirar)
+  thumbnail_url?: string | null;     // URL bruta Meta CDN — Reels/Vídeos
+  media_url?: string | null;         // URL bruta Meta CDN — Imagens e Carrosséis
 }
 
 export function useInstagramAccountDaily(from: string, to: string) {
