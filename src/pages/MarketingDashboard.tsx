@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { TrendingUp, ChevronDown } from "lucide-react";
 import { MarketingSection } from "@/components/MarketingSection";
+import { InstagramExecutivoCS } from "@/components/InstagramExecutivoCS";
 import { cn } from "@/lib/utils";
 
 type Period = "7d" | "15d" | "30d" | "90d" | "custom";
@@ -30,6 +32,7 @@ function getRange(period: Period, customStart: string, customEnd: string): { sta
 }
 
 export default function MarketingDashboard() {
+  const location = useLocation();
   const [period, setPeriod]           = useState<Period>("30d");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd]     = useState("");
@@ -38,6 +41,18 @@ export default function MarketingDashboard() {
   const { start, end } = getRange(period, customStart, customEnd);
 
   const selectedLabel = PERIODS.find(p => p.value === period)?.label ?? "Período";
+
+  // Instagram: layout fiel ao prototipo 06, mantendo as demais paginas de marketing intactas.
+  if (new URLSearchParams(location.search).get("tab") === "instagram") {
+    return (
+      <InstagramExecutivoCS
+        from={start} to={end}
+        period={period} onPeriod={setPeriod}
+        customStart={customStart} customEnd={customEnd}
+        onCustomStart={setCustomStart} onCustomEnd={setCustomEnd}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">

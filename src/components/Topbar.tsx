@@ -27,8 +27,10 @@ const ROUTE_META: Record<string, RouteMeta> = {
 // ── Topbar ────────────────────────────────────────────────────────────────────
 
 export function Topbar() {
-  const { pathname } = useLocation();
-  const meta = ROUTE_META[pathname];
+  const { pathname, search } = useLocation();
+  const meta = pathname === "/marketing" && new URLSearchParams(search).get("tab") === "instagram"
+    ? { label: "Instagram", parent: "Marketing" }
+    : ROUTE_META[pathname];
 
   if (!meta) return null;
 
