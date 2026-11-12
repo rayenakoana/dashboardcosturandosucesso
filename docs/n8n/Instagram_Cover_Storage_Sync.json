@@ -1,0 +1,331 @@
+{
+  "_instrucoes": "Workflow separado para download e persistência das capas no Supabase Storage. Importar como NOVO workflow no n8n — não substituir o workflow de Insights. Substituir SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY e SUPABASE_ANON_KEY pelos valores reais do projeto antes de ativar.",
+  "name": "Instagram Cover Storage Sync",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 9 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "_comment": "Roda às 09h30 UTC — 30 minutos após o workflow principal de Insights (09h00). Ajustar se o horário do workflow principal for diferente.",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [-800, 0],
+      "id": "cov-01"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Configurações do projeto — substituir pelos valores reais\nconst SUPABASE_URL = 'https://syecwttpsvrmhdvinjmt.supabase.co';\nconst SUPABASE_SERVICE_KEY = 'SUPABASE_SERVICE_ROLE_KEY_AQUI';\nconst STORAGE_BUCKET = 'instagram-covers';\n\nreturn [{\n  json: {\n    SUPABASE_URL,\n    SUPABASE_SERVICE_KEY,\n    STORAGE_BUCKET\n  }\n}];"
+      },
+      "name": "Config",
+      "_comment": "Centraliza as configurações. Em produção, usar variáveis de ambiente do n8n (Settings > Variables) ao invés de hardcode.",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-560, 0],
+      "id": "cov-02"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://syecwttpsvrmhdvinjmt.supabase.co/rest/v1/instagram_post_insights",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "select", "value": "post_id,username,media_type,thumbnail_url,media_url" },
+            { "name": "cover_url", "value": "is.null" },
+            { "name": "order", "value": "posted_at.desc" },
+            { "name": "limit", "value": "100" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "SUPABASE_SERVICE_ROLE_KEY_AQUI" },
+            { "name": "Authorization", "value": "Bearer SUPABASE_SERVICE_ROLE_KEY_AQUI" },
+            { "name": "Accept-Profile", "value": "wpp" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Buscar Posts Sem Capa",
+      "_comment": "Busca até 100 posts sem cover_url por execução. Executar múltiplas vezes para processar histórico completo.",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-320, 0],
+      "id": "cov-03"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.item.json;\nif (!Array.isArray(data) || data.length === 0) return [];\nreturn data.map(post => ({ json: post }));"
+      },
+      "name": "Split Posts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-80, 0],
+      "id": "cov-04"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const post = $input.item.json;\n\n// Derivar URL de capa por tipo de mídia (sem nova chamada à API)\nlet coverSourceUrl = null;\n\nif (post.media_type === 'IMAGE') {\n  coverSourceUrl = post.media_url || null;\n} else if (post.media_type === 'VIDEO') {\n  coverSourceUrl = post.thumbnail_url || post.media_url || null;\n} else if (post.media_type === 'CAROUSEL_ALBUM') {\n  // Para carrosséis, media_url pode conter a capa do álbum\n  // Se não, o post será pulado e tratado por uma segunda passagem com chamada à API\n  coverSourceUrl = post.media_url || post.thumbnail_url || null;\n}\n\nreturn {\n  json: {\n    ...post,\n    cover_source_url: coverSourceUrl,\n    has_source: Boolean(coverSourceUrl)\n  }\n};"
+      },
+      "name": "Derivar URL de Capa",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [160, 0],
+      "id": "cov-05"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "has-source",
+              "leftValue": "={{ $json.has_source }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Tem URL de Capa?",
+      "_comment": "true → baixar e fazer upload. false → pular (carrossel sem media_url — tratado em segunda passagem).",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [400, 0],
+      "id": "cov-06"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.cover_source_url }}",
+        "options": {
+          "response": { "response": { "responseFormat": "file" } },
+          "timeout": 15000
+        }
+      },
+      "name": "Download Capa",
+      "_comment": "Baixa a imagem como arquivo binário. Timeout de 15 segundos. Se falhar, continua para o próximo post.",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [640, -80],
+      "id": "cov-07",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Verificar se o download teve sucesso\nconst item = $input.item;\nconst post = $('Derivar URL de Capa').item.json;\n\n// Se houve erro no download, retornar flag de falha\nif (item.error || !item.binary?.data) {\n  return {\n    json: {\n      ...post,\n      download_ok: false,\n      download_error: item.error?.message || 'Sem dados binários'\n    }\n  };\n}\n\nreturn {\n  json: {\n    ...post,\n    download_ok: true,\n    file_size: item.binary.data.fileSize || 0\n  },\n  binary: item.binary\n};"
+      },
+      "name": "Verificar Download",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, -80],
+      "id": "cov-08"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "download-ok",
+              "leftValue": "={{ $json.download_ok }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Download OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1120, -80],
+      "id": "cov-09"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://syecwttpsvrmhdvinjmt.supabase.co/storage/v1/object/instagram-covers/{{ $json.username }}/{{ $json.post_id }}.jpg",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer SUPABASE_SERVICE_ROLE_KEY_AQUI" },
+            { "name": "Content-Type", "value": "image/jpeg" },
+            { "name": "x-upsert", "value": "true" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": { "timeout": 30000 }
+      },
+      "name": "Upload ao Storage",
+      "_comment": "Faz POST com x-upsert:true — idempotente. Se a imagem já existir, substitui. URL resultante é permanente.",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1360, -160],
+      "id": "cov-10",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const uploadResult = $input.item.json;\nconst post = $('Verificar Download').item.json;\n\n// Verificar se o upload teve sucesso (Supabase Storage retorna { Key: '...' })\nconst uploadOk = !$input.item.error && (uploadResult.Key || uploadResult.Id);\n\nconst SUPABASE_URL = 'https://syecwttpsvrmhdvinjmt.supabase.co';\nconst coverUrl = uploadOk\n  ? `${SUPABASE_URL}/storage/v1/object/public/instagram-covers/${post.username}/${post.post_id}.jpg`\n  : null;\n\nreturn {\n  json: {\n    post_id: post.post_id,\n    cover_url: coverUrl,\n    upload_ok: uploadOk,\n    upload_error: $input.item.error?.message || null\n  }\n};"
+      },
+      "name": "Montar Cover URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1600, -160],
+      "id": "cov-11"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "upload-ok",
+              "leftValue": "={{ $json.upload_ok }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Upload OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1840, -160],
+      "id": "cov-12"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://syecwttpsvrmhdvinjmt.supabase.co/rest/v1/instagram_post_insights",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "post_id", "value": "=eq.{{ $json.post_id }}" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "SUPABASE_SERVICE_ROLE_KEY_AQUI" },
+            { "name": "Authorization", "value": "Bearer SUPABASE_SERVICE_ROLE_KEY_AQUI" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Content-Profile", "value": "wpp" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"cover_url\": \"{{ $json.cover_url }}\",\n  \"cover_synced_at\": \"{{ $now.toISO() }}\"\n}",
+        "options": {}
+      },
+      "name": "Atualizar cover_url",
+      "_comment": "PATCH idempotente — atualiza APENAS cover_url e cover_synced_at. Métricas não são tocadas.",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2080, -240],
+      "id": "cov-13",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Log de sucesso\nconst d = $input.item.json;\nconsole.log(`[OK] ${d.post_id} → cover_url atualizada`);\nreturn { json: { status: 'ok', post_id: d.post_id } };"
+      },
+      "name": "Log Sucesso",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2320, -240],
+      "id": "cov-14"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const d = $input.item.json;\nconsole.warn(`[ERRO UPLOAD] post_id=${d.post_id} error=${d.upload_error}`);\nreturn { json: { status: 'upload_failed', post_id: d.post_id, error: d.upload_error } };"
+      },
+      "name": "Log Erro Upload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2080, -80],
+      "id": "cov-15"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const d = $input.item.json;\nconsole.warn(`[ERRO DOWNLOAD] post_id=${d.post_id} url=${d.cover_source_url} error=${d.download_error}`);\nreturn { json: { status: 'download_failed', post_id: d.post_id, url: d.cover_source_url, error: d.download_error } };"
+      },
+      "name": "Log Erro Download",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1360, 80],
+      "id": "cov-16"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const d = $input.item.json;\nconsole.info(`[SEM URL] post_id=${d.post_id} media_type=${d.media_type} — sem cover_source_url (carrossel sem media_url ou post removido)`);\nreturn { json: { status: 'no_url', post_id: d.post_id, media_type: d.media_type } };"
+      },
+      "name": "Log Sem URL",
+      "_comment": "Posts sem cover_source_url (geralmente carrosséis onde a Graph API não retornou media_url). Exige segunda passagem com chamada à API.",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 120],
+      "id": "cov-17"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": { "main": [[{ "node": "Config", "type": "main", "index": 0 }]] },
+    "Config": { "main": [[{ "node": "Buscar Posts Sem Capa", "type": "main", "index": 0 }]] },
+    "Buscar Posts Sem Capa": { "main": [[{ "node": "Split Posts", "type": "main", "index": 0 }]] },
+    "Split Posts": { "main": [[{ "node": "Derivar URL de Capa", "type": "main", "index": 0 }]] },
+    "Derivar URL de Capa": { "main": [[{ "node": "Tem URL de Capa?", "type": "main", "index": 0 }]] },
+    "Tem URL de Capa?": {
+      "main": [
+        [{ "node": "Download Capa", "type": "main", "index": 0 }],
+        [{ "node": "Log Sem URL", "type": "main", "index": 0 }]
+      ]
+    },
+    "Download Capa": { "main": [[{ "node": "Verificar Download", "type": "main", "index": 0 }]] },
+    "Verificar Download": { "main": [[{ "node": "Download OK?", "type": "main", "index": 0 }]] },
+    "Download OK?": {
+      "main": [
+        [{ "node": "Upload ao Storage", "type": "main", "index": 0 }],
+        [{ "node": "Log Erro Download", "type": "main", "index": 0 }]
+      ]
+    },
+    "Upload ao Storage": { "main": [[{ "node": "Montar Cover URL", "type": "main", "index": 0 }]] },
+    "Montar Cover URL": { "main": [[{ "node": "Upload OK?", "type": "main", "index": 0 }]] },
+    "Upload OK?": {
+      "main": [
+        [{ "node": "Atualizar cover_url", "type": "main", "index": 0 }],
+        [{ "node": "Log Erro Upload", "type": "main", "index": 0 }]
+      ]
+    },
+    "Atualizar cover_url": { "main": [[{ "node": "Log Sucesso", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "_nota_ativacao": "Manter inativo até a migration e o workflow principal estarem aplicados e validados com POC.",
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "tags": ["instagram", "storage", "covers"]
+}
