@@ -1,20 +1,22 @@
 {
-  "_instrucoes": "Workflow POC de persistência no Supabase Storage. Importar no n8n e executar manualmente. NÃO contém agendamento. Após importar: substituir __TOKEN_CS__ e __TOKEN_EC__ nos nós de busca pelos tokens reais das respectivas contas (igual à POC de validação). Requer variáveis de ambiente SUPABASE_URL e SUPABASE_SERVICE_KEY em n8n Settings → Variables.",
-  "_versao": "1.0.0",
-  "_posts_poc": [
-    { "post_id": "18115485343992680", "username": "costurandosucesso",      "tipo": "IMAGE"         },
-    { "post_id": "18082958183373773", "username": "eduardocristianoriginal", "tipo": "VIDEO"         },
-    { "post_id": "18066040568539014", "username": "eduardocristianoriginal", "tipo": "CAROUSEL_ALBUM"}
+  "_instrucoes": "POC de persistência de capas no Supabase Storage. Importar no n8n e NÃO ativar agendamento. Antes de executar: (1) criar credencial HTTP Query Auth 'Instagram CS' com Name=access_token e token da conta costurandosucesso; (2) criar credencial HTTP Query Auth 'Instagram EC' com Name=access_token e token da conta eduardocristianoriginal; (3) vincular cada credencial nos nós Buscar IMAGE (CS) e Buscar VIDEO / Buscar CAROUSEL (EC). Requer variáveis de ambiente SUPABASE_URL e SUPABASE_SERVICE_KEY em n8n Settings → Variables.",
+  "_versao": "1.1.0",
+  "_correcoes_v1_1": [
+    "PATCH: specifyBody=json + jsonBody com JSON.stringify()",
+    "Guard IF após Verificar Upload bloqueia PATCH quando upload_ok=false",
+    "Resultado Falha por pipeline conectado ao mesmo input do Merge",
+    "MIME: sem fallback para .jpg; lança erro em tipo não aceito",
+    "fileSize: parsing robusto de number|string, erro se indeterminado",
+    "Credenciais: httpQueryAuth sem tokens no JSON/GitHub",
+    "Relatório Final: retorno como array para runOnceForAllItems"
   ],
-  "_restricoes": [
-    "Atualiza APENAS cover_url e cover_synced_at — nenhuma métrica é tocada",
-    "Sem agendamento — executar manualmente e manter inativo após POC",
-    "Sem processamento histórico — somente os 3 post_ids listados acima",
-    "Workflow principal Instagram Insights Sync não é alterado",
-    "Função RPC original preservada"
+  "_posts_poc": [
+    { "post_id": "18115485343992680", "username": "costurandosucesso",      "tipo": "IMAGE",         "credencial": "Instagram CS" },
+    { "post_id": "18082958183373773", "username": "eduardocristianoriginal", "tipo": "VIDEO",         "credencial": "Instagram EC" },
+    { "post_id": "18066040568539014", "username": "eduardocristianoriginal", "tipo": "CAROUSEL_ALBUM","credencial": "Instagram EC" }
   ],
 
-  "name": "Instagram POC Storage Sync v1",
+  "name": "Instagram POC Storage Sync v1.1",
   "nodes": [
 
     {
@@ -31,15 +33,16 @@
       "name": "Buscar IMAGE",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [320, 200],
+      "position": [320, 100],
       "parameters": {
         "method": "GET",
         "url": "https://graph.facebook.com/v19.0/18115485343992680",
-        "authentication": "none",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "credential": { "id": "", "name": "Instagram CS" },
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "access_token", "value": "__TOKEN_CS__" },
             { "name": "fields", "value": "id,media_type,media_url,thumbnail_url,permalink,timestamp" }
           ]
         },
@@ -56,11 +59,12 @@
       "parameters": {
         "method": "GET",
         "url": "https://graph.facebook.com/v19.0/18082958183373773",
-        "authentication": "none",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "credential": { "id": "", "name": "Instagram EC" },
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "access_token", "value": "__TOKEN_EC__" },
             { "name": "fields", "value": "id,media_type,media_url,thumbnail_url,permalink,timestamp" }
           ]
         },
@@ -73,15 +77,16 @@
       "name": "Buscar CAROUSEL",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [320, 800],
+      "position": [320, 900],
       "parameters": {
         "method": "GET",
         "url": "https://graph.facebook.com/v19.0/18066040568539014",
-        "authentication": "none",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "credential": { "id": "", "name": "Instagram EC" },
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "access_token", "value": "__TOKEN_EC__" },
             { "name": "fields", "value": "id,media_type,media_url,thumbnail_url,permalink,timestamp,children{id,media_type,media_url,thumbnail_url}" }
           ]
         },
@@ -94,10 +99,10 @@
       "name": "Analisar IMAGE",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [560, 200],
+      "position": [560, 100],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const p = $input.item.json;\nif (p.error) throw new Error('API error: ' + JSON.stringify(p.error));\nconst coverSourceUrl = p.media_url || null;\nif (!coverSourceUrl) throw new Error('IMAGE sem media_url — post_id 18115485343992680');\nreturn { json: {\n  post_id:          '18115485343992680',\n  username:         'costurandosucesso',\n  media_type:       p.media_type,\n  cover_source_url: coverSourceUrl,\n  cover_strategy:   'IMAGE → media_url'\n}};"
+        "jsCode": "const p = $input.item.json;\nif (p.error) throw new Error('[IMAGE] API Graph error: ' + JSON.stringify(p.error));\nconst coverSourceUrl = p.media_url || null;\nif (!coverSourceUrl) throw new Error('[IMAGE] media_url ausente para post_id 18115485343992680');\nreturn { json: {\n  post_id:          '18115485343992680',\n  username:         'costurandosucesso',\n  media_type:       p.media_type,\n  cover_source_url: coverSourceUrl,\n  cover_strategy:   'IMAGE → media_url'\n}};"
       }
     },
 
@@ -109,7 +114,7 @@
       "position": [560, 500],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const p = $input.item.json;\nif (p.error) throw new Error('API error: ' + JSON.stringify(p.error));\n// VIDEO: APENAS thumbnail_url. media_url é arquivo .mp4 — nunca usar como capa.\nconst coverSourceUrl = p.thumbnail_url || null;\nif (!coverSourceUrl) throw new Error('VIDEO sem thumbnail_url — post_id 18082958183373773 — NÃO usar media_url (arquivo mp4)');\nreturn { json: {\n  post_id:          '18082958183373773',\n  username:         'eduardocristianoriginal',\n  media_type:       p.media_type,\n  cover_source_url: coverSourceUrl,\n  cover_strategy:   'VIDEO → thumbnail_url APENAS (media_url descartada)'\n}};"
+        "jsCode": "const p = $input.item.json;\nif (p.error) throw new Error('[VIDEO] API Graph error: ' + JSON.stringify(p.error));\n// VIDEO: SOMENTE thumbnail_url. media_url aponta para .mp4 — nunca usar como capa.\nconst coverSourceUrl = p.thumbnail_url || null;\nif (!coverSourceUrl) throw new Error('[VIDEO] thumbnail_url ausente para post_id 18082958183373773 — NÃO usar media_url (arquivo .mp4)');\nreturn { json: {\n  post_id:          '18082958183373773',\n  username:         'eduardocristianoriginal',\n  media_type:       p.media_type,\n  cover_source_url: coverSourceUrl,\n  cover_strategy:   'VIDEO → thumbnail_url APENAS (media_url .mp4 descartada)'\n}};"
       }
     },
 
@@ -118,10 +123,10 @@
       "name": "Analisar CAROUSEL",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [560, 800],
+      "position": [560, 900],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const p = $input.item.json;\nif (p.error) throw new Error('API error: ' + JSON.stringify(p.error));\nconst firstChild = p.children?.data?.[0] || null;\nlet coverSourceUrl = null;\nlet coverStrategy = 'CAROUSEL';\nif (firstChild) {\n  if (firstChild.media_type === 'VIDEO') {\n    coverSourceUrl = firstChild.thumbnail_url || null;\n    coverStrategy = 'CAROUSEL → filho[0] VIDEO → thumbnail_url do filho';\n  } else {\n    coverSourceUrl = firstChild.media_url || null;\n    coverStrategy = 'CAROUSEL → filho[0] IMAGE → media_url do filho';\n  }\n}\nif (!coverSourceUrl && firstChild?.media_type !== 'VIDEO') {\n  coverSourceUrl = p.media_url || null;\n  if (coverSourceUrl) coverStrategy += ' → fallback media_url álbum';\n}\nif (!coverSourceUrl) throw new Error('CAROUSEL sem URL de capa disponível — post_id 18066040568539014');\nreturn { json: {\n  post_id:          '18066040568539014',\n  username:         'eduardocristianoriginal',\n  media_type:       p.media_type,\n  cover_source_url: coverSourceUrl,\n  cover_strategy:   coverStrategy,\n  total_filhos:     p.children?.data?.length || 0\n}};"
+        "jsCode": "const p = $input.item.json;\nif (p.error) throw new Error('[CAROUSEL] API Graph error: ' + JSON.stringify(p.error));\nconst firstChild = p.children?.data?.[0] || null;\nif (!firstChild) throw new Error('[CAROUSEL] Nenhum filho retornado para post_id 18066040568539014');\nlet coverSourceUrl = null;\nlet coverStrategy;\nif (firstChild.media_type === 'VIDEO') {\n  coverSourceUrl = firstChild.thumbnail_url || null;\n  coverStrategy = 'CAROUSEL → filho[0] VIDEO → thumbnail_url do filho';\n  if (!coverSourceUrl) throw new Error('[CAROUSEL] Filho[0] é VIDEO mas não tem thumbnail_url');\n} else {\n  coverSourceUrl = firstChild.media_url || null;\n  coverStrategy = 'CAROUSEL → filho[0] ' + firstChild.media_type + ' → media_url do filho';\n  if (!coverSourceUrl) throw new Error('[CAROUSEL] Filho[0] IMAGE/CAROUSEL sem media_url');\n}\nreturn { json: {\n  post_id:          '18066040568539014',\n  username:         'eduardocristianoriginal',\n  media_type:       p.media_type,\n  cover_source_url: coverSourceUrl,\n  cover_strategy:   coverStrategy,\n  total_filhos:     p.children?.data?.length || 0,\n  filho0_tipo:      firstChild.media_type\n}};"
       }
     },
 
@@ -130,18 +135,18 @@
       "name": "Métricas Antes IMAGE",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [800, 200],
+      "position": [800, 100],
       "parameters": {
         "method": "GET",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/instagram_post_insights?post_id=eq.18115485343992680&select=post_id,like_count,comments_count,shares,saved,reach,impressions,views,synced_at,cover_url,cover_synced_at",
+        "url": "={{ $env.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.18115485343992680&select=post_id,like_count,comments_count,shares,saved,reach,impressions,views,synced_at,cover_url,cover_synced_at' }}",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey",          "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization",   "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Accept-Profile",  "value": "wpp" },
-            { "name": "Accept",          "value": "application/json" }
+            { "name": "apikey",         "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization",  "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Accept-Profile", "value": "wpp" },
+            { "name": "Accept",         "value": "application/json" }
           ]
         },
         "options": {}
@@ -156,15 +161,15 @@
       "position": [800, 500],
       "parameters": {
         "method": "GET",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/instagram_post_insights?post_id=eq.18082958183373773&select=post_id,like_count,comments_count,shares,saved,reach,impressions,views,synced_at,cover_url,cover_synced_at",
+        "url": "={{ $env.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.18082958183373773&select=post_id,like_count,comments_count,shares,saved,reach,impressions,views,synced_at,cover_url,cover_synced_at' }}",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey",          "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization",   "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Accept-Profile",  "value": "wpp" },
-            { "name": "Accept",          "value": "application/json" }
+            { "name": "apikey",         "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization",  "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Accept-Profile", "value": "wpp" },
+            { "name": "Accept",         "value": "application/json" }
           ]
         },
         "options": {}
@@ -176,18 +181,18 @@
       "name": "Métricas Antes CAROUSEL",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [800, 800],
+      "position": [800, 900],
       "parameters": {
         "method": "GET",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/instagram_post_insights?post_id=eq.18066040568539014&select=post_id,like_count,comments_count,shares,saved,reach,impressions,views,synced_at,cover_url,cover_synced_at",
+        "url": "={{ $env.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.18066040568539014&select=post_id,like_count,comments_count,shares,saved,reach,impressions,views,synced_at,cover_url,cover_synced_at' }}",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey",          "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization",   "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Accept-Profile",  "value": "wpp" },
-            { "name": "Accept",          "value": "application/json" }
+            { "name": "apikey",         "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization",  "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Accept-Profile", "value": "wpp" },
+            { "name": "Accept",         "value": "application/json" }
           ]
         },
         "options": {}
@@ -199,10 +204,10 @@
       "name": "Preparar Download IMAGE",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1040, 200],
+      "position": [1040, 100],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const analise  = $('Analisar IMAGE').item.json;\nconst dbBefore = $input.item.json;\n// PostgREST retorna array — pegar primeiro elemento\nconst row = Array.isArray(dbBefore) ? dbBefore[0] : dbBefore;\nif (!row || !row.post_id) throw new Error('Registro não encontrado no banco para post_id 18115485343992680');\nreturn { json: {\n  post_id:          analise.post_id,\n  username:         analise.username,\n  media_type:       analise.media_type,\n  cover_source_url: analise.cover_source_url,\n  cover_strategy:   analise.cover_strategy,\n  metricas_antes: {\n    like_count:     row.like_count,\n    comments_count: row.comments_count,\n    shares:         row.shares,\n    saved:          row.saved,\n    reach:          row.reach,\n    impressions:    row.impressions,\n    views:          row.views,\n    synced_at:      row.synced_at,\n    cover_url_antes: row.cover_url || null\n  }\n}};"
+        "jsCode": "const analise  = $('Analisar IMAGE').item.json;\nconst dbRows   = $input.item.json;\nconst row = Array.isArray(dbRows) ? dbRows[0] : dbRows;\nif (!row?.post_id) throw new Error('[IMAGE] Registro 18115485343992680 não encontrado na tabela');\nreturn { json: {\n  post_id:          analise.post_id,\n  username:         analise.username,\n  media_type:       analise.media_type,\n  cover_source_url: analise.cover_source_url,\n  cover_strategy:   analise.cover_strategy,\n  metricas_antes: {\n    like_count:      row.like_count,\n    comments_count:  row.comments_count,\n    shares:          row.shares,\n    saved:           row.saved,\n    reach:           row.reach,\n    impressions:     row.impressions,\n    views:           row.views,\n    synced_at:       row.synced_at,\n    cover_url_antes: row.cover_url || null\n  }\n}};"
       }
     },
 
@@ -214,7 +219,7 @@
       "position": [1040, 500],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const analise  = $('Analisar VIDEO').item.json;\nconst dbBefore = $input.item.json;\nconst row = Array.isArray(dbBefore) ? dbBefore[0] : dbBefore;\nif (!row || !row.post_id) throw new Error('Registro não encontrado no banco para post_id 18082958183373773');\nreturn { json: {\n  post_id:          analise.post_id,\n  username:         analise.username,\n  media_type:       analise.media_type,\n  cover_source_url: analise.cover_source_url,\n  cover_strategy:   analise.cover_strategy,\n  metricas_antes: {\n    like_count:     row.like_count,\n    comments_count: row.comments_count,\n    shares:         row.shares,\n    saved:          row.saved,\n    reach:          row.reach,\n    impressions:    row.impressions,\n    views:          row.views,\n    synced_at:      row.synced_at,\n    cover_url_antes: row.cover_url || null\n  }\n}};"
+        "jsCode": "const analise  = $('Analisar VIDEO').item.json;\nconst dbRows   = $input.item.json;\nconst row = Array.isArray(dbRows) ? dbRows[0] : dbRows;\nif (!row?.post_id) throw new Error('[VIDEO] Registro 18082958183373773 não encontrado na tabela');\nreturn { json: {\n  post_id:          analise.post_id,\n  username:         analise.username,\n  media_type:       analise.media_type,\n  cover_source_url: analise.cover_source_url,\n  cover_strategy:   analise.cover_strategy,\n  metricas_antes: {\n    like_count:      row.like_count,\n    comments_count:  row.comments_count,\n    shares:          row.shares,\n    saved:           row.saved,\n    reach:           row.reach,\n    impressions:     row.impressions,\n    views:           row.views,\n    synced_at:       row.synced_at,\n    cover_url_antes: row.cover_url || null\n  }\n}};"
       }
     },
 
@@ -223,10 +228,10 @@
       "name": "Preparar Download CAROUSEL",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1040, 800],
+      "position": [1040, 900],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const analise  = $('Analisar CAROUSEL').item.json;\nconst dbBefore = $input.item.json;\nconst row = Array.isArray(dbBefore) ? dbBefore[0] : dbBefore;\nif (!row || !row.post_id) throw new Error('Registro não encontrado no banco para post_id 18066040568539014');\nreturn { json: {\n  post_id:          analise.post_id,\n  username:         analise.username,\n  media_type:       analise.media_type,\n  cover_source_url: analise.cover_source_url,\n  cover_strategy:   analise.cover_strategy,\n  total_filhos:     analise.total_filhos,\n  metricas_antes: {\n    like_count:     row.like_count,\n    comments_count: row.comments_count,\n    shares:         row.shares,\n    saved:          row.saved,\n    reach:          row.reach,\n    impressions:    row.impressions,\n    views:          row.views,\n    synced_at:      row.synced_at,\n    cover_url_antes: row.cover_url || null\n  }\n}};"
+        "jsCode": "const analise  = $('Analisar CAROUSEL').item.json;\nconst dbRows   = $input.item.json;\nconst row = Array.isArray(dbRows) ? dbRows[0] : dbRows;\nif (!row?.post_id) throw new Error('[CAROUSEL] Registro 18066040568539014 não encontrado na tabela');\nreturn { json: {\n  post_id:          analise.post_id,\n  username:         analise.username,\n  media_type:       analise.media_type,\n  cover_source_url: analise.cover_source_url,\n  cover_strategy:   analise.cover_strategy,\n  total_filhos:     analise.total_filhos,\n  filho0_tipo:      analise.filho0_tipo,\n  metricas_antes: {\n    like_count:      row.like_count,\n    comments_count:  row.comments_count,\n    shares:          row.shares,\n    saved:           row.saved,\n    reach:           row.reach,\n    impressions:     row.impressions,\n    views:           row.views,\n    synced_at:       row.synced_at,\n    cover_url_antes: row.cover_url || null\n  }\n}};"
       }
     },
 
@@ -235,17 +240,15 @@
       "name": "Download Capa IMAGE",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1280, 200],
+      "position": [1280, 100],
+      "continueOnFail": true,
       "parameters": {
         "method": "GET",
         "url": "={{ $json.cover_source_url }}",
         "authentication": "none",
         "options": {
           "response": {
-            "response": {
-              "responseFormat": "file",
-              "outputPropertyName": "data"
-            }
+            "response": { "responseFormat": "file", "outputPropertyName": "data" }
           },
           "timeout": 30000
         }
@@ -258,16 +261,14 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [1280, 500],
+      "continueOnFail": true,
       "parameters": {
         "method": "GET",
         "url": "={{ $json.cover_source_url }}",
         "authentication": "none",
         "options": {
           "response": {
-            "response": {
-              "responseFormat": "file",
-              "outputPropertyName": "data"
-            }
+            "response": { "responseFormat": "file", "outputPropertyName": "data" }
           },
           "timeout": 30000
         }
@@ -279,17 +280,15 @@
       "name": "Download Capa CAROUSEL",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1280, 800],
+      "position": [1280, 900],
+      "continueOnFail": true,
       "parameters": {
         "method": "GET",
         "url": "={{ $json.cover_source_url }}",
         "authentication": "none",
         "options": {
           "response": {
-            "response": {
-              "responseFormat": "file",
-              "outputPropertyName": "data"
-            }
+            "response": { "responseFormat": "file", "outputPropertyName": "data" }
           },
           "timeout": 30000
         }
@@ -301,10 +300,10 @@
       "name": "Validar Download IMAGE",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1520, 200],
+      "position": [1520, 100],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const prep   = $('Preparar Download IMAGE').item.json;\nconst binary = $input.item.binary?.data;\nif (!binary) throw new Error('Download IMAGE falhou: sem dados binários');\nconst mime = binary.mimeType || '';\nconst size = binary.fileSize || 0;\nif (!mime.startsWith('image/')) throw new Error('IMAGE: Content-Type inválido: ' + mime + ' — esperado image/*');\nconst MAX = 5 * 1024 * 1024;\nif (size > MAX) throw new Error('IMAGE: arquivo muito grande: ' + size + ' bytes (máximo 5 MB)');\nconst extMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };\nconst ext = extMap[mime] || 'jpg';\nconst storagePath = prep.username + '/' + prep.post_id + '.' + ext;\nconst publicUrl   = $env.SUPABASE_URL + '/storage/v1/object/public/instagram-covers/' + storagePath;\nconst uploadUrl   = $env.SUPABASE_URL + '/storage/v1/object/instagram-covers/' + storagePath;\nreturn {\n  json: {\n    post_id:        prep.post_id,\n    username:       prep.username,\n    media_type:     prep.media_type,\n    cover_strategy: prep.cover_strategy,\n    mime_type:      mime,\n    ext:            ext,\n    file_size_bytes: size,\n    storage_path:   storagePath,\n    public_url:     publicUrl,\n    upload_url:     uploadUrl,\n    metricas_antes: prep.metricas_antes\n  },\n  binary: { data: binary }\n};"
+        "jsCode": "const prep   = $('Preparar Download IMAGE').item.json;\nconst item   = $input.item;\nif (item.json?.error) throw new Error('[IMAGE] Download falhou: ' + JSON.stringify(item.json.error));\nconst binary = item.binary?.data;\nif (!binary) throw new Error('[IMAGE] Download não retornou dados binários');\nconst mime = (binary.mimeType || '').toLowerCase();\nconst MIMES_ACEITOS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };\nconst ext = MIMES_ACEITOS[mime];\nif (!ext) throw new Error('[IMAGE] MIME não aceito: ' + mime + ' — aceitos: image/jpeg, image/png, image/webp, image/gif');\nconst rawSize = binary.fileSize;\nconst size = typeof rawSize === 'number' && !isNaN(rawSize) ? rawSize\n  : typeof rawSize === 'string' ? (parseInt(rawSize, 10) || 0) : 0;\nif (size <= 0) throw new Error('[IMAGE] Tamanho indeterminado (fileSize=' + JSON.stringify(rawSize) + ')');\nconst MAX = 5 * 1024 * 1024;\nif (size > MAX) throw new Error('[IMAGE] Arquivo muito grande: ' + size + ' bytes (limite 5 MB)');\nconst storagePath = prep.username + '/' + prep.post_id + '.' + ext;\nreturn {\n  json: {\n    post_id:          prep.post_id,\n    username:         prep.username,\n    media_type:       prep.media_type,\n    cover_strategy:   prep.cover_strategy,\n    mime_type:        mime,\n    ext:              ext,\n    file_size_bytes:  size,\n    storage_path:     storagePath,\n    upload_url:       $env.SUPABASE_URL + '/storage/v1/object/instagram-covers/' + storagePath,\n    public_url:       $env.SUPABASE_URL + '/storage/v1/object/public/instagram-covers/' + storagePath,\n    metricas_antes:   prep.metricas_antes\n  },\n  binary: { data: binary }\n};"
       }
     },
 
@@ -316,7 +315,7 @@
       "position": [1520, 500],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const prep   = $('Preparar Download VIDEO').item.json;\nconst binary = $input.item.binary?.data;\nif (!binary) throw new Error('Download VIDEO falhou: sem dados binários');\nconst mime = binary.mimeType || '';\nconst size = binary.fileSize || 0;\nif (!mime.startsWith('image/')) throw new Error('VIDEO thumbnail: Content-Type inválido: ' + mime + ' — se retornou video/* o campo thumbnail_url está apontando para mp4');\nconst MAX = 5 * 1024 * 1024;\nif (size > MAX) throw new Error('VIDEO thumbnail: arquivo muito grande: ' + size + ' bytes (máximo 5 MB)');\nconst extMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };\nconst ext = extMap[mime] || 'jpg';\nconst storagePath = prep.username + '/' + prep.post_id + '.' + ext;\nconst publicUrl   = $env.SUPABASE_URL + '/storage/v1/object/public/instagram-covers/' + storagePath;\nconst uploadUrl   = $env.SUPABASE_URL + '/storage/v1/object/instagram-covers/' + storagePath;\nreturn {\n  json: {\n    post_id:        prep.post_id,\n    username:       prep.username,\n    media_type:     prep.media_type,\n    cover_strategy: prep.cover_strategy,\n    mime_type:      mime,\n    ext:            ext,\n    file_size_bytes: size,\n    storage_path:   storagePath,\n    public_url:     publicUrl,\n    upload_url:     uploadUrl,\n    metricas_antes: prep.metricas_antes\n  },\n  binary: { data: binary }\n};"
+        "jsCode": "const prep   = $('Preparar Download VIDEO').item.json;\nconst item   = $input.item;\nif (item.json?.error) throw new Error('[VIDEO] Download falhou: ' + JSON.stringify(item.json.error));\nconst binary = item.binary?.data;\nif (!binary) throw new Error('[VIDEO] Download não retornou dados binários');\nconst mime = (binary.mimeType || '').toLowerCase();\nconst MIMES_ACEITOS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };\nconst ext = MIMES_ACEITOS[mime];\nif (!ext) throw new Error('[VIDEO] thumbnail_url retornou MIME não aceito: ' + mime + ' — se retornou video/* o campo está apontando para .mp4; aceitos: image/jpeg, image/png, image/webp, image/gif');\nconst rawSize = binary.fileSize;\nconst size = typeof rawSize === 'number' && !isNaN(rawSize) ? rawSize\n  : typeof rawSize === 'string' ? (parseInt(rawSize, 10) || 0) : 0;\nif (size <= 0) throw new Error('[VIDEO] Tamanho indeterminado (fileSize=' + JSON.stringify(rawSize) + ')');\nconst MAX = 5 * 1024 * 1024;\nif (size > MAX) throw new Error('[VIDEO] Arquivo muito grande: ' + size + ' bytes (limite 5 MB)');\nconst storagePath = prep.username + '/' + prep.post_id + '.' + ext;\nreturn {\n  json: {\n    post_id:          prep.post_id,\n    username:         prep.username,\n    media_type:       prep.media_type,\n    cover_strategy:   prep.cover_strategy,\n    mime_type:        mime,\n    ext:              ext,\n    file_size_bytes:  size,\n    storage_path:     storagePath,\n    upload_url:       $env.SUPABASE_URL + '/storage/v1/object/instagram-covers/' + storagePath,\n    public_url:       $env.SUPABASE_URL + '/storage/v1/object/public/instagram-covers/' + storagePath,\n    metricas_antes:   prep.metricas_antes\n  },\n  binary: { data: binary }\n};"
       }
     },
 
@@ -325,10 +324,10 @@
       "name": "Validar Download CAROUSEL",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1520, 800],
+      "position": [1520, 900],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const prep   = $('Preparar Download CAROUSEL').item.json;\nconst binary = $input.item.binary?.data;\nif (!binary) throw new Error('Download CAROUSEL falhou: sem dados binários');\nconst mime = binary.mimeType || '';\nconst size = binary.fileSize || 0;\nif (!mime.startsWith('image/')) throw new Error('CAROUSEL capa: Content-Type inválido: ' + mime + ' — esperado image/*');\nconst MAX = 5 * 1024 * 1024;\nif (size > MAX) throw new Error('CAROUSEL capa: arquivo muito grande: ' + size + ' bytes (máximo 5 MB)');\nconst extMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };\nconst ext = extMap[mime] || 'jpg';\nconst storagePath = prep.username + '/' + prep.post_id + '.' + ext;\nconst publicUrl   = $env.SUPABASE_URL + '/storage/v1/object/public/instagram-covers/' + storagePath;\nconst uploadUrl   = $env.SUPABASE_URL + '/storage/v1/object/instagram-covers/' + storagePath;\nreturn {\n  json: {\n    post_id:        prep.post_id,\n    username:       prep.username,\n    media_type:     prep.media_type,\n    cover_strategy: prep.cover_strategy,\n    total_filhos:   prep.total_filhos,\n    mime_type:      mime,\n    ext:            ext,\n    file_size_bytes: size,\n    storage_path:   storagePath,\n    public_url:     publicUrl,\n    upload_url:     uploadUrl,\n    metricas_antes: prep.metricas_antes\n  },\n  binary: { data: binary }\n};"
+        "jsCode": "const prep   = $('Preparar Download CAROUSEL').item.json;\nconst item   = $input.item;\nif (item.json?.error) throw new Error('[CAROUSEL] Download falhou: ' + JSON.stringify(item.json.error));\nconst binary = item.binary?.data;\nif (!binary) throw new Error('[CAROUSEL] Download não retornou dados binários');\nconst mime = (binary.mimeType || '').toLowerCase();\nconst MIMES_ACEITOS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };\nconst ext = MIMES_ACEITOS[mime];\nif (!ext) throw new Error('[CAROUSEL] MIME não aceito: ' + mime + ' — aceitos: image/jpeg, image/png, image/webp, image/gif');\nconst rawSize = binary.fileSize;\nconst size = typeof rawSize === 'number' && !isNaN(rawSize) ? rawSize\n  : typeof rawSize === 'string' ? (parseInt(rawSize, 10) || 0) : 0;\nif (size <= 0) throw new Error('[CAROUSEL] Tamanho indeterminado (fileSize=' + JSON.stringify(rawSize) + ')');\nconst MAX = 5 * 1024 * 1024;\nif (size > MAX) throw new Error('[CAROUSEL] Arquivo muito grande: ' + size + ' bytes (limite 5 MB)');\nconst storagePath = prep.username + '/' + prep.post_id + '.' + ext;\nreturn {\n  json: {\n    post_id:          prep.post_id,\n    username:         prep.username,\n    media_type:       prep.media_type,\n    cover_strategy:   prep.cover_strategy,\n    total_filhos:     prep.total_filhos,\n    filho0_tipo:      prep.filho0_tipo,\n    mime_type:        mime,\n    ext:              ext,\n    file_size_bytes:  size,\n    storage_path:     storagePath,\n    upload_url:       $env.SUPABASE_URL + '/storage/v1/object/instagram-covers/' + storagePath,\n    public_url:       $env.SUPABASE_URL + '/storage/v1/object/public/instagram-covers/' + storagePath,\n    metricas_antes:   prep.metricas_antes\n  },\n  binary: { data: binary }\n};"
       }
     },
 
@@ -337,7 +336,8 @@
       "name": "Upload Storage IMAGE",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1760, 200],
+      "position": [1760, 100],
+      "continueOnFail": true,
       "parameters": {
         "method": "POST",
         "url": "={{ $json.upload_url }}",
@@ -364,6 +364,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [1760, 500],
+      "continueOnFail": true,
       "parameters": {
         "method": "POST",
         "url": "={{ $json.upload_url }}",
@@ -389,7 +390,8 @@
       "name": "Upload Storage CAROUSEL",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1760, 800],
+      "position": [1760, 900],
+      "continueOnFail": true,
       "parameters": {
         "method": "POST",
         "url": "={{ $json.upload_url }}",
@@ -415,10 +417,10 @@
       "name": "Verificar Upload IMAGE",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2000, 200],
+      "position": [2000, 100],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const validate = $('Validar Download IMAGE').item.json;\nconst resp     = $input.item.json;\n// Supabase Storage retorna { Key: '...', Id: '...', ... } no sucesso\nconst uploadOk = !!(resp.Key || resp.Id || resp.id || resp.key);\nif (!uploadOk && resp.error) throw new Error('Upload IMAGE falhou: ' + JSON.stringify(resp.error || resp));\nreturn { json: {\n  post_id:          validate.post_id,\n  username:         validate.username,\n  media_type:       validate.media_type,\n  cover_strategy:   validate.cover_strategy,\n  mime_type:        validate.mime_type,\n  ext:              validate.ext,\n  file_size_bytes:  validate.file_size_bytes,\n  storage_path:     validate.storage_path,\n  public_url:       validate.public_url,\n  upload_ok:        uploadOk,\n  upload_response:  resp.Key || resp.Id || resp.id || JSON.stringify(resp),\n  metricas_antes:   validate.metricas_antes\n}};"
+        "jsCode": "const validate = $('Validar Download IMAGE').item.json;\nconst resp     = $input.item.json;\n// Supabase Storage retorna { Key, Id } no sucesso; { error, message } na falha\nconst httpError = $input.item.json?.error;\nconst uploadOk  = !httpError && !!(resp.Key || resp.Id || resp.id || resp.key);\nreturn { json: {\n  post_id:          validate.post_id,\n  username:         validate.username,\n  media_type:       validate.media_type,\n  cover_strategy:   validate.cover_strategy,\n  mime_type:        validate.mime_type,\n  ext:              validate.ext,\n  file_size_bytes:  validate.file_size_bytes,\n  storage_path:     validate.storage_path,\n  public_url:       validate.public_url,\n  upload_ok:        uploadOk,\n  upload_response:  uploadOk ? (resp.Key || resp.Id || resp.id) : (resp.message || resp.error || JSON.stringify(resp)),\n  metricas_antes:   validate.metricas_antes\n}};"
       }
     },
 
@@ -430,7 +432,7 @@
       "position": [2000, 500],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const validate = $('Validar Download VIDEO').item.json;\nconst resp     = $input.item.json;\nconst uploadOk = !!(resp.Key || resp.Id || resp.id || resp.key);\nif (!uploadOk && resp.error) throw new Error('Upload VIDEO falhou: ' + JSON.stringify(resp.error || resp));\nreturn { json: {\n  post_id:          validate.post_id,\n  username:         validate.username,\n  media_type:       validate.media_type,\n  cover_strategy:   validate.cover_strategy,\n  mime_type:        validate.mime_type,\n  ext:              validate.ext,\n  file_size_bytes:  validate.file_size_bytes,\n  storage_path:     validate.storage_path,\n  public_url:       validate.public_url,\n  upload_ok:        uploadOk,\n  upload_response:  resp.Key || resp.Id || resp.id || JSON.stringify(resp),\n  metricas_antes:   validate.metricas_antes\n}};"
+        "jsCode": "const validate = $('Validar Download VIDEO').item.json;\nconst resp     = $input.item.json;\nconst httpError = $input.item.json?.error;\nconst uploadOk  = !httpError && !!(resp.Key || resp.Id || resp.id || resp.key);\nreturn { json: {\n  post_id:          validate.post_id,\n  username:         validate.username,\n  media_type:       validate.media_type,\n  cover_strategy:   validate.cover_strategy,\n  mime_type:        validate.mime_type,\n  ext:              validate.ext,\n  file_size_bytes:  validate.file_size_bytes,\n  storage_path:     validate.storage_path,\n  public_url:       validate.public_url,\n  upload_ok:        uploadOk,\n  upload_response:  uploadOk ? (resp.Key || resp.Id || resp.id) : (resp.message || resp.error || JSON.stringify(resp)),\n  metricas_antes:   validate.metricas_antes\n}};"
       }
     },
 
@@ -439,10 +441,115 @@
       "name": "Verificar Upload CAROUSEL",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2000, 800],
+      "position": [2000, 900],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const validate = $('Validar Download CAROUSEL').item.json;\nconst resp     = $input.item.json;\nconst uploadOk = !!(resp.Key || resp.Id || resp.id || resp.key);\nif (!uploadOk && resp.error) throw new Error('Upload CAROUSEL falhou: ' + JSON.stringify(resp.error || resp));\nreturn { json: {\n  post_id:          validate.post_id,\n  username:         validate.username,\n  media_type:       validate.media_type,\n  cover_strategy:   validate.cover_strategy,\n  total_filhos:     validate.total_filhos,\n  mime_type:        validate.mime_type,\n  ext:              validate.ext,\n  file_size_bytes:  validate.file_size_bytes,\n  storage_path:     validate.storage_path,\n  public_url:       validate.public_url,\n  upload_ok:        uploadOk,\n  upload_response:  resp.Key || resp.Id || resp.id || JSON.stringify(resp),\n  metricas_antes:   validate.metricas_antes\n}};"
+        "jsCode": "const validate = $('Validar Download CAROUSEL').item.json;\nconst resp     = $input.item.json;\nconst httpError = $input.item.json?.error;\nconst uploadOk  = !httpError && !!(resp.Key || resp.Id || resp.id || resp.key);\nreturn { json: {\n  post_id:          validate.post_id,\n  username:         validate.username,\n  media_type:       validate.media_type,\n  cover_strategy:   validate.cover_strategy,\n  total_filhos:     validate.total_filhos,\n  filho0_tipo:      validate.filho0_tipo,\n  mime_type:        validate.mime_type,\n  ext:              validate.ext,\n  file_size_bytes:  validate.file_size_bytes,\n  storage_path:     validate.storage_path,\n  public_url:       validate.public_url,\n  upload_ok:        uploadOk,\n  upload_response:  uploadOk ? (resp.Key || resp.Id || resp.id) : (resp.message || resp.error || JSON.stringify(resp)),\n  metricas_antes:   validate.metricas_antes\n}};"
+      }
+    },
+
+    {
+      "id": "nd-guard-img",
+      "name": "Guard Upload IMAGE",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2200, 100],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-img-upload-ok",
+              "leftValue": "={{ $json.upload_ok }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+
+    {
+      "id": "nd-guard-vid",
+      "name": "Guard Upload VIDEO",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2200, 500],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-vid-upload-ok",
+              "leftValue": "={{ $json.upload_ok }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+
+    {
+      "id": "nd-guard-car",
+      "name": "Guard Upload CAROUSEL",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2200, 900],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-car-upload-ok",
+              "leftValue": "={{ $json.upload_ok }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+
+    {
+      "id": "nd-result-fail-img",
+      "name": "Resultado Falha IMAGE",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2400, 300],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const v = $input.item.json;\nreturn { json: {\n  post_id:              v.post_id,\n  username:             v.username,\n  media_type:           v.media_type,\n  cover_strategy:       v.cover_strategy || null,\n  status_final:         'FALHA_UPLOAD',\n  upload_ok:            false,\n  upload_response:      v.upload_response || null,\n  erro:                 'Upload para o Storage falhou — PATCH não executado para preservar integridade',\n  mime_type:            v.mime_type || null,\n  file_size_bytes:      v.file_size_bytes || null,\n  storage_path:         v.storage_path || null,\n  public_url:           null,\n  patch_registros:      0,\n  cover_url_storage:    null,\n  cover_synced_at:      null,\n  url_publica_ok:       false,\n  url_publica_status:   null,\n  metricas_ok:          false,\n  metricas_divergentes: ['PATCH não executado — upload falhou']\n}};"
+      }
+    },
+
+    {
+      "id": "nd-result-fail-vid",
+      "name": "Resultado Falha VIDEO",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2400, 700],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const v = $input.item.json;\nreturn { json: {\n  post_id:              v.post_id,\n  username:             v.username,\n  media_type:           v.media_type,\n  cover_strategy:       v.cover_strategy || null,\n  status_final:         'FALHA_UPLOAD',\n  upload_ok:            false,\n  upload_response:      v.upload_response || null,\n  erro:                 'Upload para o Storage falhou — PATCH não executado para preservar integridade',\n  mime_type:            v.mime_type || null,\n  file_size_bytes:      v.file_size_bytes || null,\n  storage_path:         v.storage_path || null,\n  public_url:           null,\n  patch_registros:      0,\n  cover_url_storage:    null,\n  cover_synced_at:      null,\n  url_publica_ok:       false,\n  url_publica_status:   null,\n  metricas_ok:          false,\n  metricas_divergentes: ['PATCH não executado — upload falhou']\n}};"
+      }
+    },
+
+    {
+      "id": "nd-result-fail-car",
+      "name": "Resultado Falha CAROUSEL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2400, 1100],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const v = $input.item.json;\nreturn { json: {\n  post_id:              v.post_id,\n  username:             v.username,\n  media_type:           v.media_type,\n  cover_strategy:       v.cover_strategy || null,\n  status_final:         'FALHA_UPLOAD',\n  upload_ok:            false,\n  upload_response:      v.upload_response || null,\n  erro:                 'Upload para o Storage falhou — PATCH não executado para preservar integridade',\n  mime_type:            v.mime_type || null,\n  file_size_bytes:      v.file_size_bytes || null,\n  storage_path:         v.storage_path || null,\n  public_url:           null,\n  patch_registros:      0,\n  cover_url_storage:    null,\n  cover_synced_at:      null,\n  url_publica_ok:       false,\n  url_publica_status:   null,\n  metricas_ok:          false,\n  metricas_divergentes: ['PATCH não executado — upload falhou']\n}};"
       }
     },
 
@@ -451,25 +558,24 @@
       "name": "PATCH cover_url IMAGE",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [2240, 200],
+      "position": [2440, 100],
       "parameters": {
         "method": "PATCH",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/instagram_post_insights?post_id=eq.{{ $json.post_id }}",
+        "url": "={{ $env.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.' + $json.post_id }}",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             { "name": "apikey",          "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
             { "name": "Authorization",   "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Content-Type",    "value": "application/json" },
             { "name": "Content-Profile", "value": "wpp" },
             { "name": "Accept-Profile",  "value": "wpp" },
             { "name": "Prefer",          "value": "return=representation" }
           ]
         },
         "sendBody": true,
-        "contentType": "json",
-        "body": "={ \"cover_url\": \"{{ $json.public_url }}\", \"cover_synced_at\": \"{{ new Date().toISOString() }}\" }",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ cover_url: $json.public_url, cover_synced_at: new Date().toISOString() }) }}",
         "options": {}
       }
     },
@@ -479,25 +585,24 @@
       "name": "PATCH cover_url VIDEO",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [2240, 500],
+      "position": [2440, 500],
       "parameters": {
         "method": "PATCH",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/instagram_post_insights?post_id=eq.{{ $json.post_id }}",
+        "url": "={{ $env.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.' + $json.post_id }}",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             { "name": "apikey",          "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
             { "name": "Authorization",   "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Content-Type",    "value": "application/json" },
             { "name": "Content-Profile", "value": "wpp" },
             { "name": "Accept-Profile",  "value": "wpp" },
             { "name": "Prefer",          "value": "return=representation" }
           ]
         },
         "sendBody": true,
-        "contentType": "json",
-        "body": "={ \"cover_url\": \"{{ $json.public_url }}\", \"cover_synced_at\": \"{{ new Date().toISOString() }}\" }",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ cover_url: $json.public_url, cover_synced_at: new Date().toISOString() }) }}",
         "options": {}
       }
     },
@@ -507,25 +612,24 @@
       "name": "PATCH cover_url CAROUSEL",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [2240, 800],
+      "position": [2440, 900],
       "parameters": {
         "method": "PATCH",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/instagram_post_insights?post_id=eq.{{ $json.post_id }}",
+        "url": "={{ $env.SUPABASE_URL + '/rest/v1/instagram_post_insights?post_id=eq.' + $json.post_id }}",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             { "name": "apikey",          "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
             { "name": "Authorization",   "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Content-Type",    "value": "application/json" },
             { "name": "Content-Profile", "value": "wpp" },
             { "name": "Accept-Profile",  "value": "wpp" },
             { "name": "Prefer",          "value": "return=representation" }
           ]
         },
         "sendBody": true,
-        "contentType": "json",
-        "body": "={ \"cover_url\": \"{{ $json.public_url }}\", \"cover_synced_at\": \"{{ new Date().toISOString() }}\" }",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ cover_url: $json.public_url, cover_synced_at: new Date().toISOString() }) }}",
         "options": {}
       }
     },
@@ -535,10 +639,10 @@
       "name": "Verificar PATCH IMAGE",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2480, 200],
+      "position": [2680, 100],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const upload = $('Verificar Upload IMAGE').item.json;\nconst resp   = $input.item.json;\n// PostgREST com Prefer: return=representation retorna array dos registros atualizados\nconst rows = Array.isArray(resp) ? resp : (resp.data ? resp.data : [resp]);\nif (rows.length === 0) throw new Error('PATCH IMAGE: nenhum registro atualizado — post_id não encontrado na tabela');\nif (rows.length > 1)  throw new Error('PATCH IMAGE: ' + rows.length + ' registros atualizados — esperado exatamente 1');\nconst row = rows[0];\nif (row.post_id !== upload.post_id) throw new Error('PATCH IMAGE: post_id retornado (' + row.post_id + ') diverge do esperado (' + upload.post_id + ')');\n// Verificar métricas não alteradas\nconst antes  = upload.metricas_antes;\nconst campos = ['like_count','comments_count','shares','saved','reach','impressions','views'];\nconst divergencias = campos.filter(c => String(row[c]) !== String(antes[c]));\nreturn { json: {\n  post_id:              upload.post_id,\n  username:             upload.username,\n  media_type:           upload.media_type,\n  cover_strategy:       upload.cover_strategy,\n  mime_type:            upload.mime_type,\n  ext:                  upload.ext,\n  file_size_bytes:      upload.file_size_bytes,\n  storage_path:         upload.storage_path,\n  public_url:           upload.public_url,\n  upload_ok:            upload.upload_ok,\n  patch_registros:      rows.length,\n  patch_cover_url:      row.cover_url,\n  patch_synced_at:      row.cover_synced_at,\n  metricas_divergentes: divergencias,\n  metricas_ok:          divergencias.length === 0\n}};"
+        "jsCode": "const upload = $('Verificar Upload IMAGE').item.json;\nconst resp   = $input.item.json;\nconst rows = Array.isArray(resp) ? resp : (resp ? [resp] : []);\nif (rows.length === 0) throw new Error('[IMAGE] PATCH retornou 0 registros — post_id não encontrado ou Content-Profile incorreto');\nif (rows.length > 1)  throw new Error('[IMAGE] PATCH atualizou ' + rows.length + ' registros — esperado exatamente 1');\nconst row = rows[0];\nif (String(row.post_id) !== String(upload.post_id)) throw new Error('[IMAGE] post_id retornado (' + row.post_id + ') diverge do esperado (' + upload.post_id + ')');\nconst antes  = upload.metricas_antes;\nconst campos = ['like_count','comments_count','shares','saved','reach','impressions','views'];\nconst divergencias = campos.filter(c => String(row[c]) !== String(antes[c]));\nreturn { json: {\n  post_id:              upload.post_id,\n  username:             upload.username,\n  media_type:           upload.media_type,\n  cover_strategy:       upload.cover_strategy,\n  mime_type:            upload.mime_type,\n  ext:                  upload.ext,\n  file_size_bytes:      upload.file_size_bytes,\n  storage_path:         upload.storage_path,\n  public_url:           upload.public_url,\n  patch_registros:      rows.length,\n  patch_cover_url:      row.cover_url,\n  patch_synced_at:      row.cover_synced_at,\n  metricas_divergentes: divergencias,\n  metricas_ok:          divergencias.length === 0\n}};"
       }
     },
 
@@ -547,10 +651,10 @@
       "name": "Verificar PATCH VIDEO",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2480, 500],
+      "position": [2680, 500],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const upload = $('Verificar Upload VIDEO').item.json;\nconst resp   = $input.item.json;\nconst rows = Array.isArray(resp) ? resp : (resp.data ? resp.data : [resp]);\nif (rows.length === 0) throw new Error('PATCH VIDEO: nenhum registro atualizado');\nif (rows.length > 1)  throw new Error('PATCH VIDEO: ' + rows.length + ' registros atualizados — esperado exatamente 1');\nconst row = rows[0];\nif (row.post_id !== upload.post_id) throw new Error('PATCH VIDEO: post_id retornado diverge do esperado');\nconst antes  = upload.metricas_antes;\nconst campos = ['like_count','comments_count','shares','saved','reach','impressions','views'];\nconst divergencias = campos.filter(c => String(row[c]) !== String(antes[c]));\nreturn { json: {\n  post_id:              upload.post_id,\n  username:             upload.username,\n  media_type:           upload.media_type,\n  cover_strategy:       upload.cover_strategy,\n  mime_type:            upload.mime_type,\n  ext:                  upload.ext,\n  file_size_bytes:      upload.file_size_bytes,\n  storage_path:         upload.storage_path,\n  public_url:           upload.public_url,\n  upload_ok:            upload.upload_ok,\n  patch_registros:      rows.length,\n  patch_cover_url:      row.cover_url,\n  patch_synced_at:      row.cover_synced_at,\n  metricas_divergentes: divergencias,\n  metricas_ok:          divergencias.length === 0\n}};"
+        "jsCode": "const upload = $('Verificar Upload VIDEO').item.json;\nconst resp   = $input.item.json;\nconst rows = Array.isArray(resp) ? resp : (resp ? [resp] : []);\nif (rows.length === 0) throw new Error('[VIDEO] PATCH retornou 0 registros');\nif (rows.length > 1)  throw new Error('[VIDEO] PATCH atualizou ' + rows.length + ' registros — esperado exatamente 1');\nconst row = rows[0];\nif (String(row.post_id) !== String(upload.post_id)) throw new Error('[VIDEO] post_id retornado (' + row.post_id + ') diverge do esperado (' + upload.post_id + ')');\nconst antes  = upload.metricas_antes;\nconst campos = ['like_count','comments_count','shares','saved','reach','impressions','views'];\nconst divergencias = campos.filter(c => String(row[c]) !== String(antes[c]));\nreturn { json: {\n  post_id:              upload.post_id,\n  username:             upload.username,\n  media_type:           upload.media_type,\n  cover_strategy:       upload.cover_strategy,\n  mime_type:            upload.mime_type,\n  ext:                  upload.ext,\n  file_size_bytes:      upload.file_size_bytes,\n  storage_path:         upload.storage_path,\n  public_url:           upload.public_url,\n  patch_registros:      rows.length,\n  patch_cover_url:      row.cover_url,\n  patch_synced_at:      row.cover_synced_at,\n  metricas_divergentes: divergencias,\n  metricas_ok:          divergencias.length === 0\n}};"
       }
     },
 
@@ -559,10 +663,10 @@
       "name": "Verificar PATCH CAROUSEL",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2480, 800],
+      "position": [2680, 900],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const upload = $('Verificar Upload CAROUSEL').item.json;\nconst resp   = $input.item.json;\nconst rows = Array.isArray(resp) ? resp : (resp.data ? resp.data : [resp]);\nif (rows.length === 0) throw new Error('PATCH CAROUSEL: nenhum registro atualizado');\nif (rows.length > 1)  throw new Error('PATCH CAROUSEL: ' + rows.length + ' registros atualizados — esperado exatamente 1');\nconst row = rows[0];\nif (row.post_id !== upload.post_id) throw new Error('PATCH CAROUSEL: post_id retornado diverge do esperado');\nconst antes  = upload.metricas_antes;\nconst campos = ['like_count','comments_count','shares','saved','reach','impressions','views'];\nconst divergencias = campos.filter(c => String(row[c]) !== String(antes[c]));\nreturn { json: {\n  post_id:              upload.post_id,\n  username:             upload.username,\n  media_type:           upload.media_type,\n  cover_strategy:       upload.cover_strategy,\n  total_filhos:         upload.total_filhos,\n  mime_type:            upload.mime_type,\n  ext:                  upload.ext,\n  file_size_bytes:      upload.file_size_bytes,\n  storage_path:         upload.storage_path,\n  public_url:           upload.public_url,\n  upload_ok:            upload.upload_ok,\n  patch_registros:      rows.length,\n  patch_cover_url:      row.cover_url,\n  patch_synced_at:      row.cover_synced_at,\n  metricas_divergentes: divergencias,\n  metricas_ok:          divergencias.length === 0\n}};"
+        "jsCode": "const upload = $('Verificar Upload CAROUSEL').item.json;\nconst resp   = $input.item.json;\nconst rows = Array.isArray(resp) ? resp : (resp ? [resp] : []);\nif (rows.length === 0) throw new Error('[CAROUSEL] PATCH retornou 0 registros');\nif (rows.length > 1)  throw new Error('[CAROUSEL] PATCH atualizou ' + rows.length + ' registros — esperado exatamente 1');\nconst row = rows[0];\nif (String(row.post_id) !== String(upload.post_id)) throw new Error('[CAROUSEL] post_id retornado (' + row.post_id + ') diverge do esperado (' + upload.post_id + ')');\nconst antes  = upload.metricas_antes;\nconst campos = ['like_count','comments_count','shares','saved','reach','impressions','views'];\nconst divergencias = campos.filter(c => String(row[c]) !== String(antes[c]));\nreturn { json: {\n  post_id:              upload.post_id,\n  username:             upload.username,\n  media_type:           upload.media_type,\n  cover_strategy:       upload.cover_strategy,\n  total_filhos:         upload.total_filhos,\n  filho0_tipo:          upload.filho0_tipo,\n  mime_type:            upload.mime_type,\n  ext:                  upload.ext,\n  file_size_bytes:      upload.file_size_bytes,\n  storage_path:         upload.storage_path,\n  public_url:           upload.public_url,\n  patch_registros:      rows.length,\n  patch_cover_url:      row.cover_url,\n  patch_synced_at:      row.cover_synced_at,\n  metricas_divergentes: divergencias,\n  metricas_ok:          divergencias.length === 0\n}};"
       }
     },
 
@@ -571,7 +675,7 @@
       "name": "Verificar URL Pública IMAGE",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [2720, 200],
+      "position": [2920, 100],
       "continueOnFail": true,
       "parameters": {
         "method": "HEAD",
@@ -579,7 +683,7 @@
         "authentication": "none",
         "options": {
           "response": { "response": { "fullResponse": true, "neverError": true } },
-          "timeout": 10000
+          "timeout": 15000
         }
       }
     },
@@ -589,7 +693,7 @@
       "name": "Verificar URL Pública VIDEO",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [2720, 500],
+      "position": [2920, 500],
       "continueOnFail": true,
       "parameters": {
         "method": "HEAD",
@@ -597,7 +701,7 @@
         "authentication": "none",
         "options": {
           "response": { "response": { "fullResponse": true, "neverError": true } },
-          "timeout": 10000
+          "timeout": 15000
         }
       }
     },
@@ -607,7 +711,7 @@
       "name": "Verificar URL Pública CAROUSEL",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [2720, 800],
+      "position": [2920, 900],
       "continueOnFail": true,
       "parameters": {
         "method": "HEAD",
@@ -615,7 +719,7 @@
         "authentication": "none",
         "options": {
           "response": { "response": { "fullResponse": true, "neverError": true } },
-          "timeout": 10000
+          "timeout": 15000
         }
       }
     },
@@ -625,10 +729,10 @@
       "name": "Resultado IMAGE",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2960, 200],
+      "position": [3160, 100],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const patch  = $('Verificar PATCH IMAGE').item.json;\nconst head   = $input.item.json;\nconst pubStatus = head?.statusCode || head?.status || null;\nconst pubCT     = head?.headers?.['content-type'] || head?.headers?.['Content-Type'] || null;\nconst pubOk     = pubStatus === 200 && (pubCT || '').startsWith('image/');\nconst statusFinal = patch.metricas_ok && patch.upload_ok && pubOk ? 'OK' :\n                    !patch.upload_ok          ? 'FALHA_UPLOAD' :\n                    !patch.metricas_ok         ? 'METRICAS_ALTERADAS' :\n                    !pubOk                     ? 'URL_PUBLICA_INVALIDA' : 'ERRO';\nreturn { json: {\n  post_id:              patch.post_id,\n  username:             patch.username,\n  media_type:           patch.media_type,\n  cover_strategy:       patch.cover_strategy,\n  status_final:         statusFinal,\n  upload_ok:            patch.upload_ok,\n  patch_registros:      patch.patch_registros,\n  cover_url_storage:    patch.patch_cover_url,\n  cover_synced_at:      patch.patch_synced_at,\n  url_publica_status:   pubStatus,\n  url_publica_ct:       pubCT,\n  url_publica_ok:       pubOk,\n  mime_type:            patch.mime_type,\n  file_size_bytes:      patch.file_size_bytes,\n  metricas_ok:          patch.metricas_ok,\n  metricas_divergentes: patch.metricas_divergentes\n}};"
+        "jsCode": "const patch = $('Verificar PATCH IMAGE').item.json;\nconst head  = $input.item.json;\nconst pubStatus = head?.statusCode || head?.status || null;\nconst pubCT     = (head?.headers?.['content-type'] || head?.headers?.['Content-Type'] || '').toLowerCase();\nconst pubOk     = pubStatus === 200 && pubCT.startsWith('image/');\nlet statusFinal;\nif (!patch.metricas_ok)         statusFinal = 'METRICAS_ALTERADAS';\nelse if (!pubOk)                statusFinal = 'URL_PUBLICA_INVALIDA';\nelse                            statusFinal = 'OK';\nreturn { json: {\n  post_id:              patch.post_id,\n  username:             patch.username,\n  media_type:           patch.media_type,\n  cover_strategy:       patch.cover_strategy,\n  status_final:         statusFinal,\n  upload_ok:            true,\n  patch_registros:      patch.patch_registros,\n  cover_url_storage:    patch.patch_cover_url,\n  cover_synced_at:      patch.patch_synced_at,\n  url_publica_ok:       pubOk,\n  url_publica_status:   pubStatus,\n  url_publica_ct:       pubCT || null,\n  mime_type:            patch.mime_type,\n  file_size_bytes:      patch.file_size_bytes,\n  metricas_ok:          patch.metricas_ok,\n  metricas_divergentes: patch.metricas_divergentes\n}};"
       }
     },
 
@@ -637,10 +741,10 @@
       "name": "Resultado VIDEO",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2960, 500],
+      "position": [3160, 500],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const patch  = $('Verificar PATCH VIDEO').item.json;\nconst head   = $input.item.json;\nconst pubStatus = head?.statusCode || head?.status || null;\nconst pubCT     = head?.headers?.['content-type'] || head?.headers?.['Content-Type'] || null;\nconst pubOk     = pubStatus === 200 && (pubCT || '').startsWith('image/');\nconst statusFinal = patch.metricas_ok && patch.upload_ok && pubOk ? 'OK' :\n                    !patch.upload_ok          ? 'FALHA_UPLOAD' :\n                    !patch.metricas_ok         ? 'METRICAS_ALTERADAS' :\n                    !pubOk                     ? 'URL_PUBLICA_INVALIDA' : 'ERRO';\nreturn { json: {\n  post_id:              patch.post_id,\n  username:             patch.username,\n  media_type:           patch.media_type,\n  cover_strategy:       patch.cover_strategy,\n  status_final:         statusFinal,\n  upload_ok:            patch.upload_ok,\n  patch_registros:      patch.patch_registros,\n  cover_url_storage:    patch.patch_cover_url,\n  cover_synced_at:      patch.patch_synced_at,\n  url_publica_status:   pubStatus,\n  url_publica_ct:       pubCT,\n  url_publica_ok:       pubOk,\n  mime_type:            patch.mime_type,\n  file_size_bytes:      patch.file_size_bytes,\n  metricas_ok:          patch.metricas_ok,\n  metricas_divergentes: patch.metricas_divergentes\n}};"
+        "jsCode": "const patch = $('Verificar PATCH VIDEO').item.json;\nconst head  = $input.item.json;\nconst pubStatus = head?.statusCode || head?.status || null;\nconst pubCT     = (head?.headers?.['content-type'] || head?.headers?.['Content-Type'] || '').toLowerCase();\nconst pubOk     = pubStatus === 200 && pubCT.startsWith('image/');\nlet statusFinal;\nif (!patch.metricas_ok)         statusFinal = 'METRICAS_ALTERADAS';\nelse if (!pubOk)                statusFinal = 'URL_PUBLICA_INVALIDA';\nelse                            statusFinal = 'OK';\nreturn { json: {\n  post_id:              patch.post_id,\n  username:             patch.username,\n  media_type:           patch.media_type,\n  cover_strategy:       patch.cover_strategy,\n  status_final:         statusFinal,\n  upload_ok:            true,\n  patch_registros:      patch.patch_registros,\n  cover_url_storage:    patch.patch_cover_url,\n  cover_synced_at:      patch.patch_synced_at,\n  url_publica_ok:       pubOk,\n  url_publica_status:   pubStatus,\n  url_publica_ct:       pubCT || null,\n  mime_type:            patch.mime_type,\n  file_size_bytes:      patch.file_size_bytes,\n  metricas_ok:          patch.metricas_ok,\n  metricas_divergentes: patch.metricas_divergentes\n}};"
       }
     },
 
@@ -649,10 +753,10 @@
       "name": "Resultado CAROUSEL",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2960, 800],
+      "position": [3160, 900],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const patch  = $('Verificar PATCH CAROUSEL').item.json;\nconst head   = $input.item.json;\nconst pubStatus = head?.statusCode || head?.status || null;\nconst pubCT     = head?.headers?.['content-type'] || head?.headers?.['Content-Type'] || null;\nconst pubOk     = pubStatus === 200 && (pubCT || '').startsWith('image/');\nconst statusFinal = patch.metricas_ok && patch.upload_ok && pubOk ? 'OK' :\n                    !patch.upload_ok          ? 'FALHA_UPLOAD' :\n                    !patch.metricas_ok         ? 'METRICAS_ALTERADAS' :\n                    !pubOk                     ? 'URL_PUBLICA_INVALIDA' : 'ERRO';\nreturn { json: {\n  post_id:              patch.post_id,\n  username:             patch.username,\n  media_type:           patch.media_type,\n  cover_strategy:       patch.cover_strategy,\n  total_filhos:         patch.total_filhos,\n  status_final:         statusFinal,\n  upload_ok:            patch.upload_ok,\n  patch_registros:      patch.patch_registros,\n  cover_url_storage:    patch.patch_cover_url,\n  cover_synced_at:      patch.patch_synced_at,\n  url_publica_status:   pubStatus,\n  url_publica_ct:       pubCT,\n  url_publica_ok:       pubOk,\n  mime_type:            patch.mime_type,\n  file_size_bytes:      patch.file_size_bytes,\n  metricas_ok:          patch.metricas_ok,\n  metricas_divergentes: patch.metricas_divergentes\n}};"
+        "jsCode": "const patch = $('Verificar PATCH CAROUSEL').item.json;\nconst head  = $input.item.json;\nconst pubStatus = head?.statusCode || head?.status || null;\nconst pubCT     = (head?.headers?.['content-type'] || head?.headers?.['Content-Type'] || '').toLowerCase();\nconst pubOk     = pubStatus === 200 && pubCT.startsWith('image/');\nlet statusFinal;\nif (!patch.metricas_ok)         statusFinal = 'METRICAS_ALTERADAS';\nelse if (!pubOk)                statusFinal = 'URL_PUBLICA_INVALIDA';\nelse                            statusFinal = 'OK';\nreturn { json: {\n  post_id:              patch.post_id,\n  username:             patch.username,\n  media_type:           patch.media_type,\n  cover_strategy:       patch.cover_strategy,\n  total_filhos:         patch.total_filhos,\n  filho0_tipo:          patch.filho0_tipo,\n  status_final:         statusFinal,\n  upload_ok:            true,\n  patch_registros:      patch.patch_registros,\n  cover_url_storage:    patch.patch_cover_url,\n  cover_synced_at:      patch.patch_synced_at,\n  url_publica_ok:       pubOk,\n  url_publica_status:   pubStatus,\n  url_publica_ct:       pubCT || null,\n  mime_type:            patch.mime_type,\n  file_size_bytes:      patch.file_size_bytes,\n  metricas_ok:          patch.metricas_ok,\n  metricas_divergentes: patch.metricas_divergentes\n}};"
       }
     },
 
@@ -661,7 +765,7 @@
       "name": "Consolidar Resultados",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 2,
-      "position": [3200, 500],
+      "position": [3400, 500],
       "parameters": { "mode": "append", "numberInputs": 3 }
     },
 
@@ -670,10 +774,10 @@
       "name": "Relatório Final POC Storage",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3440, 500],
+      "position": [3640, 500],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const items = $input.all();\nconst ok          = items.filter(i => i.json.status_final === 'OK').length;\nconst falhas      = items.filter(i => i.json.status_final !== 'OK');\nconst metricasOk  = items.every(i => i.json.metricas_ok);\n\nconst resultado = ok === items.length && metricasOk\n  ? 'APROVADO — ' + ok + '/3 capas persistidas, métricas intactas'\n  : 'FALHA — verificar detalhes';\n\nconst detalhes = items.map(i => {\n  const j = i.json;\n  return {\n    post_id:            j.post_id,\n    username:           j.username,\n    media_type:         j.media_type,\n    cover_strategy:     j.cover_strategy,\n    status_final:       j.status_final,\n    upload_ok:          j.upload_ok,\n    patch_registros:    j.patch_registros,\n    cover_url_storage:  j.cover_url_storage,\n    cover_synced_at:    j.cover_synced_at,\n    url_publica_ok:     j.url_publica_ok,\n    url_publica_status: j.url_publica_status,\n    url_publica_ct:     j.url_publica_ct,\n    mime_type:          j.mime_type,\n    file_size_bytes:    j.file_size_bytes,\n    metricas_ok:        j.metricas_ok,\n    metricas_divergentes: j.metricas_divergentes\n  };\n});\n\nreturn { json: {\n  poc_summary: {\n    total:          items.length,\n    ok:             ok,\n    falhou:         items.length - ok,\n    metricas_ok:    metricasOk,\n    resultado_geral: resultado\n  },\n  detalhes: detalhes,\n  _nota: 'cover_url_storage contém a URL permanente do Supabase Storage. URLs brutas da Meta CDN não aparecem neste relatório.'\n}};"
+        "jsCode": "const items = $input.all();\nconst ok     = items.filter(i => i.json.status_final === 'OK').length;\nconst falhas = items.filter(i => i.json.status_final !== 'OK');\nconst todosMet = items.every(i => i.json.metricas_ok === true);\nconst resultado = ok === 3 && todosMet\n  ? 'APROVADO — 3/3 capas persistidas com métricas intactas'\n  : 'REPROVADO — ' + (3 - ok) + ' pipeline(s) com falha';\nconst detalhes = items.map(i => {\n  const j = i.json;\n  return {\n    post_id:              j.post_id,\n    username:             j.username,\n    media_type:           j.media_type,\n    cover_strategy:       j.cover_strategy,\n    status_final:         j.status_final,\n    upload_ok:            j.upload_ok,\n    patch_registros:      j.patch_registros,\n    cover_url_storage:    j.cover_url_storage,\n    cover_synced_at:      j.cover_synced_at,\n    url_publica_ok:       j.url_publica_ok,\n    url_publica_status:   j.url_publica_status,\n    url_publica_ct:       j.url_publica_ct,\n    mime_type:            j.mime_type,\n    file_size_bytes:      j.file_size_bytes,\n    metricas_ok:          j.metricas_ok,\n    metricas_divergentes: j.metricas_divergentes,\n    erro:                 j.erro || null\n  };\n});\n// runOnceForAllItems: retornar array de itens\nreturn [{ json: {\n  poc_summary: {\n    total:           items.length,\n    ok:              ok,\n    falhou:          items.length - ok,\n    metricas_ok:     todosMet,\n    resultado_geral: resultado\n  },\n  detalhes: detalhes,\n  _nota: 'cover_url_storage contém a URL permanente do Supabase Storage. URLs brutas da Meta CDN não aparecem neste relatório.'\n}}];"
       }
     }
 
@@ -687,6 +791,7 @@
         { "node": "Buscar CAROUSEL", "type": "main", "index": 0 }
       ]]
     },
+
     "Buscar IMAGE":    { "main": [[{ "node": "Analisar IMAGE",    "type": "main", "index": 0 }]] },
     "Buscar VIDEO":    { "main": [[{ "node": "Analisar VIDEO",    "type": "main", "index": 0 }]] },
     "Buscar CAROUSEL": { "main": [[{ "node": "Analisar CAROUSEL", "type": "main", "index": 0 }]] },
@@ -715,9 +820,28 @@
     "Upload Storage VIDEO":    { "main": [[{ "node": "Verificar Upload VIDEO",    "type": "main", "index": 0 }]] },
     "Upload Storage CAROUSEL": { "main": [[{ "node": "Verificar Upload CAROUSEL", "type": "main", "index": 0 }]] },
 
-    "Verificar Upload IMAGE":    { "main": [[{ "node": "PATCH cover_url IMAGE",    "type": "main", "index": 0 }]] },
-    "Verificar Upload VIDEO":    { "main": [[{ "node": "PATCH cover_url VIDEO",    "type": "main", "index": 0 }]] },
-    "Verificar Upload CAROUSEL": { "main": [[{ "node": "PATCH cover_url CAROUSEL", "type": "main", "index": 0 }]] },
+    "Verificar Upload IMAGE":    { "main": [[{ "node": "Guard Upload IMAGE",    "type": "main", "index": 0 }]] },
+    "Verificar Upload VIDEO":    { "main": [[{ "node": "Guard Upload VIDEO",    "type": "main", "index": 0 }]] },
+    "Verificar Upload CAROUSEL": { "main": [[{ "node": "Guard Upload CAROUSEL", "type": "main", "index": 0 }]] },
+
+    "Guard Upload IMAGE": {
+      "main": [
+        [{ "node": "PATCH cover_url IMAGE",    "type": "main", "index": 0 }],
+        [{ "node": "Resultado Falha IMAGE",    "type": "main", "index": 0 }]
+      ]
+    },
+    "Guard Upload VIDEO": {
+      "main": [
+        [{ "node": "PATCH cover_url VIDEO",    "type": "main", "index": 0 }],
+        [{ "node": "Resultado Falha VIDEO",    "type": "main", "index": 0 }]
+      ]
+    },
+    "Guard Upload CAROUSEL": {
+      "main": [
+        [{ "node": "PATCH cover_url CAROUSEL", "type": "main", "index": 0 }],
+        [{ "node": "Resultado Falha CAROUSEL", "type": "main", "index": 0 }]
+      ]
+    },
 
     "PATCH cover_url IMAGE":    { "main": [[{ "node": "Verificar PATCH IMAGE",    "type": "main", "index": 0 }]] },
     "PATCH cover_url VIDEO":    { "main": [[{ "node": "Verificar PATCH VIDEO",    "type": "main", "index": 0 }]] },
@@ -731,9 +855,12 @@
     "Verificar URL Pública VIDEO":    { "main": [[{ "node": "Resultado VIDEO",    "type": "main", "index": 0 }]] },
     "Verificar URL Pública CAROUSEL": { "main": [[{ "node": "Resultado CAROUSEL", "type": "main", "index": 0 }]] },
 
-    "Resultado IMAGE":    { "main": [[{ "node": "Consolidar Resultados", "type": "main", "index": 0 }]] },
-    "Resultado VIDEO":    { "main": [[{ "node": "Consolidar Resultados", "type": "main", "index": 1 }]] },
-    "Resultado CAROUSEL": { "main": [[{ "node": "Consolidar Resultados", "type": "main", "index": 2 }]] },
+    "Resultado IMAGE":          { "main": [[{ "node": "Consolidar Resultados", "type": "main", "index": 0 }]] },
+    "Resultado Falha IMAGE":    { "main": [[{ "node": "Consolidar Resultados", "type": "main", "index": 0 }]] },
+    "Resultado VIDEO":          { "main": [[{ "node": "Consolidar Resultados", "type": "main", "index": 1 }]] },
+    "Resultado Falha VIDEO":    { "main": [[{ "node": "Consolidar Resultados", "type": "main", "index": 1 }]] },
+    "Resultado CAROUSEL":       { "main": [[{ "node": "Consolidar Resultados", "type": "main", "index": 2 }]] },
+    "Resultado Falha CAROUSEL": { "main": [[{ "node": "Consolidar Resultados", "type": "main", "index": 2 }]] },
 
     "Consolidar Resultados": { "main": [[{ "node": "Relatório Final POC Storage", "type": "main", "index": 0 }]] }
   },
@@ -744,5 +871,5 @@
     "callerPolicy": "workflowsFromSameOwner"
   },
 
-  "tags": ["instagram", "poc", "storage", "v1"]
+  "tags": ["instagram", "poc", "storage", "v1.1"]
 }
