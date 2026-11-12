@@ -29,8 +29,8 @@
       "parameters": {
         "method": "GET",
         "url": "https://graph.facebook.com/v19.0/18115485343992680",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpQueryAuth",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
@@ -40,13 +40,7 @@
             }
           ]
         },
-        "options": {
-          "response": {
-            "response": {
-              "fullResponse": false
-            }
-          }
-        }
+        "options": {}
       },
       "credentials": {
         "httpQueryAuth": {
@@ -65,8 +59,8 @@
       "parameters": {
         "method": "GET",
         "url": "https://graph.facebook.com/v19.0/18082958183373773",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpQueryAuth",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
@@ -95,8 +89,8 @@
       "parameters": {
         "method": "GET",
         "url": "https://graph.facebook.com/v19.0/18066040568539014",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpQueryAuth",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
